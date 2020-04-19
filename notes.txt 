@@ -1,0 +1,87 @@
+Implementation Specific Notes
+
+APPLICATION:
+- Each application maintains 2 sets of records:
+	- Public: Replicated on all applications
+	- Private: Accessible only to the application
+----------------------------------------------------------
+----------------------------------------------------------
+BLOCKCHAIN LEDGER:
+- Append-only data structure, recording transactions in the form of a hash chain
+- Every blockchain starts with a Genesis block
+- Each block contains:
+	- Batch of transactions(in case of CAPER, only 1 transaction per block)
+	- The blockchain ledger consists of both internal and cross-application transactions
+- Model the ledger as a directed acyclic graph(DAG)
+----------------------------------------------------------
+----------------------------------------------------------
+TRANSACTIONS:
+- Internal transaction includes the cryptographic hash of a cross application transaction in the ledger
+(When internal transaction has to use the data of cross application transactions).
+- Includes:
+	- To show that a transaction t includes H(t'), we include an esge from t to t' in the DAG
+	- Transaction ID: t<i><j>: i: order of the transaction among those initiated by the initiator app
+	j: order of transaction among cross-application transactions.
+- 2 types of Transactions
+	- Internal: Performed within an application. Can R/W its private records
+	- Cross-application: Involve multiple applications and are visible to all applications. Public
+	  records can only be updated via Cross-Application transactions
+----------------------------------------------------------
+----------------------------------------------------------
+MESSAGES:
+- contain public-key signatures and message digests
+- Message digest: numeric representation of contents of a message
+- Assume that all machines have access to public keys of all other machines
+----------------------------------------------------------
+----------------------------------------------------------
+ARCHITECTURE:
+- Each application runs on a disjoint subset of nodes(agents)
+- All applications, there exists Na intersect Nb == NULL
+- Nodes are connected by bidirectional communication channels[DEPLOYMENT DETAILS]
+- Network channels are pairwise authenticated
+----------------------------------------------------------
+----------------------------------------------------------
+BEHAVIOUR:
+- At the node level, each agent might be crash-only, Byzantine, or a reliable node.
+- At the application level, the application might behave maliciously.
+- These 2 behaviours are independent of each other
+----------------------------------------------------------
+----------------------------------------------------------
+CONSENSUS:
+- Ordering the transactions within each application needs consensus among the agents of that
+particular application.
+- PAXOS and PBFT (from the Bi-partite PAXOS paper)
+----------------------------------------------------------
+----------------------------------------------------------
+LOCAL CONSENSUS:
+- Internal transactions are ordered and executed in CAPER using consensus algorithms.
+- The application can also NOT use a consensus protocol and instead rely on a single
+non-faulty reliable node to order the transactions.
+- The local consensus protocol of an application is initiated by one of the agents - called the
+primary.
+-------------
+Process:
+- client c -> requests internal transaction tx -> signed(<REQUEST, tx, Tc, c>) to agent p
+		- Tc: client's timestamp - used to totally order the requests of each client and to ensure exactly-once semantics
+		- signed: Entire message is signed with signature
+- Primary p receives the request -> check signature to ensure it is valid -> initiate local consensus algo
+- To provide total order b/w transactions, p also includes H(t) in the message
+- More details about the message above under the "MESSAGE" section.
+- The agents then establish agreement on a total order of transactions using the utilized consensus protocol, execute
+transaction, and append to the blockchain ledger.
+- Finally, either the primary/every agent node send a reply message signed(<REPLY, Tc, u>) to client
+where u is the execution result.
+----------------------------------------------------------
+----------------------------------------------------------
+GLOBAL CONSENSUS:
+3 ways to do this:
+------------
+Orderers
+------------
+- disjoint set of nodes which are not agents of any applications.
+- these are used to globally order cross application transactions
+
+
+
+
+
