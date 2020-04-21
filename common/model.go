@@ -14,5 +14,3 @@ type Vertex struct {
 	Index int `json:"index"`
 	Id int `json:"id"`
 }
-
-

@@ -2,6 +2,7 @@ package node
 
 import (
 	"All-On-Cloud-9/common"
+	"fmt"
 )
 
 var (
@@ -12,49 +13,69 @@ type Leader struct {
 	Index int
 }
 
-func Union(a, b []*Vertex, m map[*Vertex]bool) []*Vertex {
-
-	for _, item := range a {
-			m[item] = true
-	}
-
-	for _, item := range b {
-			if _, ok := m[item]; !ok {
-					a = append(a, item)
-			}
-	}
-	return a
-}
-
-func Union(a, messages[]*MessageEvent ) []*Vertex {
-	m := map[*Vertex]bool
+// func Union(a, b []*Vertex, m map[*Vertex]bool) []*Vertex {
+func Union(messages []*common.MessageEvent) common.MessageEvent {
 	
-	for _, item := range a {
-		m[item] = true
+	newMessage := common.MessageEvent{}
+
+	if len(messages) > 0 {
+		var m map[*common.Vertex]bool
+		deps := messages[0].Deps
+
+		for _, item := range deps {
+				m[item] = true
+		}
+
+		for _, mes := range messages[1:] {
+			for _, item := range mes.Deps {
+				if _, ok := m[item]; !ok {
+						deps = append(deps, item)
+						m[item] = true
+				}
+			}	
+		}
+
+		newMessage.VertexId = messages[0].VertexId
+		newMessage.Message = messages[0].Message
+		newMessage.Deps = deps
 	}
 
-	for _, mes := range messages {
-		for _, item := range mes.Deps {
-			if _, ok := m[item]; !ok {
-					a = append(a, item)
-					m[item] = true
-			}
-		}	
-	}
-
-	return a
+	return newMessage
 }
 
-func (leader *Leader) handleReceiveCommand(message string) {
-	v := Vertex{leader.Index, id_count}
+// func Union(a, messages[]*MessageEvent ) []*Vertex {
+// 	m := map[*Vertex]bool
+	
+// 	for _, item := range a {
+// 		m[item] = true
+// 	}
+
+// 	for _, mes := range messages {
+// 		for _, item := range mes.Deps {
+// 			if _, ok := m[item]; !ok {
+// 					a = append(a, item)
+// 					m[item] = true
+// 			}
+// 		}	
+// 	}
+
+// 	return a
+// }
+
+func (leader *Leader) HandleReceiveCommand(message string) {
+	v := common.Vertex{leader.Index, id_count}
 	id_count += 1
-	newMessageEvent := MessageEvent{v, message, []*Vertex{}}
+	newMessageEvent := common.MessageEvent{&v, message, []*common.Vertex{}}
+	fmt.Println(newMessageEvent.Message)
+
 	// send message to dependency
 }
 
-func (leader *Leader) handleReceiveDeps(messages []*MessageEvent) {
+func (leader *Leader) HandleReceiveDeps(messages []*common.MessageEvent) {
 	// deps is a list of vertices
-	deps := Union(messages[0].Deps, messages[1:])
-	newMessageEvent := MessageEvent{messages[0].VertexId, messages[0].Message, deps}
+	if len(messages) > 0 {
+		newMessageEvent := Union(messages)
+		fmt.Println(newMessageEvent.Message)
+	}
 	// send message to proposer
 }
