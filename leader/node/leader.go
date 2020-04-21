@@ -55,10 +55,8 @@ func (leader *Leader) HandleReceiveCommand(message string) {
 }
 
 func (leader *Leader) HandleReceiveDeps(messages []*common.MessageEvent) {
-	// deps is a list of vertices
-	if len(messages) > 0 {
-		newMessageEvent := Union(messages)
-		fmt.Println(newMessageEvent.Message) // STUB
-	}
-	// send message to proposer
+	
+	newMessageEvent := Union(messages)
+	fmt.Println(newMessageEvent.Message) // STUB
+	
 }
