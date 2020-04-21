@@ -4,11 +4,11 @@ import (
 	"testing"
 	"All-On-Cloud-9/leader/node"
 	"All-On-Cloud-9/common"
-	"reflect"
 	"fmt"
 )
 
 func TestUnion1(t *testing.T) {
+	fmt.Println("TestUnion1")
 	// Test that all dependencies are unioned together
 	v0 := common.Vertex{0,0}
 	v1 := common.Vertex{0,1}
@@ -26,7 +26,7 @@ func TestUnion1(t *testing.T) {
 	newMessage := node.Union(messages)
 	
 	// Now check that newMessages has been created correctly
-	if !reflect.DeepEqual(newMessage.VertexId, v0) {
+	if *newMessage.VertexId != v0 {
 		t.Errorf("newMessage VertexId = (%d, %d); want (%d, %d)", 
 		newMessage.VertexId.Index, newMessage.VertexId.Id, 
 		v0.Index, v0.Id)
@@ -36,19 +36,70 @@ func TestUnion1(t *testing.T) {
 		t.Errorf("newMessage Message = %s; want \"Hello\"", newMessage.Message)
 	}
 
-	for idx, item := range newMessage.Deps {
-		if !reflect.DeepEqual(messages[idx], item) {
-			t.Errorf("newMessage Dep[%d] = (%d, %d); want (%d, %d)", idx,
-			item.Index, item.Id, 
-			messages[idx].VertexId.Index, messages[idx].VertexId.Id)
+	if 6 != len(newMessage.Deps) {
+		t.Errorf("newMessage Deps length is %d; should be 6", len(newMessage.Deps))
+	}
+
+	m := map[*common.Vertex]bool{}
+
+	for _, item := range newMessage.Deps {
+		m[item] = true
+	}
+
+	for _, mess := range messages {
+		for _, item := range mess.Deps {
+			if _, ok := m[item]; !ok {
+				t.Errorf("newMessage Dep missing dependency (%d, %d)", item.Index, item.Id)
+			}
 		}
 	}
 
-	fmt.Println("Union1 test SUCCESS")
+	fmt.Println("END TestUnion1")
 }
 
-// func TestUnion2(t *testing.T) {
-// 	// Test that duplicate dependencies are not unioned Twice
-// 	messages := make([]*common.MessageEvent, 5)
+func TestUnion2(t *testing.T) {
+	fmt.Println("TestUnion2")
+	// Test that duplicate dependencies are not unioned Twice
+	v0 := common.Vertex{0,0}
+
+	v1 := common.Vertex{0,1}
+	v2 := common.Vertex{0,2}
+	v3 := common.Vertex{1,1}
+
+	message1 := common.MessageEvent{&v0, "Hello", []*common.Vertex{&v1, &v2}}
+	message2 := common.MessageEvent{&v0, "Hello", []*common.Vertex{&v3, &v1}}
+	message3 := common.MessageEvent{&v0, "Hello", []*common.Vertex{&v2, &v3}}
+
+	messages := []*common.MessageEvent{&message1, &message2, &message3}
+	newMessage := node.Union(messages)
 	
-// }
+	// Now check that newMessages has been created correctly
+	if *newMessage.VertexId != v0 {
+		t.Errorf("newMessage VertexId = (%d, %d); want (%d, %d)", 
+		newMessage.VertexId.Index, newMessage.VertexId.Id, 
+		v0.Index, v0.Id)
+	}
+
+	if newMessage.Message != "Hello" {
+		t.Errorf("newMessage Message = %s; want \"Hello\"", newMessage.Message)
+	}
+
+	if 3 != len(newMessage.Deps) {
+		t.Errorf("newMessage Deps length is %d; should be 3", len(newMessage.Deps))
+	}
+
+	m := map[*common.Vertex]bool{}
+
+	for _, item := range newMessage.Deps {
+		m[item] = true
+	}
+
+	for _, mess := range messages {
+		for _, item := range mess.Deps {
+			if _, ok := m[item]; !ok {
+				t.Errorf("newMessage Dep missing dependency (%d, %d)", item.Index, item.Id)
+			}
+		}
+	}
+	fmt.Println("END TestUnion2")
+}

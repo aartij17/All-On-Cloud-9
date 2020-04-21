@@ -19,11 +19,13 @@ func Union(messages []*common.MessageEvent) common.MessageEvent {
 	newMessage := common.MessageEvent{}
 
 	if len(messages) > 0 {
-		var m map[*common.Vertex]bool
+
+		m := map[*common.Vertex]bool{}
+
 		deps := messages[0].Deps
 
 		for _, item := range deps {
-				m[item] = true
+			m[item] = true
 		}
 
 		for _, mes := range messages[1:] {
@@ -47,7 +49,7 @@ func (leader *Leader) HandleReceiveCommand(message string) {
 	v := common.Vertex{leader.Index, id_count}
 	id_count += 1
 	newMessageEvent := common.MessageEvent{&v, message, []*common.Vertex{}}
-	fmt.Println(newMessageEvent.Message)
+	fmt.Println(newMessageEvent.Message)  // STUB
 
 	// send message to dependency
 }
@@ -56,7 +58,7 @@ func (leader *Leader) HandleReceiveDeps(messages []*common.MessageEvent) {
 	// deps is a list of vertices
 	if len(messages) > 0 {
 		newMessageEvent := Union(messages)
-		fmt.Println(newMessageEvent.Message)
+		fmt.Println(newMessageEvent.Message) // STUB
 	}
 	// send message to proposer
 }
