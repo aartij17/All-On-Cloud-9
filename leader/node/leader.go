@@ -43,25 +43,6 @@ func Union(messages []*common.MessageEvent) common.MessageEvent {
 	return newMessage
 }
 
-// func Union(a, messages[]*MessageEvent ) []*Vertex {
-// 	m := map[*Vertex]bool
-	
-// 	for _, item := range a {
-// 		m[item] = true
-// 	}
-
-// 	for _, mes := range messages {
-// 		for _, item := range mes.Deps {
-// 			if _, ok := m[item]; !ok {
-// 					a = append(a, item)
-// 					m[item] = true
-// 			}
-// 		}	
-// 	}
-
-// 	return a
-// }
-
 func (leader *Leader) HandleReceiveCommand(message string) {
 	v := common.Vertex{leader.Index, id_count}
 	id_count += 1
