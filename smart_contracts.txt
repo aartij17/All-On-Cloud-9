@@ -49,3 +49,9 @@ solc --bin Store.sol -o build
 abigen --bin=./build/Store.bin --abi=./build/Store.abi --pkg=store --out=Store.go
 ```
 
+OR
+
+- Just compile the Solidity file to generate the Go file
+```bash
+abigen -sol Inbox1.sol -pkg contracts -out inbox.go
+```
