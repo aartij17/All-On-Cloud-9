@@ -5,6 +5,6 @@ import (
 )
 
 func main() {
-	l := node.Leader{0}
+	l := leadernode.Leader{0}
 	l.HandleReceiveCommand("hello")
 }

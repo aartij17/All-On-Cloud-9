@@ -23,7 +23,7 @@ func TestUnion1(t *testing.T) {
 	message3 := common.MessageEvent{&v0, "Hello", []*common.Vertex{&v5, &v6}}
 
 	messages := []*common.MessageEvent{&message1, &message2, &message3}
-	newMessage := node.Union(messages)
+	newMessage := leadernode.Union(messages)
 	
 	// Now check that newMessages has been created correctly
 	if *newMessage.VertexId != v0 {
@@ -71,7 +71,7 @@ func TestUnion2(t *testing.T) {
 	message3 := common.MessageEvent{&v0, "Hello", []*common.Vertex{&v2, &v3}}
 
 	messages := []*common.MessageEvent{&message1, &message2, &message3}
-	newMessage := node.Union(messages)
+	newMessage := leadernode.Union(messages)
 	
 	// Now check that newMessages has been created correctly
 	if *newMessage.VertexId != v0 {
