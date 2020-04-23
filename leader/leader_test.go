@@ -4,11 +4,9 @@ import (
 	"testing"
 	"All-On-Cloud-9/leader/node"
 	"All-On-Cloud-9/common"
-	"fmt"
 )
 
 func TestUnion1(t *testing.T) {
-	fmt.Println("TestUnion1")
 	// Test that all dependencies are unioned together
 	v0 := common.Vertex{0,0}
 	v1 := common.Vertex{0,1}
@@ -54,11 +52,9 @@ func TestUnion1(t *testing.T) {
 		}
 	}
 
-	fmt.Println("END TestUnion1")
 }
 
 func TestUnion2(t *testing.T) {
-	fmt.Println("TestUnion2")
 	// Test that duplicate dependencies are not unioned Twice
 	v0 := common.Vertex{0,0}
 
@@ -101,5 +97,4 @@ func TestUnion2(t *testing.T) {
 			}
 		}
 	}
-	fmt.Println("END TestUnion2")
 }
