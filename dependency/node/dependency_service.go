@@ -6,7 +6,7 @@ import (
 )
 
 // Private datatype
-type messagekey struct {
+type Messagekey struct {
 	// This will be used for the key into the map
 	VertexId *common.Vertex
 	Message string
@@ -14,7 +14,7 @@ type messagekey struct {
 
 type DepsServiceNode struct {
 	Cmds []*common.MessageEvent  // Array of commands
-	CmdsMap map[messagekey]bool  // Keep a map for quick lookup of which message are already part of Cmds
+	CmdsMap map[Messagekey]bool  // Keep a map for quick lookup of which message are already part of Cmds
 }
 
 func (depsSeriviceNode *DepsServiceNode) ComputeConflictingMessages(message *common.MessageEvent) []*common.Vertex {
@@ -28,7 +28,7 @@ func (depsServiceNode *DepsServiceNode) HandleReceive(message *common.MessageEve
 	deps := depsServiceNode.ComputeConflictingMessages(message)
 
 	// Append message to Cmds if it is not already inside
-	key := messagekey{message.VertexId, message.Message}
+	key := Messagekey{message.VertexId, message.Message}
 	if !depsServiceNode.CmdsMap[key] {
 		depsServiceNode.Cmds = append(depsServiceNode.Cmds, message)
 		depsServiceNode.CmdsMap[key] = true
