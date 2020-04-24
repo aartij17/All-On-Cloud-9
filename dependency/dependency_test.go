@@ -14,3 +14,7 @@ func TestComputeConflicts(t *testing.T) {
 	_ = depService.ComputeConflictingMessages(&message1)
 	t.Errorf("STUB: This functon is still unimplemented")
 }
+
+func TestHandleReceive(t *testing.T) {
+	t.Errorf("STUB: Test for HandleReceive still unimplemented")
+}

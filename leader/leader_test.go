@@ -98,3 +98,11 @@ func TestUnion2(t *testing.T) {
 		}
 	}
 }
+
+func TestHandleReceiveCommand(t *testing.T) {
+	t.Errorf("STUB: Test for HandleReceiveCommand still unimplemented")
+}
+
+func TestHandleReceiveDeps(t *testing.T) {
+	t.Errorf("STUB: Test for HandleReceiveDeps still unimplemented")
+}
