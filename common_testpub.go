@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	// STUB CLASS REMOVE LATER
+	// STUB FILE REMOVE LATER
 	socket := common.Socket{}
 	_ = socket.Connect(nats.DefaultURL)
 	socket.Publish(common.LeaderToDeps, []byte("golden retriever"))
