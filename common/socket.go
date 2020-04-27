@@ -3,7 +3,6 @@ package common
 import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/nats-io/nats.go"
-	"fmt"
 )
 
 const (
@@ -31,7 +30,6 @@ func (s *Socket) Connect(address string) bool {
 		//ClosedCB:          nil,
 		//DisconnectedErrCB: nil,
 	}
-	fmt.Println(natsOptions)
 
 	s.conn, err = natsOptions.Connect()
 	if err != nil {
@@ -43,7 +41,7 @@ func (s *Socket) Connect(address string) bool {
 	return true
 }
 
-func (s *Socket) Subscribe(subject string, response func(m *nats.Msg) ) {
+func (s *Socket) Subscribe(subject string, response nats.MsgHandler ) {
 	_, err := s.conn.Subscribe(subject, response)
 	if err != nil {
 		log.WithFields(log.Fields{
