@@ -1,6 +1,8 @@
 package common
 
 import (
+	"os"
+	"os/signal"
 	log "github.com/Sirupsen/logrus"
 	"github.com/nats-io/nats.go"
 )
@@ -59,3 +61,16 @@ func (s *Socket) Publish(subject string, request []byte ) {
 	}
 }
 
+func HandleInterrupt() {
+	signalChan := make(chan os.Signal, 1)
+	cleanupDone := make(chan bool)
+	signal.Notify(signalChan, os.Interrupt)
+	go func() {
+		for _ = range signalChan {
+			log.Info("Received an interrupt, stopping all connections...")
+			//cancel()
+			cleanupDone <- true
+		}
+	}()
+	<-cleanupDone
+}

@@ -1,7 +1,7 @@
 package common
 
 const (
-	F = 1
+	F = 0
 )
 
 type MessageEvent struct {
