@@ -24,7 +24,7 @@ func (depsSeriviceNode *DepsServiceNode) ComputeConflictingMessages(message *com
 	return deps
 }
 
-func (depsServiceNode *DepsServiceNode) HandleReceive(message *common.MessageEvent) {
+func (depsServiceNode *DepsServiceNode) HandleReceive(message *common.MessageEvent) common.MessageEvent{
 	deps := depsServiceNode.ComputeConflictingMessages(message)
 
 	// Append message to Cmds if it is not already inside
@@ -37,6 +37,7 @@ func (depsServiceNode *DepsServiceNode) HandleReceive(message *common.MessageEve
 	// Now send a new message with the calculated dependencies back to the leader
 	newMessage := common.MessageEvent{message.VertexId, message.Message, deps}
 	fmt.Println("Send new message to leader: %s", newMessage.Message)  // STUB: stop the compiler from complaining until implement the real send
+	return newMessage
 
 }
 
