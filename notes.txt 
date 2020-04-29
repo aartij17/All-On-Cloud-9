@@ -19,7 +19,7 @@ TRANSACTIONS:
 - Internal transaction includes the cryptographic hash of a cross application transaction in the ledger
 (When internal transaction has to use the data of cross application transactions).
 - Includes:
-	- To show that a transaction t includes H(t'), we include an esge from t to t' in the DAG
+	- To show that a transaction t includes H(t'), we include an edge from t to t' in the DAG
 	- Transaction ID: t<i><j>: i: order of the transaction among those initiated by the initiator app
 	j: order of transaction among cross-application transactions.
 - 2 types of Transactions

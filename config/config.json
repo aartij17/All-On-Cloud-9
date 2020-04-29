@@ -1,0 +1,75 @@
+{
+  "_comment": "Configuration for CAPER blockchain implementation",
+  "application_instance": {
+    "APPLICATION_1": {
+      "servers": [
+        {
+          "host": "0.0.0.0",
+          "port": 9001
+        },
+        {
+          "host": "0.0.0.0",
+          "port": 9002
+        },
+        {
+          "host": "0.0.0.0",
+          "port": 9003
+        }
+      ]
+    },
+    "APPLICATION_2": {
+      "servers": [
+        {
+          "host": "0.0.0.0",
+          "port": 9001
+        },
+        {
+          "host": "0.0.0.0",
+          "port": 9002
+        },
+        {
+          "host": "0.0.0.0",
+          "port": 9003
+        }
+      ]
+    },
+    "APPLICATION_3": {
+      "servers": [
+        {
+          "host": "0.0.0.0",
+          "port": 9001
+        },
+        {
+          "host": "0.0.0.0",
+          "port": 9002
+        },
+        {
+          "host": "0.0.0.0",
+          "port": 9003
+        }
+      ]
+    }
+  },
+  "orderers": {
+    "servers": [
+      {
+        "_comment": "by default, the first node in this list is the primary node",
+        "host": "0.0.0.0",
+        "port": 9001
+      },
+      {
+        "host": "0.0.0.0",
+        "port": 9002
+      },
+      {
+        "host": "0.0.0.0",
+        "port": 9003
+      }
+    ]
+  },
+  "nats": {
+    "servers": [
+      "nats://0.0.0.0:4222"
+    ]
+  }
+}

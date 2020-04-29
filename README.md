@@ -1,51 +1,49 @@
-# All-On-Cloud-9
-CS293B: Cloud Computing, Edge Computing and IoT Project 
+## NATS for inter-node communication
 
-### Solidity files for the smart contracts
+- Request-reply messaging pattern suits the requirement of this project quite well [https://docs.nats.io/developing-with-nats/tutorials/reqreply]
 
-Smart contracts are written in Solidity
 
-- In order to use the contract in the Go source code, we must first generate the ABI(Application Binary Interface)
-of the contract and compile the ABI to a format which can be imported in our Go code. 
+#### Deploying NATS server  
+##### Pre-requisites: Make sure you have docker up and running on your system
 
-- For this, download the Solidity compiler `solc`    
+Pull the docker image from dockerhub
 ```bash
-MacOS: 
-brew update
-brew tap ethereum/ethereum
-brew install solidity
-
-Ubuntu:
-sudo snap install solc --edge
+docker pull nats
 ```
-- We also need to install a tool called Abigen for generating the ABI from Solidity smart contract  
+Run the docker container
 ```bash
-go get -u github.com/ethereum/go-ethereum
-cd $GOPATH/src/github.com/ethereum/go-ethereum/
-make
-make devtools
+docker images | grep nats
+Select the container ID
+# map the internal ports to make them accessible from outside the docker environment
+docker run -p 4222:4222 -p 8222:8222 <container_ID> &  
 ```
 
-- Once the smart contract is created, generate the ABI from a solidity source file. It will write to a file - `./build/Store.abi`  
-```bash
-solc --abi Store.sol -o build
-```  
+## DESIGN
 
-- Convert the ABI to a Go file that can be imported. This new file will contain all the available methods that we can  
-use to interact with the smart contract from our Go application
-```bash
-abigen --abi=./build/Store.abi --pkg=store --out=Store.go
-```
+### Application
+Each application will have 3 nodes deployed with IDs of the format: ```NODE<app_id><node #>```. For example ```NODE12```
+denotes ```node 2``` of ```application 1```.  
+```Node 1``` of each application will act as the ```PRIMARY AGENT``` - this node receives requests from clients.  
+Each application that is deployed has 2 types of transactions -  
+- Internal transactions: These can be modeled as investments, fiat entities put on hold etc.  
+- Cross-application transactions: These can be simple transactions like lending/borrowing money  
 
-- In order to deploy a smart contract from Go, we also need to compile the solidity smart contract to EVM bytecode.  
-The EVM bytecode is what will be sent in the data field of the transaction. The bin file is required for generating the  
-deploy methods on the Go contract file.
-```bash
-solc --bin Store.sol -o build
-```
+### Blockchain
+The blockchain is modeled as a Directed Acyclic Graph  
+Each block maintains a single transaction  
+Each application can view 2 types of blockchain -  
+- Public: All applications have the same view of this blockchain. This blockchain can only be updated by ```CROSS_APPLICATION_TXN```
+- Private: Maintained separately per app. An application can both R/W to this blockchain.  
 
-- Now we compile the Go contract file which will include the deploy methods because we includes the bin file.  
-```bash
-abigen --bin=./build/Store.bin --abi=./build/Store.abi --pkg=store --out=Store.go
-```
+### Transactions
+Two types of transactions:
+- ```CROSS_APPLICATION_TXN```  
+- ```INTERNAL_TXN```
 
+### CONSENSUS
+#### Orderers
+- There are 3 orderers per application  
+- These nodes will have to be deployed as different nodes/services altogether
+- Each orderer has a primary agent as well. 
+#### QUESTIONS
+1. Is there any difference between public/private records and public/private blockchains? 
