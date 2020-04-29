@@ -11,7 +11,8 @@ type Transaction struct {
 }
 
 type Message struct {
-	Txn     *Transaction `json:"transaction"`
+	Type    string       `json:"message_type"`
+	Txn     *Transaction `json:"transaction,omitempty"`
 	Digest  string       `json:"digest"`
 	PKeySig string       `json:"pkey_sig"`
 }

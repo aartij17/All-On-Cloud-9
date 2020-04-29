@@ -1,7 +1,7 @@
 package main
 
 import (
-	"All-On-Cloud-9/common"
+	"All-On-Cloud-9/config"
 	"All-On-Cloud-9/server/nodes"
 	"context"
 	"os"
@@ -29,7 +29,7 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	// TODO: Send configurable ID here
-	id := common.NODE11
+	id := config.NODE11
 	rootNode := nodes.StartServer(ctx, id)
 	_ = rootNode // TODO: Added to get rid of compilation errors, remove this
 	signalChan := make(chan os.Signal, 1)

@@ -25,6 +25,8 @@ func InitPublicBlockchain() {
 }
 
 type Block struct {
-	Digit       int                 `json:"digit"`
-	Transaction *common.Transaction `json:"transaction"`
+	LocalSeqNum  int                  `json:"local_seq_num"`
+	GlobalSeqNum int                  `json:"global_seq_num"`
+	Clock        *common.LamportClock `json:"clock"`
+	Transaction  *common.Transaction  `json:"transaction"`
 }
