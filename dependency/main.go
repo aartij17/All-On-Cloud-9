@@ -2,23 +2,27 @@ package main
 
 import (
 	"All-On-Cloud-9/dependency/node"
+	"All-On-Cloud-9/common"
+	"github.com/nats-io/nats.go"
+	"fmt"
+	"encoding/json"
 )
 
 func main() {
-	dependency_node := depsnode.DepsServiceNode{}
+	dependency_node := depsnode.NewDepsServiceNode()
 	// dependency_node.Stub()
 	go func(dep_node *depsnode.DepsServiceNode) {
 		socket := common.Socket{}
 		_ = socket.Connect(nats.DefaultURL)
 		socket.Subscribe(common.LeaderToDeps, func(m *nats.Msg) {
-			fmt.Println("Received")
+			fmt.Println("Received leader to deps")
 			data := common.MessageEvent{}
 			json.Unmarshal(m.Data, &data)
 			newMessage := dep_node.HandleReceive(&data)
 			sentMessage, err := json.Marshal(&newMessage)
 
 			if err == nil {
-				fmt.Println("i can publish a message")
+				fmt.Println("deps can publish a message to leader")
 				socket.Publish(common.DepsToLeader, sentMessage)
 			} else {
 				fmt.Println("json marshal failed")

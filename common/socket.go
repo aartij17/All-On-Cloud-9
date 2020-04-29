@@ -14,6 +14,7 @@ const (
 	ProposerToConsensus = "ProposerToConsensus"
 	ConsensusToProposer = "ConsensusToProposer"
 	ProposerToReplica = "ProposerToReplica"
+	ClientToLeader = "ClientToLeader"
 )
 
 type Socket struct {

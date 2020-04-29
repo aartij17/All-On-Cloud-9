@@ -10,11 +10,12 @@ import (
 
 func main() {
 	l := leadernode.NewLeader(0)
-	go func(leader *leadernode.Leader) {
-		socket := common.Socket{}
-		_ = socket.Connect(nats.DefaultURL)
+	socket := common.Socket{}
+	_ = socket.Connect(nats.DefaultURL)
+
+	go func(leader *leadernode.Leader, socket *common.Socket) {
 		socket.Subscribe(common.DepsToLeader, func(m *nats.Msg) {
-			fmt.Println("Received")
+			fmt.Println("Received deps to leader")
 			data := common.MessageEvent{}
 			json.Unmarshal(m.Data, &data)
 			l.AddToMessages(&data)
@@ -26,7 +27,7 @@ func main() {
 				// fmt.Printf("%+v\n",newMessageEvent)
 				sentMessage, err := json.Marshal(&newMessageEvent)
 				if err == nil {
-					fmt.Println("i can publish a message")
+					fmt.Println("leader can publish a message to proposer")
 					socket.Publish(common.LeaderToProposer, sentMessage)
 				} else {
 					fmt.Println("json marshal failed")
@@ -36,6 +37,21 @@ func main() {
 				l.FlushMessages()
 			}
 		})
-	}(&l)
+	}(&l, &socket)
+
+	go func(leader *leadernode.Leader, socket *common.Socket) {
+		socket.Subscribe(common.ClientToLeader, func(m *nats.Msg) {
+			fmt.Println("Received client to leader")
+			newMessage := leader.HandleReceiveCommand(string(m.Data))
+			sentMessage, err := json.Marshal(&newMessage)
+			if err == nil {
+				fmt.Println("leader can publish a message to deps")
+				socket.Publish(common.LeaderToDeps, sentMessage)
+			} else {
+				fmt.Println("json marshal failed")
+				fmt.Println(err.Error())
+			}
+		})
+	}(&l, &socket)
 	common.HandleInterrupt()
 }

@@ -2,7 +2,6 @@ package leadernode
 
 import (
 	"All-On-Cloud-9/common"
-	"fmt"
 )
 
 var (
@@ -53,12 +52,12 @@ func (leader *Leader) Union() common.MessageEvent {
 	return newMessage
 }
 
-func (leader *Leader) HandleReceiveCommand(message string) {
+func (leader *Leader) HandleReceiveCommand(message string) common.MessageEvent{
 	v := common.Vertex{leader.Index, id_count}
 	id_count += 1
 	newMessageEvent := common.MessageEvent{&v, message, []*common.Vertex{}}
-	fmt.Println(newMessageEvent.Message)  // STUB
-
+	// fmt.Println(newMessageEvent.Message)  // STUB
+	return newMessageEvent
 	// send message to dependency
 }
 

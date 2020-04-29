@@ -17,7 +17,14 @@ type DepsServiceNode struct {
 	CmdsMap map[Messagekey]bool  // Keep a map for quick lookup of which message are already part of Cmds
 }
 
-func (depsSeriviceNode *DepsServiceNode) ComputeConflictingMessages(message *common.MessageEvent) []*common.Vertex {
+func NewDepsServiceNode() DepsServiceNode{
+	depsServiceNode := DepsServiceNode{}
+	depsServiceNode.CmdsMap = make(map[Messagekey]bool)
+	depsServiceNode.Cmds = nil
+	return depsServiceNode
+}
+
+func (depsServiceNode *DepsServiceNode) ComputeConflictingMessages(message *common.MessageEvent) []*common.Vertex {
 	// Find and all commands that conflict with message and add them to deps
 	deps := []*common.Vertex{}
 

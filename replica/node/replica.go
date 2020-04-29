@@ -10,9 +10,9 @@ type Replica struct {
 	NumReplicas int
 }
 
-func (replica *Replica) HandleReceive(message *common.MessageEvent) {
+func (replica *Replica) HandleReceive(message *common.MessageEvent) string{
 	replica.AddDepsToGraph(message)
-	replica.ExecVertices()
+	return replica.ExecVertices()
 }
 
 // add the dependency to the graph
@@ -20,17 +20,15 @@ func (replica *Replica) AddDepsToGraph(message *common.MessageEvent) {
 	fmt.Println("add dependency to graph")
 }
 
-func (replica *Replica) ExecVertices() {
+func (replica *Replica) ExecVertices() string{
 	fmt.Println("execute every eligible vertex Vy")
-	Vy := common.Vertex{0,0}
+	// Vy := common.Vertex{0,0}
 	// if hash(vy) % num replicas = replica index then send result
 	if true {
-		replica.SendResult(&Vy)
+		return "success"
+	} else {
+		return "fail"
 	}
-}
-
-func (replica *Replica) SendResult(vertex *common.Vertex) {
-	fmt.Println("send the execution result to the client")
 }
 
 
