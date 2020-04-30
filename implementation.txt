@@ -28,6 +28,22 @@ TIP: After every consensus run, when the transaction is executed on each node of
 made which updates the view of the blockchain for that particular blockchain.
 
 ---------------------------------------------------------------------------------------------------------------------
+BLOCK
+---------------------------------------------------------------------------------------------------------------------
+- Type:
+	- internal transaction
+	- external transaction
+- Edge
+	- Incoming edges (to blocks)
+	- Outgoing edges (to blocks)
+- Transaction number/ID
+	- Internal transaction of an application: t11, t12, t13 are internal transactions of application A1. 
+	- Cross application transactions: t<12, 1>, t<23,2> are cross-application transactions of applications A1 and A2. 
+	- Each cross application transaction is labeled with t<i, j> where i indicates order of transaction among transactions
+	  that are initiated by the initiator application and j represents the order of the transaction among all
+	  cross-application transactions. [CHECK FIGURE 2 IN THE PAPER FOR MORE DETAILS]
+
+---------------------------------------------------------------------------------------------------------------------
 TRANSACTION
 ---------------------------------------------------------------------------------------------------------------------
 - Consists of the cryptographic hash of the previous transaction
