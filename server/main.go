@@ -4,6 +4,8 @@ import (
 	"All-On-Cloud-9/config"
 	"All-On-Cloud-9/server/nodes"
 	"context"
+	"flag"
+	"fmt"
 	"os"
 	"os/signal"
 	"strings"
@@ -25,13 +27,46 @@ func configureLogger(level string) {
 	}
 }
 
-func main() {
-	ctx, cancel := context.WithCancel(context.Background())
+func getNodeId(appName string, nodeIdNum int) string {
+	switch appName {
+	case config.APP_MANUFACTURER:
+		return fmt.Sprintf(config.MA_NODE, nodeIdNum)
+	case config.APP_SUPPLIER:
+		return fmt.Sprintf(config.S_NODE, nodeIdNum)
+	case config.APP_MIDDLEMAN:
+		return fmt.Sprintf(config.MI_NODE, nodeIdNum)
+	case config.APP_CARRIER:
+		return fmt.Sprintf(config.C_NODE, nodeIdNum)
+	case config.APP_BUYER:
+		return fmt.Sprintf(config.B_NODE, nodeIdNum)
+	}
+	return ""
+}
 
-	// TODO: Send configurable ID here
-	id := config.NODE11
-	rootNode := nodes.StartServer(ctx, id)
-	_ = rootNode // TODO: Added to get rid of compilation errors, remove this
+func main() {
+	var (
+		nodeIdNum      int
+		appName        string
+		configFilePath string
+	)
+	flag.IntVar(&nodeIdNum, "nodeId", 1, "node ID(1, 2, 3, 4)")
+	flag.StringVar(&appName, "appName", config.APP_MANUFACTURER, fmt.Sprintf("apps - %s, %s, %s, %s, %s",
+		config.APP_MANUFACTURER, config.APP_BUYER, config.APP_CARRIER, config.APP_MIDDLEMAN, config.APP_SUPPLIER))
+	flag.StringVar(&configFilePath, "configFilePath", "", "")
+	if configFilePath == "" {
+		log.Error("invalid config file path found, exiting now")
+		os.Exit(1)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	// load all the config details - hosts, ports, service names
+	config.LoadConfig(ctx, configFilePath)
+	nodeId := getNodeId(appName, nodeIdNum)
+	if nodeId == "" {
+		log.Error("invalid node Id created, exiting now")
+		os.Exit(1)
+	}
+	rootNode := nodes.StartServer(ctx, nodeId, appName, nodeIdNum)
+	_ = rootNode // TODO: [Aarti] - Remove later, added for now to keep compiler happy
 	signalChan := make(chan os.Signal, 1)
 	cleanupDone := make(chan bool)
 	signal.Notify(signalChan, os.Interrupt)

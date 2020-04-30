@@ -1,11 +1,13 @@
 package common
 
 type Transaction struct {
+	LocalXNum  string        `json:"local_transaction_number"`
+	GlobalXNum string        `json:"global_transaction_number"`
+	Type       string        `json:"transaction_type"` // local/global transaction type
 	TxnId      string        `json:"txn_id"`
 	ToId       string        `json:"to_id"`
 	FromId     string        `json:"from_id"`
 	CryptoHash string        `json:"crypto_hash"`
-	Amount     int           `json:"amount"`
 	TxnType    string        `json:"transaction_type"`
 	Clock      *LamportClock `json:"lamport_clock"`
 }
