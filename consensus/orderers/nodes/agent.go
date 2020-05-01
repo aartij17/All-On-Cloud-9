@@ -4,6 +4,7 @@ import (
 	"All-On-Cloud-9/common"
 	"All-On-Cloud-9/messenger"
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/nats-io/nats.go"
@@ -12,7 +13,7 @@ import (
 )
 
 var (
-	NatsOrdMessage chan *nats.Msg
+	NatsOrdMessage = make(chan *nats.Msg)
 	ONode          *Orderer
 )
 
@@ -60,12 +61,20 @@ func (o *Orderer) startNatsConsumers(ctx context.Context) {
 func (o *Orderer) StartOrdListener(ctx context.Context) {
 	o.startNatsConsumers(ctx)
 	var (
-		msg *nats.Msg
+		natsMsg *nats.Msg
+		msg     *Message
+		_       error
 	)
 	for {
 		select {
-		case msg = <-NatsOrdMessage:
-			_ = msg
+		case natsMsg = <-NatsOrdMessage:
+			_ = json.Unmarshal(natsMsg.Data, &msg)
+			switch natsMsg.Subject {
+			case common.NATS_ORD_ORDER:
+				continue
+			case common.NATS_ORD_SYNC:
+				continue
+			}
 		}
 	}
 }

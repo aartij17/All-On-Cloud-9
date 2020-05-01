@@ -3,14 +3,11 @@ package messenger
 import (
 	"All-On-Cloud-9/config"
 	"context"
-	"time"
 
 	log "github.com/Sirupsen/logrus"
 
 	"github.com/nats-io/nats.go"
 )
-
-var timeout = time.Duration(10 * time.Second)
 
 func NatsConnect(ctx context.Context) (*nats.Conn, error) {
 	natsOptions := nats.Options{

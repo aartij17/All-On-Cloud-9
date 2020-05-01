@@ -65,8 +65,7 @@ func main() {
 		log.Error("invalid node Id created, exiting now")
 		os.Exit(1)
 	}
-	rootNode := nodes.StartServer(ctx, nodeId, appName, nodeIdNum)
-	_ = rootNode // TODO: [Aarti] - Remove later, added for now to keep compiler happy
+	nodes.StartServer(ctx, nodeId, appName, nodeIdNum)
 	signalChan := make(chan os.Signal, 1)
 	cleanupDone := make(chan bool)
 	signal.Notify(signalChan, os.Interrupt)

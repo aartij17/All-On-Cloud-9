@@ -13,10 +13,13 @@ type Transaction struct {
 }
 
 type Message struct {
-	Type    string       `json:"message_type"`
-	Txn     *Transaction `json:"transaction,omitempty"`
-	Digest  string       `json:"digest"`
-	PKeySig string       `json:"pkey_sig"`
+	MessageType string       `json:"message_type"`
+	Timestamp   int          `json:"client_timestamp,omitempty"`
+	FromNodeId  string       `json:"from_node_id"`
+	FromNodeNum int          `json:"from_node_num"`
+	Txn         *Transaction `json:"transaction,omitempty"`
+	Digest      string       `json:"digest"`
+	PKeySig     string       `json:"pkey_sig"`
 }
 
 // LamportClock is used for ordering the local/global transactions
