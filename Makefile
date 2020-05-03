@@ -24,7 +24,7 @@ else
   SHELL=/bin/bash
 endif
 
-.PHONY:  build local fmt test show refactor
+.PHONY:  build local fmt test show format
 
 pr-build: clean fmt build test
 
@@ -35,7 +35,7 @@ show:
 	@echo "SRC  = $(GO_SRC_DIRS)"
 	@echo "TEST = $(GO_TEST_DIRS)"
 
-refactor:
+format:
 	gofmt -w `find . -mindepth 1 -maxdepth 1 -type d | cut -c 3- | grep -vE '^\.'`
 
 # Note that we're not using cd to get into the directories.
