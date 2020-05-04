@@ -2,8 +2,8 @@ package depsnode
 
 import (
 	"All-On-Cloud-9/common"
-	"fmt"
 	"encoding/json"
+	"fmt"
 	"github.com/nats-io/nats.go"
 )
 
