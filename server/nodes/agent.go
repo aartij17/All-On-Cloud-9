@@ -2,6 +2,7 @@ package nodes
 
 import (
 	"All-On-Cloud-9/common"
+	"All-On-Cloud-9/config"
 	"All-On-Cloud-9/messenger"
 	"All-On-Cloud-9/server/blockchain"
 	"context"
@@ -75,6 +76,19 @@ func (server *Server) startNatsListener(ctx context.Context) {
 	}
 }
 
+func (server *Server) RunApplication(ctx context.Context, appName string) {
+	switch appName {
+	case config.APP_BUYER:
+		startBuyerApplication(ctx)
+	case config.APP_CARRIER:
+		startCarrierApplication(ctx)
+	case config.APP_SUPPLIER:
+		startSupplierApplication(ctx)
+	case config.APP_MANUFACTURER:
+		startManufacturerApplication(ctx)
+	}
+}
+
 func StartServer(ctx context.Context, nodeId string, appName string, id int) {
 	nc, err := messenger.NatsConnect(ctx)
 	if err != nil {
@@ -94,5 +108,8 @@ func StartServer(ctx context.Context, nodeId string, appName string, id int) {
 	// initialize the public blockchain
 	blockchain.InitBlockchain(id)
 	AppServer.startNatsListener(ctx)
+	// start the application for which the pod is spun up. it HAS to be a goroutine since we want this to be a
+	// non-blocking call and also run some part of this code like a smart contract.
+	go AppServer.RunApplication(ctx, appName)
 	return
 }
