@@ -1,20 +1,20 @@
 package common
 
 import (
-	"os"
-	"os/signal"
 	log "github.com/Sirupsen/logrus"
 	"github.com/nats-io/nats.go"
+	"os"
+	"os/signal"
 )
 
 const (
-	LeaderToDeps = "LeaderToDeps"
-	DepsToLeader = "DepsToLeader"
-	LeaderToProposer = "LeaderToProposer"
+	LeaderToDeps        = "LeaderToDeps"
+	DepsToLeader        = "DepsToLeader"
+	LeaderToProposer    = "LeaderToProposer"
 	ProposerToConsensus = "ProposerToConsensus"
 	ConsensusToProposer = "ConsensusToProposer"
-	ProposerToReplica = "ProposerToReplica"
-	ClientToLeader = "ClientToLeader"
+	ProposerToReplica   = "ProposerToReplica"
+	ClientToLeader      = "ClientToLeader"
 )
 
 type Socket struct {
@@ -44,7 +44,7 @@ func (s *Socket) Connect(address string) bool {
 	return true
 }
 
-func (s *Socket) Subscribe(subject string, response nats.MsgHandler ) {
+func (s *Socket) Subscribe(subject string, response nats.MsgHandler) {
 	_, err := s.conn.Subscribe(subject, response)
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -53,8 +53,8 @@ func (s *Socket) Subscribe(subject string, response nats.MsgHandler ) {
 	}
 }
 
-func (s *Socket) Publish(subject string, request []byte ) {
-	err := s.conn.Publish(subject,request)
+func (s *Socket) Publish(subject string, request []byte) {
+	err := s.conn.Publish(subject, request)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error": err.Error(),

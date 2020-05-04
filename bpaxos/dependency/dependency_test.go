@@ -1,13 +1,13 @@
 package main
 
 import (
-	"testing"
 	"All-On-Cloud-9/bpaxos/dependency/node"
 	"All-On-Cloud-9/common"
+	"testing"
 )
 
 func TestComputeConflicts(t *testing.T) {
-	v0 := common.Vertex{0,0}
+	v0 := common.Vertex{0, 0}
 	message1 := common.MessageEvent{&v0, "Hello", []*common.Vertex{&v0}}
 
 	depService := depsnode.DepsServiceNode{}

@@ -5,12 +5,11 @@ import (
 )
 
 type ConsensusServiceNode struct {
-	
 }
 
-func (consensusServiceNode *ConsensusServiceNode) HandleReceive(message *common.MessageEvent) common.MessageEvent{
+func (consensusServiceNode *ConsensusServiceNode) HandleReceive(message *common.MessageEvent) common.MessageEvent {
 	if consensusServiceNode.ReachConsensus() {
-		v_stub := common.Vertex{0,0}
+		v_stub := common.Vertex{0, 0}
 		message_stub := common.MessageEvent{&v_stub, "Hello", []*common.Vertex{&v_stub}}
 		return message_stub
 	} else {

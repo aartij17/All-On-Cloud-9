@@ -3,9 +3,9 @@ package main
 import (
 	"All-On-Cloud-9/bpaxos/replica/node"
 	"All-On-Cloud-9/common"
-	"github.com/nats-io/nats.go"
-	"fmt"
 	"encoding/json"
+	"fmt"
+	"github.com/nats-io/nats.go"
 )
 
 func main() {

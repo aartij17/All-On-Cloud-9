@@ -9,7 +9,7 @@ var (
 )
 
 type Leader struct {
-	Index int
+	Index    int
 	messages []*common.MessageEvent
 }
 
@@ -22,7 +22,7 @@ func NewLeader(index int) Leader {
 
 // func Union(a, b []*Vertex, m map[*Vertex]bool) []*Vertex {
 func (leader *Leader) Union() common.MessageEvent {
-	
+
 	newMessage := common.MessageEvent{}
 
 	if len(leader.messages) > 0 {
@@ -38,10 +38,10 @@ func (leader *Leader) Union() common.MessageEvent {
 		for _, mes := range leader.messages[1:] {
 			for _, item := range mes.Deps {
 				if _, ok := m[item]; !ok {
-						deps = append(deps, item)
-						m[item] = true
+					deps = append(deps, item)
+					m[item] = true
 				}
-			}	
+			}
 		}
 
 		newMessage.VertexId = leader.messages[0].VertexId
@@ -52,7 +52,7 @@ func (leader *Leader) Union() common.MessageEvent {
 	return newMessage
 }
 
-func (leader *Leader) HandleReceiveCommand(message string) common.MessageEvent{
+func (leader *Leader) HandleReceiveCommand(message string) common.MessageEvent {
 	v := common.Vertex{leader.Index, id_count}
 	id_count += 1
 	newMessageEvent := common.MessageEvent{&v, message, []*common.Vertex{}}
@@ -62,10 +62,10 @@ func (leader *Leader) HandleReceiveCommand(message string) common.MessageEvent{
 }
 
 func (leader *Leader) HandleReceiveDeps() common.MessageEvent {
-	
+
 	newMessageEvent := leader.Union()
 	return newMessageEvent
-	
+
 }
 
 func (leader *Leader) AddToMessages(message *common.MessageEvent) {
@@ -76,6 +76,6 @@ func (leader *Leader) FlushMessages() {
 	leader.messages = nil
 }
 
-func (leader *Leader) GetMessagesLen() int{
+func (leader *Leader) GetMessagesLen() int {
 	return len(leader.messages)
 }

@@ -3,8 +3,8 @@ package main
 import (
 	"All-On-Cloud-9/bpaxos/proposer/node"
 	"All-On-Cloud-9/common"
-	"github.com/nats-io/nats.go"
 	"fmt"
+	"github.com/nats-io/nats.go"
 )
 
 func main() {

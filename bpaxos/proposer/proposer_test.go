@@ -1,9 +1,9 @@
 package main
 
 import (
-	"testing"
 	"All-On-Cloud-9/bpaxos/proposer/node"
 	"All-On-Cloud-9/common"
+	"testing"
 )
 
 func TestHandleReceive(t *testing.T) {

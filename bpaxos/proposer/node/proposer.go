@@ -15,4 +15,3 @@ func (proposer *Proposer) HandleReceive(message *common.MessageEvent) {
 func (proposer *Proposer) SendResult(message *common.MessageEvent) {
 	fmt.Println("send consensus result")
 }
-

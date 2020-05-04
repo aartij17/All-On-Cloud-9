@@ -9,15 +9,15 @@ import (
 type Messagekey struct {
 	// This will be used for the key into the map
 	VertexId *common.Vertex
-	Message string
+	Message  string
 }
 
 type DepsServiceNode struct {
-	Cmds []*common.MessageEvent  // Array of commands
-	CmdsMap map[Messagekey]bool  // Keep a map for quick lookup of which message are already part of Cmds
+	Cmds    []*common.MessageEvent // Array of commands
+	CmdsMap map[Messagekey]bool    // Keep a map for quick lookup of which message are already part of Cmds
 }
 
-func NewDepsServiceNode() DepsServiceNode{
+func NewDepsServiceNode() DepsServiceNode {
 	depsServiceNode := DepsServiceNode{}
 	depsServiceNode.CmdsMap = make(map[Messagekey]bool)
 	depsServiceNode.Cmds = nil
@@ -31,7 +31,7 @@ func (depsServiceNode *DepsServiceNode) ComputeConflictingMessages(message *comm
 	return deps
 }
 
-func (depsServiceNode *DepsServiceNode) HandleReceive(message *common.MessageEvent) common.MessageEvent{
+func (depsServiceNode *DepsServiceNode) HandleReceive(message *common.MessageEvent) common.MessageEvent {
 	deps := depsServiceNode.ComputeConflictingMessages(message)
 
 	// Append message to Cmds if it is not already inside
@@ -40,10 +40,10 @@ func (depsServiceNode *DepsServiceNode) HandleReceive(message *common.MessageEve
 		depsServiceNode.Cmds = append(depsServiceNode.Cmds, message)
 		depsServiceNode.CmdsMap[key] = true
 	}
-	
+
 	// Now send a new message with the calculated dependencies back to the leader
 	newMessage := common.MessageEvent{message.VertexId, message.Message, deps}
-	fmt.Println("Send new message to leader: %s", newMessage.Message)  // STUB: stop the compiler from complaining until implement the real send
+	fmt.Println("Send new message to leader: %s", newMessage.Message) // STUB: stop the compiler from complaining until implement the real send
 	return newMessage
 
 }
