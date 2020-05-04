@@ -3,6 +3,8 @@ package depsnode
 import (
 	"All-On-Cloud-9/common"
 	"fmt"
+	"encoding/json"
+	"github.com/nats-io/nats.go"
 )
 
 // Private datatype
@@ -50,4 +52,30 @@ func (depsServiceNode *DepsServiceNode) HandleReceive(message *common.MessageEve
 
 func (depsServiceNode *DepsServiceNode) Stub() {
 	fmt.Println("Dependency Service Node: STUB PLS REMOVE")
+}
+
+func StartDependencyService() {
+	dependency_node := NewDepsServiceNode()
+	// dependency_node.Stub()
+	go func(dep_node *DepsServiceNode) {
+		socket := common.Socket{}
+		_ = socket.Connect(nats.DefaultURL)
+		socket.Subscribe(common.LeaderToDeps, func(m *nats.Msg) {
+			fmt.Println("Received leader to deps")
+			data := common.MessageEvent{}
+			json.Unmarshal(m.Data, &data)
+			newMessage := dep_node.HandleReceive(&data)
+			sentMessage, err := json.Marshal(&newMessage)
+
+			if err == nil {
+				fmt.Println("deps can publish a message to leader")
+				socket.Publish(common.DepsToLeader, sentMessage)
+			} else {
+				fmt.Println("json marshal failed")
+				fmt.Println(err.Error())
+			}
+
+		})
+	}(&dependency_node)
+	common.HandleInterrupt()
 }

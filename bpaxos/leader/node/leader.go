@@ -2,6 +2,9 @@ package leadernode
 
 import (
 	"All-On-Cloud-9/common"
+	"fmt"
+	"github.com/nats-io/nats.go"
+	"encoding/json"
 )
 
 var (
@@ -78,4 +81,49 @@ func (leader *Leader) FlushMessages() {
 
 func (leader *Leader) GetMessagesLen() int {
 	return len(leader.messages)
+}
+
+func StartLeader(leaderindex int) {
+	l := NewLeader(leaderindex) // Hard Coded User Id.
+	socket := common.Socket{}
+	_ = socket.Connect(nats.DefaultURL)
+
+	go func(leader *Leader, socket *common.Socket) {
+		socket.Subscribe(common.DepsToLeader, func(m *nats.Msg) {
+			fmt.Println("Received deps to leader")
+			data := common.MessageEvent{}
+			json.Unmarshal(m.Data, &data)
+			l.AddToMessages(&data)
+			if l.GetMessagesLen() > common.F {
+				newMessageEvent := l.HandleReceiveDeps()
+
+				sentMessage, err := json.Marshal(&newMessageEvent)
+				if err == nil {
+					fmt.Println("leader can publish a message to proposer")
+					socket.Publish(common.LeaderToProposer, sentMessage)
+				} else {
+					fmt.Println("json marshal failed")
+					fmt.Println(err.Error())
+				}
+				// should we flush when it fails?
+				l.FlushMessages()
+			}
+		})
+	}(&l, &socket)
+
+	go func(leader *Leader, socket *common.Socket) {
+		socket.Subscribe(common.NATS_CONSENSUS_INITIATE_MSG, func(m *nats.Msg) {
+			fmt.Println("Received client to leader")
+			newMessage := leader.HandleReceiveCommand(string(m.Data))
+			sentMessage, err := json.Marshal(&newMessage)
+			if err == nil {
+				fmt.Println("leader can publish a message to deps")
+				socket.Publish(common.LeaderToDeps, sentMessage)
+			} else {
+				fmt.Println("json marshal failed")
+				fmt.Println(err.Error())
+			}
+		})
+	}(&l, &socket)
+	common.HandleInterrupt()
 }

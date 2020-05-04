@@ -2,7 +2,9 @@ package replica
 
 import (
 	"All-On-Cloud-9/common"
+	"encoding/json"
 	"fmt"
+	"github.com/nats-io/nats.go"
 )
 
 type Replica struct {
@@ -29,4 +31,29 @@ func (replica *Replica) ExecVertices() string {
 	} else {
 		return "fail"
 	}
+}
+
+func StartReplica() {
+	rep := Replica{}
+	go func(rep *Replica) {
+		socket := common.Socket{}
+		_ = socket.Connect(nats.DefaultURL)
+		socket.Subscribe(common.ProposerToReplica, func(m *nats.Msg) {
+			fmt.Println("Received proposer to replica")
+			data := common.MessageEvent{}
+			json.Unmarshal(m.Data, &data)
+			newMessage := rep.HandleReceive(&data)
+			sentMessage, err := json.Marshal(&newMessage)
+			// Respond back to the client
+			if err == nil {
+				fmt.Println("leader can publish a message to deps")
+				socket.Publish(common.NATS_CONSENSUS_DONE, sentMessage)
+			} else {
+				fmt.Println("json marshal failed")
+				fmt.Println(err.Error())
+			}
+
+		})
+	}(&rep)
+	common.HandleInterrupt()
 }
