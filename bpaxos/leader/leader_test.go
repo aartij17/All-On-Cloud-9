@@ -2,7 +2,7 @@ package main
 
 import (
 	"testing"
-	"All-On-Cloud-9/leader/node"
+	"All-On-Cloud-9/bpaxos/leader/node"
 	"All-On-Cloud-9/common"
 )
 

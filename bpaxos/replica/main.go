@@ -1,7 +1,7 @@
 package main
 
 import (
-	"All-On-Cloud-9/replica/node"
+	"All-On-Cloud-9/bpaxos/replica/node"
 	"All-On-Cloud-9/common"
 	"github.com/nats-io/nats.go"
 	"fmt"

@@ -24,6 +24,9 @@ const (
 
 	NATS_CONSENSUS_INITIATE_MSG = "NATS_CONSENSUS_START"
 	NATS_CONSENSUS_DONE         = "NATS_CONSENSUS_DONE"
+
+	// Number of tolerable failures
+	F = 0
 )
 
 var (

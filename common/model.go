@@ -1,9 +1,5 @@
 package common
 
-const (
-	F = 0
-)
-
 type MessageEvent struct {
 	VertexId *Vertex `json:"vertex"`
 	Message string `json:"message"`
