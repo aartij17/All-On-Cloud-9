@@ -1,9 +1,11 @@
 package nodes
 
 import (
+	"All-On-Cloud-9/common"
 	"All-On-Cloud-9/config"
 	"All-On-Cloud-9/messenger"
 	"context"
+	"encoding/json"
 
 	log "github.com/Sirupsen/logrus"
 
@@ -65,13 +67,26 @@ func startSupplierApplication(ctx context.Context) {
 	// all the other app-specific business logic can come here.
 }
 
+func startInterAppNatsListener(ctx context.Context, msgChan chan *nats.Msg) {
+	var (
+		msg *common.Message
+	)
+	for {
+		select {
+		case natsMsg := <-msgChan:
+			_ = json.Unmarshal(natsMsg.Data, &msg)
+
+		}
+	}
+}
+
 func startManufacturerApplication(ctx context.Context) {
 	manufacturer = &Manufacturer{
 		ContractValid: make(chan bool),
 		MsgChannel:    make(chan *nats.Msg),
 	}
 	// all the other app-specific business logic can come here.
-	manufacturer.startNatsListener(ctx)
+	manufacturer.subToInterAppNats(ctx)
 	// following logic has to be taken care of here -
 	// 1. Listen to the NATS channel
 	// 2. once a message is received, send it to the main AppServer object which establishes consensus
@@ -80,9 +95,10 @@ func startManufacturerApplication(ctx context.Context) {
 	//    smart contract.
 	// 5. Listen to the smart contract channel as well, and if the result is false, tell the main AppServer that
 	//    addition of the block to the blockchain cannot be performed.
+	startInterAppNatsListener(ctx, manufacturer.MsgChannel)
 }
 
-func (m *Manufacturer) startNatsListener(ctx context.Context) {
+func (m *Manufacturer) subToInterAppNats(ctx context.Context) {
 	var (
 		err error
 	)

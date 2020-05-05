@@ -30,6 +30,13 @@ func SubscribeToInbox(ctx context.Context, nc *nats.Conn, subject string, messag
 	go func(nc *nats.Conn) {
 		for {
 			_, err = nc.Subscribe(subject, func(m *nats.Msg) {
+				if err != nil {
+					log.WithFields(log.Fields{
+						"error":   err.Error(),
+						"subject": subject,
+					}).Error("error subscribing to NATS inbox")
+					return
+				}
 				log.WithFields(log.Fields{
 					"message": string(m.Data),
 				}).Info("Received a message from NATS")

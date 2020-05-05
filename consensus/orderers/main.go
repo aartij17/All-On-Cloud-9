@@ -5,7 +5,6 @@ import (
 	"All-On-Cloud-9/consensus/orderers/nodes"
 	"context"
 	"flag"
-	"fmt"
 	"os"
 	"os/signal"
 	"strings"
@@ -25,22 +24,6 @@ func configureLogger(level string) {
 	case "warning", "warn":
 		log.SetLevel(log.WarnLevel)
 	}
-}
-
-func getNodeId(appName string, nodeIdNum int) string {
-	switch appName {
-	case config.APP_MANUFACTURER:
-		return fmt.Sprintf(config.MA_NODE, nodeIdNum)
-	case config.APP_SUPPLIER:
-		return fmt.Sprintf(config.S_NODE, nodeIdNum)
-	case config.APP_MIDDLEMAN:
-		return fmt.Sprintf(config.MI_NODE, nodeIdNum)
-	case config.APP_CARRIER:
-		return fmt.Sprintf(config.C_NODE, nodeIdNum)
-	case config.APP_BUYER:
-		return fmt.Sprintf(config.B_NODE, nodeIdNum)
-	}
-	return ""
 }
 
 func main() {
