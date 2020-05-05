@@ -26,9 +26,9 @@ var (
 func InitBlockchain(nodeId int) {
 	// 1. create the Genesis block
 	genesisBlock := &Block{
-		IsGenesis:       true,
-		Transaction:     nil,
-		InitiatorNodeId: "",
+		IsGenesis:     true,
+		Transaction:   nil,
+		InitiatorNode: "",
 		Clock: &common.LamportClock{
 			// TODO: [Aarti] Confirm if this is right
 			PID:   nodeId,
@@ -40,8 +40,8 @@ func InitBlockchain(nodeId int) {
 }
 
 type Block struct {
-	IsGenesis       bool                 `json:"is_genesis"`
-	Transaction     *common.Transaction  `json:"transaction,omitempty"`
-	InitiatorNodeId string               `json:"initiator_node,omitempty"`
-	Clock           *common.LamportClock `json:"clock"`
+	IsGenesis     bool                 `json:"is_genesis"`
+	Transaction   *common.Transaction  `json:"transaction,omitempty"`
+	InitiatorNode string               `json:"initiator_node,omitempty"`
+	Clock         *common.LamportClock `json:"clock"`
 }

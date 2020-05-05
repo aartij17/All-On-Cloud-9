@@ -30,6 +30,13 @@ func SubscribeToInbox(ctx context.Context, nc *nats.Conn, subject string, messag
 	go func(nc *nats.Conn) {
 		for {
 			_, err = nc.Subscribe(subject, func(m *nats.Msg) {
+				if err != nil {
+					log.WithFields(log.Fields{
+						"error":   err.Error(),
+						"subject": subject,
+					}).Error("error subscribing to NATS inbox")
+					return
+				}
 				log.WithFields(log.Fields{
 					"message": string(m.Data),
 				}).Info("Received a message from NATS")
@@ -40,12 +47,16 @@ func SubscribeToInbox(ctx context.Context, nc *nats.Conn, subject string, messag
 	return nil
 }
 
-func SendRequest(ctx context.Context, nc *nats.Conn, reqSubj string, replySubj string, message []byte) {
-	err := nc.PublishRequest(reqSubj, replySubj, message)
+// PublishNatsMessage sends a NATS message to the specified NATS inbox.
+func PublishNatsMessage(ctx context.Context, nc *nats.Conn, reqSubj string, message []byte) {
+	var (
+		err error
+	)
+	err = nc.PublishRequest(reqSubj, "", message)
 	if err != nil {
 		log.WithFields(log.Fields{
-			"err":         err.Error(),
-			"requestSubj": reqSubj,
+			"err":            err.Error(),
+			"requestSubject": reqSubj,
 		}).Error("error publishing request to NATS")
 	}
 	log.WithFields(log.Fields{
