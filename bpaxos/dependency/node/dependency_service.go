@@ -5,6 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/nats-io/nats.go"
+	"All-On-Cloud-9/messenger"
+	log "github.com/Sirupsen/logrus"
+	"context"
+	"os"
+	"os/signal"
 )
 
 // Private datatype
@@ -54,13 +59,18 @@ func (depsServiceNode *DepsServiceNode) Stub() {
 	fmt.Println("Dependency Service Node: STUB PLS REMOVE")
 }
 
-func StartDependencyService() {
+func StartDependencyService(ctx context.Context) {
+	nc, err := messenger.NatsConnect(ctx)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err.Error(),
+		}).Error("error DependencyService connecting to nats server")
+		return
+	}
 	dependency_node := NewDepsServiceNode()
 	// dependency_node.Stub()
-	go func(dep_node *DepsServiceNode) {
-		socket := common.Socket{}
-		_ = socket.Connect(nats.DefaultURL)
-		socket.Subscribe(common.LeaderToDeps, func(m *nats.Msg) {
+	go func(nc *nats.Conn, dep_node *DepsServiceNode) {
+		_, err = nc.Subscribe(common.LeaderToDeps, func(m *nats.Msg) {
 			fmt.Println("Received leader to deps")
 			data := common.MessageEvent{}
 			json.Unmarshal(m.Data, &data)
@@ -69,13 +79,33 @@ func StartDependencyService() {
 
 			if err == nil {
 				fmt.Println("deps can publish a message to leader")
-				socket.Publish(common.DepsToLeader, sentMessage)
+				err = nc.Publish(common.DepsToLeader, sentMessage)
+				if err != nil {
+					log.WithFields(log.Fields{
+						"error": err.Error(),
+					}).Error("error publish DepsToLeader")
+				}
 			} else {
 				fmt.Println("json marshal failed")
 				fmt.Println(err.Error())
 			}
 
 		})
-	}(&dependency_node)
-	common.HandleInterrupt()
+		if err != nil {
+			log.WithFields(log.Fields{
+				"error": err.Error(),
+			}).Error("error subscribe LeaderToDeps")
+		}
+	}(nc, &dependency_node)
+	signalChan := make(chan os.Signal, 1)
+	cleanupDone := make(chan bool)
+	signal.Notify(signalChan, os.Interrupt)
+	go func() {
+		for _ = range signalChan {
+			log.Info("Received an interrupt, stopping all connections...")
+			//cancel()
+			cleanupDone <- true
+		}
+	}()
+	<-cleanupDone
 }

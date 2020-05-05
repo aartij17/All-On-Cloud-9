@@ -6,6 +6,7 @@ import (
 	"All-On-Cloud-9/bpaxos/leader/node"
 	"All-On-Cloud-9/bpaxos/proposer/node"
 	"All-On-Cloud-9/bpaxos/replica/node"
+	"context"
 )
 
 var (
@@ -14,15 +15,15 @@ var (
 	leader_count = 0
 )
 
-func SetupBPaxos(isPrimary bool) {
+func SetupBPaxos(ctx context.Context, isPrimary bool) {
 
 	if isPrimary {
-		go leadernode.StartLeader(leader_count)
-		go proposer.StartProposer()
+		go leadernode.StartLeader(ctx,leader_count)
+		go proposer.StartProposer(ctx)
 		leader_count += 1
 	}
 
-	go depsnode.StartDependencyService()
-	go consensus.StartConsensus()
-	go replica.StartReplica()
+	go depsnode.StartDependencyService(ctx)
+	go consensus.StartConsensus(ctx)
+	go replica.StartReplica(ctx)
 }

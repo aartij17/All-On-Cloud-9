@@ -5,6 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/nats-io/nats.go"
+	"All-On-Cloud-9/messenger"
+	log "github.com/Sirupsen/logrus"
+	"context"
+	"os"
+	"os/signal"
 )
 
 type Replica struct {
@@ -33,12 +38,18 @@ func (replica *Replica) ExecVertices() string {
 	}
 }
 
-func StartReplica() {
+func StartReplica(ctx context.Context) {
+	nc, err := messenger.NatsConnect(ctx)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err.Error(),
+		}).Error("error Replica connecting to nats server")
+		return
+	}
+
 	rep := Replica{}
-	go func(rep *Replica) {
-		socket := common.Socket{}
-		_ = socket.Connect(nats.DefaultURL)
-		socket.Subscribe(common.ProposerToReplica, func(m *nats.Msg) {
+	go func(nc *nats.Conn, rep *Replica) {
+		_, err = nc.Subscribe(common.ProposerToReplica, func(m *nats.Msg) {
 			fmt.Println("Received proposer to replica")
 			data := common.MessageEvent{}
 			json.Unmarshal(m.Data, &data)
@@ -47,13 +58,33 @@ func StartReplica() {
 			// Respond back to the client
 			if err == nil {
 				fmt.Println("leader can publish a message to deps")
-				socket.Publish(common.NATS_CONSENSUS_DONE, sentMessage)
+				err = nc.Publish(common.NATS_CONSENSUS_DONE, sentMessage)
+				if err != nil {
+					log.WithFields(log.Fields{
+						"error": err.Error(),
+					}).Error("error publish NATS_CONSENSUS_DONE")
+				}
 			} else {
 				fmt.Println("json marshal failed")
 				fmt.Println(err.Error())
 			}
 
 		})
-	}(&rep)
-	common.HandleInterrupt()
+		if err != nil {
+			log.WithFields(log.Fields{
+				"error": err.Error(),
+			}).Error("error subscribe ProposerToReplica")
+		}
+	}(nc, &rep)
+	signalChan := make(chan os.Signal, 1)
+	cleanupDone := make(chan bool)
+	signal.Notify(signalChan, os.Interrupt)
+	go func() {
+		for _ = range signalChan {
+			log.Info("Received an interrupt, stopping all connections...")
+			//cancel()
+			cleanupDone <- true
+		}
+	}()
+	<-cleanupDone
 }

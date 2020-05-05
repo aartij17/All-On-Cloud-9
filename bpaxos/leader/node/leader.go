@@ -2,9 +2,14 @@ package leadernode
 
 import (
 	"All-On-Cloud-9/common"
+	"All-On-Cloud-9/messenger"
 	"encoding/json"
 	"fmt"
+	"context"
 	"github.com/nats-io/nats.go"
+	"os"
+	"os/signal"
+	log "github.com/Sirupsen/logrus"
 )
 
 var (
@@ -83,24 +88,34 @@ func (leader *Leader) GetMessagesLen() int {
 	return len(leader.messages)
 }
 
-func StartLeader(leaderindex int) {
+func StartLeader(ctx context.Context, leaderindex int) {
 	l := NewLeader(leaderindex) // Hard Coded User Id.
-	socket := common.Socket{}
-	_ = socket.Connect(nats.DefaultURL)
+	nc, err := messenger.NatsConnect(ctx)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err.Error(),
+		}).Error("error Leader connecting to nats server")
+		return
+	}
 
-	go func(leader *Leader, socket *common.Socket) {
-		socket.Subscribe(common.DepsToLeader, func(m *nats.Msg) {
+	go func(nc *nats.Conn, leader *Leader) {
+		_, err = nc.Subscribe(common.DepsToLeader, func(m *nats.Msg) {
 			fmt.Println("Received deps to leader")
 			data := common.MessageEvent{}
 			json.Unmarshal(m.Data, &data)
 			l.AddToMessages(&data)
 			if l.GetMessagesLen() > common.F {
 				newMessageEvent := l.HandleReceiveDeps()
-
+				
 				sentMessage, err := json.Marshal(&newMessageEvent)
 				if err == nil {
 					fmt.Println("leader can publish a message to proposer")
-					socket.Publish(common.LeaderToProposer, sentMessage)
+					err = nc.Publish(common.LeaderToProposer, sentMessage)
+					if err != nil {
+						log.WithFields(log.Fields{
+							"error": err.Error(),
+						}).Error("error publish LeaderToProposer")
+					}
 				} else {
 					fmt.Println("json marshal failed")
 					fmt.Println(err.Error())
@@ -109,21 +124,48 @@ func StartLeader(leaderindex int) {
 				l.FlushMessages()
 			}
 		})
-	}(&l, &socket)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"error": err.Error(),
+			}).Error("error subscribe DepsToLeader")
+		}
+	}(nc, &l)
 
-	go func(leader *Leader, socket *common.Socket) {
-		socket.Subscribe(common.NATS_CONSENSUS_INITIATE_MSG, func(m *nats.Msg) {
+	go func(nc *nats.Conn, leader *Leader) {
+		_, err = nc.Subscribe(common.NATS_CONSENSUS_INITIATE_MSG, func(m *nats.Msg) {
 			fmt.Println("Received client to leader")
 			newMessage := leader.HandleReceiveCommand(string(m.Data))
 			sentMessage, err := json.Marshal(&newMessage)
 			if err == nil {
 				fmt.Println("leader can publish a message to deps")
-				socket.Publish(common.LeaderToDeps, sentMessage)
+				err = nc.Publish(common.LeaderToDeps, sentMessage)
+				if err != nil {
+					log.WithFields(log.Fields{
+						"error": err.Error(),
+					}).Error("error publish LeaderToDeps")
+				}
 			} else {
 				fmt.Println("json marshal failed")
 				fmt.Println(err.Error())
 			}
 		})
-	}(&l, &socket)
-	common.HandleInterrupt()
+		if err != nil {
+			log.WithFields(log.Fields{
+				"error": err.Error(),
+			}).Error("error subscribe NATS_CONSENSUS_INITIATE_MSG")
+		}
+	}(nc, &l)
+
+	signalChan := make(chan os.Signal, 1)
+	cleanupDone := make(chan bool)
+	signal.Notify(signalChan, os.Interrupt)
+	go func() {
+		for _ = range signalChan {
+			log.Info("Received an interrupt, stopping all connections...")
+			//cancel()
+			cleanupDone <- true
+		}
+	}()
+	<-cleanupDone
+
 }

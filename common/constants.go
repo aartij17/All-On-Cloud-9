@@ -25,6 +25,14 @@ const (
 	NATS_CONSENSUS_INITIATE_MSG = "NATS_CONSENSUS_START"
 	NATS_CONSENSUS_DONE         = "NATS_CONSENSUS_DONE"
 
+	LeaderToDeps        = "LeaderToDeps"
+	DepsToLeader        = "DepsToLeader"
+	LeaderToProposer    = "LeaderToProposer"
+	ProposerToConsensus = "ProposerToConsensus"
+	ConsensusToProposer = "ConsensusToProposer"
+	ProposerToReplica   = "ProposerToReplica"
+	ClientToLeader      = "ClientToLeader"
+
 	// Number of tolerable failures
 	F = 0
 )
