@@ -10,12 +10,22 @@ import (
 	"context"
 	"os"
 	"os/signal"
+	"github.com/hashicorp/terraform/dag"
+)
+var (
+	m = make(map[string]string)
 )
 
 type Replica struct {
-	Graph       string // STUB. For now, the DAG will just be a string
+	Graph       dag.AcyclicGraph
 	NumReplicas int
 }
+
+// type GraphNode struct {
+// 	VertexId int
+// 	LeaderIndex int
+// 	Message string
+// }
 
 func (replica *Replica) HandleReceive(message *common.MessageEvent) string {
 	replica.AddDepsToGraph(message)
@@ -25,6 +35,15 @@ func (replica *Replica) HandleReceive(message *common.MessageEvent) string {
 // add the dependency to the graph
 func (replica *Replica) AddDepsToGraph(message *common.MessageEvent) {
 	fmt.Println("add dependency to graph")
+	// newNode := &GraphNode {VertexId:message.VertexId.Id, LeaderIndex:message.VertexId.Index, Message:message.Message}
+	strkey := fmt.Sprintf("%d:%d", message.VertexId.Id, message.VertexId.Index)
+	m[strkey] = message.Message
+	replica.Graph.add(strkey)
+	for index, dep := range message.Deps {
+		strkeyDep := fmt.Sprintf("%d:%d", dep.VertexId.Id, dep.VertexId.Index)
+		replica.Graph.Connect(BasicEdge(strkeyDep, strkey))
+	}
+
 }
 
 func (replica *Replica) ExecVertices() string {
