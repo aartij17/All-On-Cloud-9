@@ -5,6 +5,7 @@ import (
 	"All-On-Cloud-9/common"
 	"github.com/nats-io/nats.go"
 	// "encoding/json"
+	log "github.com/Sirupsen/logrus"
 )
 
 type Socket struct {
