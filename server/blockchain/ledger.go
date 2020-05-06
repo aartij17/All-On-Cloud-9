@@ -16,7 +16,6 @@ g.Add(Block{Digit:1})
 
 https://github.com/hashicorp/terraform/blob/master/dag/dag_test.go
 */
-// TEST Commit
 var (
 	GlobalSeqNumber  int
 	LocalSeqNumber   int
