@@ -13,6 +13,7 @@ type Transaction struct {
 }
 
 type Message struct {
+	FromApp     string       `json:"from_application"`
 	MessageType string       `json:"message_type"`
 	Timestamp   int          `json:"client_timestamp,omitempty"`
 	FromNodeId  string       `json:"from_node_id"`
