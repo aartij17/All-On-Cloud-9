@@ -29,36 +29,36 @@ func NewLeader(index int) Leader {
 }
 
 // func Union(a, b []*Vertex, m map[*Vertex]bool) []*Vertex {
-func (leader *Leader) Union() common.MessageEvent {
+// func (leader *Leader) Union() common.MessageEvent {
 
-	newMessage := common.MessageEvent{}
+// 	newMessage := common.MessageEvent{}
 
-	if len(leader.messages) > 0 {
+// 	if len(leader.messages) > 0 {
 
-		m := map[*common.Vertex]bool{}
+// 		m := map[*common.Vertex]bool{}
 
-		deps := leader.messages[0].Deps
+// 		deps := leader.messages[0].Deps
 
-		for _, item := range deps {
-			m[item] = true
-		}
+// 		for _, item := range deps {
+// 			m[item] = true
+// 		}
 
-		for _, mes := range leader.messages[1:] {
-			for _, item := range mes.Deps {
-				if _, ok := m[item]; !ok {
-					deps = append(deps, item)
-					m[item] = true
-				}
-			}
-		}
+// 		for _, mes := range leader.messages[1:] {
+// 			for _, item := range mes.Deps {
+// 				if _, ok := m[item]; !ok {
+// 					deps = append(deps, item)
+// 					m[item] = true
+// 				}
+// 			}
+// 		}
 
-		newMessage.VertexId = leader.messages[0].VertexId
-		newMessage.Message = leader.messages[0].Message
-		newMessage.Deps = deps
-	}
+// 		newMessage.VertexId = leader.messages[0].VertexId
+// 		newMessage.Message = leader.messages[0].Message
+// 		newMessage.Deps = deps
+// 	}
 
-	return newMessage
-}
+// 	return newMessage
+// }
 
 func (leader *Leader) HandleReceiveCommand(message []byte) common.MessageEvent {
 	v := common.Vertex{leader.Index, id_count}
@@ -69,12 +69,12 @@ func (leader *Leader) HandleReceiveCommand(message []byte) common.MessageEvent {
 	// send message to dependency
 }
 
-func (leader *Leader) HandleReceiveDeps() common.MessageEvent {
+// func (leader *Leader) HandleReceiveDeps() common.MessageEvent {
 
-	newMessageEvent := leader.Union()
-	return newMessageEvent
+// 	newMessageEvent := leader.Union()
+// 	return newMessageEvent
 
-}
+// }
 
 func (leader *Leader) AddToMessages(message *common.MessageEvent) {
 	leader.messages = append(leader.messages, message)
