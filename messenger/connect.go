@@ -27,16 +27,21 @@ func NatsConnect(ctx context.Context) (*nats.Conn, error) {
 func SubscribeToInbox(ctx context.Context, nc *nats.Conn, subject string, messageChannel chan *nats.Msg) error {
 	var err error
 	// run another routine to listen to the messages that you are expecting from the server
-	go func(nc *nats.Conn) {
-		for {
-			_, err = nc.Subscribe(subject, func(m *nats.Msg) {
-				log.WithFields(log.Fields{
-					"message": string(m.Data),
-				}).Info("Received a message from NATS")
-				messageChannel <- m
-			})
+
+	_, err = nc.Subscribe(subject, func(m *nats.Msg) {
+		if err != nil {
+			log.WithFields(log.Fields{
+				"error":   err.Error(),
+				"subject": subject,
+			}).Error("error subscribing to NATS inbox")
+			return
 		}
-	}(nc)
+		log.WithFields(log.Fields{
+			"message": string(m.Data),
+		}).Info("Received a message from NATS")
+		messageChannel <- m
+	})
+
 	return nil
 }
 
