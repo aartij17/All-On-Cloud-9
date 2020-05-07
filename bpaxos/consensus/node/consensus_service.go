@@ -10,6 +10,12 @@ import (
 	"os/signal"
 	"All-On-Cloud-9/messenger"
 	log "github.com/Sirupsen/logrus"
+	"sync"
+	"time"
+)
+var (
+	mux sync.Mutex
+	timeoutTrigger = make(chan bool)
 )
 
 type ConsensusServiceNode struct {
@@ -20,6 +26,16 @@ func NewConsensusServiceNode() ConsensusServiceNode {
 	consensusNode := ConsensusServiceNode{}
 	consensusNode.VertexId = nil
 	return consensusNode
+}
+
+func Timeout(duration_ms int, consensusNode *ConsensusServiceNode) {
+	time.Sleep(time.Duration(duration_ms) * time.Millisecond)
+	mux.Lock()
+	if (consensusNode.VertexId != nil) {
+		consensusNode.VertexId = nil
+		log.Error("Consensus timeout")
+	}
+	mux.Unlock()
 }
 
 func (consensusServiceNode *ConsensusServiceNode) HandleReceive(message *common.MessageEvent) common.MessageEvent {
@@ -47,7 +63,7 @@ func (consensusServiceNode *ConsensusServiceNode) ProcessConsensusMessage(m *nat
 		return
 	}
 
-	if consensusServiceNode.VertexId == nil {
+	if (consensusServiceNode.VertexId == nil) && (data.Release == 0) {
 		consensusServiceNode.VertexId = data.VertexId
 		sub := fmt.Sprintf("%s%d", common.CONSENSUS_TO_PROPOSER, data.ProposerId)
 
@@ -59,10 +75,12 @@ func (consensusServiceNode *ConsensusServiceNode) ProcessConsensusMessage(m *nat
 			return
 		}
 		messenger.PublishNatsMessage(ctx, nc, sub, sentMessage)
+		go Timeout(common.CONSENSUS_TIMEOUT_MILLISECONDS, consensusServiceNode)
 	} else {
 		// release vote
 		if (consensusServiceNode.VertexId.Index == data.VertexId.Index) && (consensusServiceNode.VertexId.Id == data.VertexId.Id) && (data.Release == 1) {
 			consensusServiceNode.VertexId = nil
+			
 		}
 	}
 	// newMessage := cons.HandleReceive(&data)
@@ -99,7 +117,9 @@ func StartConsensus(ctx context.Context, nc *nats.Conn) {
 		for {
 			select {
 			case natsMsg = <-NatsMessage:
+				mux.Lock()
 				cons.ProcessConsensusMessage(natsMsg, nc, ctx, cons)
+				mux.Unlock()
 			}
 		}
 	}(nc, &cons)

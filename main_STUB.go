@@ -2,6 +2,7 @@ package main
 
 import (
 	"All-On-Cloud-9/bpaxos"
+	"All-On-Cloud-9/bpaxos/consensus/node"
 	"All-On-Cloud-9/common"
 	"All-On-Cloud-9/messenger"
 	"github.com/nats-io/nats.go"
@@ -84,6 +85,16 @@ func main() {
 	socket.Subscribe(common.NATS_CONSENSUS_DONE, func(m *nats.Msg) {
 		fmt.Println("Received")
 	})
+
+	fmt.Println("\n\n")
+	time.Sleep(5000 * time.Millisecond)
+	go consensus.StartConsensus(ctx, nc)
+	socket.Publish(common.NATS_CONSENSUS_INITIATE_MSG, []byte("bitch"))
+	time.Sleep(5000 * time.Millisecond)
+	fmt.Println("\n\n")
+	socket.Publish(common.NATS_CONSENSUS_INITIATE_MSG, []byte("bitch"))
+
+
 	signalChan := make(chan os.Signal, 1)
 	cleanupDone := make(chan bool)
 	signal.Notify(signalChan, os.Interrupt)

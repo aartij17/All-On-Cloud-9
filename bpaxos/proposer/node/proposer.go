@@ -10,10 +10,16 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"context"
 	"os/signal"
+	"time"
+	"sync"
 )
 
 var (
 	id_count = 0
+	requestQ = make([]common.MessageEvent, 0)
+	QueueTrigger = make(chan bool, common.F)  // Max of F requests
+	QueueRelease = make(chan bool)
+	mux sync.Mutex
 )
 
 type Proposer struct {
@@ -38,16 +44,9 @@ func (proposer *Proposer) SendResult(message *common.MessageEvent) {
 	fmt.Println("send consensus result")
 }
 
-func (proposer *Proposer) ProcessMessageFromLeader(m *nats.Msg, nc *nats.Conn, ctx context.Context) {
+func (proposer *Proposer) ProcessMessageFromLeader(data common.MessageEvent, nc *nats.Conn, ctx context.Context) {
 	fmt.Println("Received leader to proposer")
-	data := common.MessageEvent{}
-	err := json.Unmarshal(m.Data, &data)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"err":            err.Error(),
-		}).Error("error unmarshal message from leader")
-		return
-	}
+	
 	proposer.VoteCount = 0
 	proposer.Message = data
 	vertexId := data.VertexId
@@ -61,6 +60,20 @@ func (proposer *Proposer) ProcessMessageFromLeader(m *nats.Msg, nc *nats.Conn, c
 		return
 	}
 	messenger.PublishNatsMessage(ctx, nc, common.PROPOSER_TO_CONSENSUS, sentMessage)
+	go Timeout(common.CONSENSUS_TIMEOUT_MILLISECONDS, proposer)
+}
+
+func Timeout(duration_ms int, proposer *Proposer) {
+	time.Sleep(time.Duration(duration_ms) * time.Millisecond)
+	mux.Lock()
+	if (len(requestQ) > 0) && (requestQ[0].VertexId.Id == proposer.Message.VertexId.Id) && (requestQ[0].VertexId.Index == proposer.Message.VertexId.Index) {
+		// Set Message Vertex to -1 so it will ignore any subsequent message related to this vertex
+		proposer.Message.VertexId.Id = -1   
+		proposer.Message.VertexId.Index = -1
+		QueueRelease <- true
+		log.Error("Proposer timeout")
+	}
+	mux.Unlock()
 }
 
 func (proposer *Proposer) ProcessMessageFromConsensus(m *nats.Msg, nc *nats.Conn, ctx context.Context) {
@@ -96,6 +109,10 @@ func (proposer *Proposer) ProcessMessageFromConsensus(m *nats.Msg, nc *nats.Conn
 			return
 		}
 		messenger.PublishNatsMessage(ctx, nc, common.PROPOSER_TO_CONSENSUS, sentConsensusMessage)
+
+		proposer.Message.VertexId.Id = -1   
+		proposer.Message.VertexId.Index = -1
+		QueueRelease <- true
 	}
 }
 
@@ -104,7 +121,8 @@ func StartProposer(ctx context.Context, nc *nats.Conn) {
 
 	go func(nc *nats.Conn, proposer *Proposer) {
 		NatsMessage := make(chan *nats.Msg)
-		err := messenger.SubscribeToInbox(ctx, nc, common.LEADER_TO_PROPOSER, NatsMessage)
+		subj := fmt.Sprintf("%s%d", common.LEADER_TO_PROPOSER, proposer.ProposerId)
+		err := messenger.SubscribeToInbox(ctx, nc, subj, NatsMessage)
 
 		if err != nil {
 			log.WithFields(log.Fields{
@@ -113,12 +131,24 @@ func StartProposer(ctx context.Context, nc *nats.Conn) {
 		}
 
 		var (
-			natsMsg *nats.Msg
+			m *nats.Msg
 		)
 		for {
 			select {
-			case natsMsg = <-NatsMessage:
-				proposer.ProcessMessageFromLeader(natsMsg, nc, ctx)
+			case m = <-NatsMessage:
+
+				data := common.MessageEvent{}
+				err := json.Unmarshal(m.Data, &data)
+				if err != nil {
+					log.WithFields(log.Fields{
+						"err":            err.Error(),
+					}).Error("error unmarshal message from leader")
+					return
+				}
+				requestQ = append(requestQ, data)
+				QueueTrigger <- true
+				// proposer.ProcessMessageFromLeader(natsMsg, nc, ctx)
+				
 			}
 		}
 	}(nc, &p)
@@ -140,10 +170,22 @@ func StartProposer(ctx context.Context, nc *nats.Conn) {
 		for {
 			select {
 			case natsMsg = <-NatsMessage:
+				mux.Lock()
 				proposer.ProcessMessageFromConsensus(natsMsg, nc, ctx)
+				mux.Unlock()
 			}
 		}
 	}(nc, &p)
+
+	go func(nc *nats.Conn, proposer *Proposer) {
+		for {
+			<-QueueTrigger
+			proposer.ProcessMessageFromLeader(requestQ[0], nc, ctx)
+			<-QueueRelease
+			requestQ = requestQ[1:]
+		}
+	} (nc, &p)
+
 	signalChan := make(chan os.Signal, 1)
 	cleanupDone := make(chan bool)
 	signal.Notify(signalChan, os.Interrupt)

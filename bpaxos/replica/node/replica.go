@@ -56,6 +56,8 @@ func (replica *Replica) ExecVertices() string {
 	}
 }
 
+
+
 func ProcessReplicaMessage(m *nats.Msg, nc *nats.Conn, ctx context.Context, rep *Replica) {
 	fmt.Println("Received proposer to replica")
 	data := common.MessageEvent{}

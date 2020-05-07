@@ -14,6 +14,7 @@ import (
 
 var (
 	id_count = 0
+	proposer_id = 0    // This ID will determine which proposer to send to
 )
 
 type Leader struct {
@@ -116,9 +117,13 @@ func ProcessMessageFromClient(m *nats.Msg, nc *nats.Conn, ctx context.Context, l
 	newMessage := leader.HandleReceiveCommand(m.Data)
 	sentMessage, err := json.Marshal(&newMessage)
 	if err == nil {
+		// The leader will forward this request to one of the proposers in a round roubin 
 		fmt.Println("leader can publish a message to proposer")
-		messenger.PublishNatsMessage(ctx, nc, common.LEADER_TO_PROPOSER, sentMessage)
+		subj := fmt.Sprintf("%s%d", common.LEADER_TO_PROPOSER, proposer_id)
+		messenger.PublishNatsMessage(ctx, nc, subj, sentMessage)
+
 		// messenger.PublishNatsMessage(ctx, nc, common.NATS_CONSENSUS_DONE, sentMessage)
+		proposer_id = (proposer_id + 1) % common.NUM_PROPOSERS
 	
 	} else {
 		fmt.Println("json marshal failed")

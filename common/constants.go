@@ -35,7 +35,11 @@ const (
 	CLIENT_TO_LEADER      = "CLIENT_TO_LEADER"
 
 	// Number of tolerable failures
-	F = 0
+	F = 1
+
+	// Number of BPaxos Proposer nodes
+	NUM_PROPOSERS = 1
+	CONSENSUS_TIMEOUT_MILLISECONDS = 1000
 )
 
 var (
