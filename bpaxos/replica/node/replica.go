@@ -6,10 +6,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
-	"github.com/nats-io/nats.go"
 	"os"
 	"os/signal"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/nats-io/nats.go"
 	// "github.com/hashicorp/terraform/dag"
 )
 

@@ -1,8 +1,6 @@
 package main
 
 import (
-	"All-On-Cloud-9/bpaxos/consensus/node"
-	"All-On-Cloud-9/common"
 	"testing"
 )
 

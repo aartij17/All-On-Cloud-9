@@ -6,6 +6,7 @@ import (
 	"All-On-Cloud-9/bpaxos/proposer/node"
 	"All-On-Cloud-9/bpaxos/replica/node"
 	"context"
+
 	"github.com/nats-io/nats.go"
 )
 
