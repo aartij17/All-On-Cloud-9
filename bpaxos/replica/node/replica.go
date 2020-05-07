@@ -2,16 +2,17 @@ package replica
 
 import (
 	"All-On-Cloud-9/common"
+	"All-On-Cloud-9/messenger"
+	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/nats-io/nats.go"
-	"All-On-Cloud-9/messenger"
 	log "github.com/Sirupsen/logrus"
-	"context"
+	"github.com/nats-io/nats.go"
 	"os"
 	"os/signal"
 	// "github.com/hashicorp/terraform/dag"
 )
+
 // var (
 // 	m = make(map[string]string)
 // )
@@ -56,8 +57,6 @@ func (replica *Replica) ExecVertices() string {
 	}
 }
 
-
-
 func ProcessReplicaMessage(m *nats.Msg, nc *nats.Conn, ctx context.Context, rep *Replica) {
 	fmt.Println("Received proposer to replica")
 	data := common.MessageEvent{}
@@ -81,7 +80,7 @@ func StartReplica(ctx context.Context, nc *nats.Conn) {
 	go func(nc *nats.Conn, rep *Replica) {
 		NatsMessage := make(chan *nats.Msg)
 		err := messenger.SubscribeToInbox(ctx, nc, common.PROPOSER_TO_REPLICA, NatsMessage)
-	
+
 		if err != nil {
 			log.WithFields(log.Fields{
 				"error": err.Error(),

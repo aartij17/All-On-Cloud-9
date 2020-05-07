@@ -3,18 +3,18 @@ package leadernode
 import (
 	"All-On-Cloud-9/common"
 	"All-On-Cloud-9/messenger"
+	"context"
 	"encoding/json"
 	"fmt"
-	"context"
+	log "github.com/Sirupsen/logrus"
 	"github.com/nats-io/nats.go"
 	"os"
 	"os/signal"
-	log "github.com/Sirupsen/logrus"
 )
 
 var (
-	id_count = 0
-	proposer_id = 0    // This ID will determine which proposer to send to
+	id_count    = 0
+	proposer_id = 0 // This ID will determine which proposer to send to
 )
 
 type Leader struct {
@@ -96,13 +96,13 @@ func (leader *Leader) GetMessagesLen() int {
 // 	l.AddToMessages(&data)
 // 	if l.GetMessagesLen() > common.F {
 // 		newMessageEvent := l.HandleReceiveDeps()
-		
+
 // 		sentMessage, err := json.Marshal(&newMessageEvent)
 // 		if err == nil {
 // 			fmt.Println("leader can publish a message to proposer")
 // 			messenger.PublishNatsMessage(ctx, nc, common.LEADER_TO_PROPOSER, sentMessage)
 // 			// messenger.PublishNatsMessage(ctx, nc, common.NATS_CONSENSUS_DONE, sentMessage)
-			
+
 // 		} else {
 // 			fmt.Println("json marshal failed")
 // 			fmt.Println(err.Error())
@@ -117,14 +117,14 @@ func ProcessMessageFromClient(m *nats.Msg, nc *nats.Conn, ctx context.Context, l
 	newMessage := leader.HandleReceiveCommand(m.Data)
 	sentMessage, err := json.Marshal(&newMessage)
 	if err == nil {
-		// The leader will forward this request to one of the proposers in a round roubin 
+		// The leader will forward this request to one of the proposers in a round roubin
 		fmt.Println("leader can publish a message to proposer")
 		subj := fmt.Sprintf("%s%d", common.LEADER_TO_PROPOSER, proposer_id)
 		messenger.PublishNatsMessage(ctx, nc, subj, sentMessage)
 
 		// messenger.PublishNatsMessage(ctx, nc, common.NATS_CONSENSUS_DONE, sentMessage)
 		proposer_id = (proposer_id + 1) % common.NUM_PROPOSERS
-	
+
 	} else {
 		fmt.Println("json marshal failed")
 		fmt.Println(err.Error())
@@ -136,8 +136,8 @@ func StartLeader(ctx context.Context, nc *nats.Conn, leaderindex int) {
 
 	// go func(nc *nats.Conn, leader *Leader) {
 	// 	NatsMessage := make(chan *nats.Msg)
-	// 	err := messenger.SubscribeToInbox(ctx, nc, common.DEPS_TO_LEADER, NatsMessage) 
-			
+	// 	err := messenger.SubscribeToInbox(ctx, nc, common.DEPS_TO_LEADER, NatsMessage)
+
 	// 	if err != nil {
 	// 		log.WithFields(log.Fields{
 	// 			"error": err.Error(),
@@ -158,7 +158,7 @@ func StartLeader(ctx context.Context, nc *nats.Conn, leaderindex int) {
 	go func(nc *nats.Conn, leader *Leader) {
 		NatsMessage := make(chan *nats.Msg)
 		err := messenger.SubscribeToInbox(ctx, nc, common.NATS_CONSENSUS_INITIATE_MSG, NatsMessage)
-			
+
 		if err != nil {
 			log.WithFields(log.Fields{
 				"error": err.Error(),

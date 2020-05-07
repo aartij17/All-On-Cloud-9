@@ -38,7 +38,7 @@ const (
 	F = 1
 
 	// Number of BPaxos Proposer nodes
-	NUM_PROPOSERS = 1
+	NUM_PROPOSERS                  = 1
 	CONSENSUS_TIMEOUT_MILLISECONDS = 1000
 )
 

@@ -2,12 +2,12 @@ package depsnode
 
 import (
 	"All-On-Cloud-9/common"
+	"All-On-Cloud-9/messenger"
+	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/nats-io/nats.go"
-	"All-On-Cloud-9/messenger"
 	log "github.com/Sirupsen/logrus"
-	"context"
+	"github.com/nats-io/nats.go"
 	"os"
 	"os/signal"
 )
@@ -65,7 +65,7 @@ func ProcessDepMessage(m *nats.Msg, nc *nats.Conn, ctx context.Context, dep_node
 	if err == nil {
 		fmt.Println("deps can publish a message to leader")
 		messenger.PublishNatsMessage(ctx, nc, common.DEPS_TO_LEADER, sentMessage)
-	
+
 	} else {
 		fmt.Println("json marshal failed")
 		fmt.Println(err.Error())

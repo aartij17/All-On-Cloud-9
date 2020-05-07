@@ -12,9 +12,9 @@ type Vertex struct {
 }
 
 type ConsensusMessage struct {
-	VertexId *Vertex   `json:"vertex"`
-	Release  int       `json:"release"` 
-	ProposerId int `json:"proposerId"`
+	VertexId   *Vertex `json:"vertex"`
+	Release    int     `json:"release"`
+	ProposerId int     `json:"proposerId"`
 }
 
 type Transaction struct {

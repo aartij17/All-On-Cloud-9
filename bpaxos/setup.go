@@ -5,8 +5,8 @@ import (
 	"All-On-Cloud-9/bpaxos/leader/node"
 	"All-On-Cloud-9/bpaxos/proposer/node"
 	"All-On-Cloud-9/bpaxos/replica/node"
-	"github.com/nats-io/nats.go"
 	"context"
+	"github.com/nats-io/nats.go"
 )
 
 var (

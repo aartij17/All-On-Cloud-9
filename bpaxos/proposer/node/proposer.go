@@ -2,29 +2,29 @@ package proposer
 
 import (
 	"All-On-Cloud-9/common"
+	"All-On-Cloud-9/messenger"
+	"context"
 	"encoding/json"
 	"fmt"
-	"os"
-	"github.com/nats-io/nats.go"
-	"All-On-Cloud-9/messenger"
 	log "github.com/Sirupsen/logrus"
-	"context"
+	"github.com/nats-io/nats.go"
+	"os"
 	"os/signal"
-	"time"
 	"sync"
+	"time"
 )
 
 var (
-	id_count = 0
-	requestQ = make([]common.MessageEvent, 0)
-	QueueTrigger = make(chan bool, common.F)  // Max of F requests
+	id_count     = 0
+	requestQ     = make([]common.MessageEvent, 0)
+	QueueTrigger = make(chan bool, common.F) // Max of F requests
 	QueueRelease = make(chan bool)
-	mux sync.Mutex
+	mux          sync.Mutex
 )
 
 type Proposer struct {
-	VoteCount int
-	Message common.MessageEvent
+	VoteCount  int
+	Message    common.MessageEvent
 	ProposerId int
 }
 
@@ -46,16 +46,16 @@ func (proposer *Proposer) SendResult(message *common.MessageEvent) {
 
 func (proposer *Proposer) ProcessMessageFromLeader(data common.MessageEvent, nc *nats.Conn, ctx context.Context) {
 	fmt.Println("Received leader to proposer")
-	
+
 	proposer.VoteCount = 0
 	proposer.Message = data
 	vertexId := data.VertexId
 	// TODO: hardcoded the ip address for now, change that later
-	consensusMessage := common.ConsensusMessage{VertexId:vertexId, ProposerId:proposer.ProposerId, Release: 0}
+	consensusMessage := common.ConsensusMessage{VertexId: vertexId, ProposerId: proposer.ProposerId, Release: 0}
 	sentMessage, err := json.Marshal(&consensusMessage)
 	if err != nil {
 		log.WithFields(log.Fields{
-			"err":            err.Error(),
+			"err": err.Error(),
 		}).Error("error marshal consensus message")
 		return
 	}
@@ -68,7 +68,7 @@ func Timeout(duration_ms int, proposer *Proposer) {
 	mux.Lock()
 	if (len(requestQ) > 0) && (requestQ[0].VertexId.Id == proposer.Message.VertexId.Id) && (requestQ[0].VertexId.Index == proposer.Message.VertexId.Index) {
 		// Set Message Vertex to -1 so it will ignore any subsequent message related to this vertex
-		proposer.Message.VertexId.Id = -1   
+		proposer.Message.VertexId.Id = -1
 		proposer.Message.VertexId.Index = -1
 		QueueRelease <- true
 		log.Error("Proposer timeout")
@@ -82,7 +82,7 @@ func (proposer *Proposer) ProcessMessageFromConsensus(m *nats.Msg, nc *nats.Conn
 	err := json.Unmarshal(m.Data, &data)
 	if err != nil {
 		log.WithFields(log.Fields{
-			"err":            err.Error(),
+			"err": err.Error(),
 		}).Error("error unmarshal message from leader")
 		return
 	}
@@ -95,22 +95,22 @@ func (proposer *Proposer) ProcessMessageFromConsensus(m *nats.Msg, nc *nats.Conn
 		replicaMessage, err := json.Marshal(&proposer.Message)
 		if err != nil {
 			log.WithFields(log.Fields{
-				"err":            err.Error(),
+				"err": err.Error(),
 			}).Error("error marshal proposer message")
 			return
 		}
 		messenger.PublishNatsMessage(ctx, nc, common.PROPOSER_TO_REPLICA, replicaMessage)
-		consensusMessage := common.ConsensusMessage{VertexId:proposer.Message.VertexId, ProposerId:proposer.ProposerId, Release: 1}
+		consensusMessage := common.ConsensusMessage{VertexId: proposer.Message.VertexId, ProposerId: proposer.ProposerId, Release: 1}
 		sentConsensusMessage, err := json.Marshal(&consensusMessage)
 		if err != nil {
 			log.WithFields(log.Fields{
-				"err":            err.Error(),
+				"err": err.Error(),
 			}).Error("error marshal proposer release message")
 			return
 		}
 		messenger.PublishNatsMessage(ctx, nc, common.PROPOSER_TO_CONSENSUS, sentConsensusMessage)
 
-		proposer.Message.VertexId.Id = -1   
+		proposer.Message.VertexId.Id = -1
 		proposer.Message.VertexId.Index = -1
 		QueueRelease <- true
 	}
@@ -141,14 +141,14 @@ func StartProposer(ctx context.Context, nc *nats.Conn) {
 				err := json.Unmarshal(m.Data, &data)
 				if err != nil {
 					log.WithFields(log.Fields{
-						"err":            err.Error(),
+						"err": err.Error(),
 					}).Error("error unmarshal message from leader")
 					return
 				}
 				requestQ = append(requestQ, data)
 				QueueTrigger <- true
 				// proposer.ProcessMessageFromLeader(natsMsg, nc, ctx)
-				
+
 			}
 		}
 	}(nc, &p)
@@ -184,7 +184,7 @@ func StartProposer(ctx context.Context, nc *nats.Conn) {
 			<-QueueRelease
 			requestQ = requestQ[1:]
 		}
-	} (nc, &p)
+	}(nc, &p)
 
 	signalChan := make(chan os.Signal, 1)
 	cleanupDone := make(chan bool)

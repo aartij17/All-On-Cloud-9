@@ -2,19 +2,20 @@ package consensus
 
 import (
 	"All-On-Cloud-9/common"
+	"All-On-Cloud-9/messenger"
+	"context"
 	"encoding/json"
 	"fmt"
-	"context"
+	log "github.com/Sirupsen/logrus"
 	"github.com/nats-io/nats.go"
 	"os"
 	"os/signal"
-	"All-On-Cloud-9/messenger"
-	log "github.com/Sirupsen/logrus"
 	"sync"
 	"time"
 )
+
 var (
-	mux sync.Mutex
+	mux            sync.Mutex
 	timeoutTrigger = make(chan bool)
 )
 
@@ -31,7 +32,7 @@ func NewConsensusServiceNode() ConsensusServiceNode {
 func Timeout(duration_ms int, consensusNode *ConsensusServiceNode) {
 	time.Sleep(time.Duration(duration_ms) * time.Millisecond)
 	mux.Lock()
-	if (consensusNode.VertexId != nil) {
+	if consensusNode.VertexId != nil {
 		consensusNode.VertexId = nil
 		log.Error("Consensus timeout")
 	}
@@ -58,7 +59,7 @@ func (consensusServiceNode *ConsensusServiceNode) ProcessConsensusMessage(m *nat
 	err := json.Unmarshal(m.Data, &data)
 	if err != nil {
 		log.WithFields(log.Fields{
-			"err":            err.Error(),
+			"err": err.Error(),
 		}).Error("error unmarshal message from proposer")
 		return
 	}
@@ -70,7 +71,7 @@ func (consensusServiceNode *ConsensusServiceNode) ProcessConsensusMessage(m *nat
 		sentMessage, err := json.Marshal(&data.VertexId)
 		if err != nil {
 			log.WithFields(log.Fields{
-				"err":            err.Error(),
+				"err": err.Error(),
 			}).Error("error marshal consensus vertex message")
 			return
 		}
@@ -80,7 +81,7 @@ func (consensusServiceNode *ConsensusServiceNode) ProcessConsensusMessage(m *nat
 		// release vote
 		if (consensusServiceNode.VertexId.Index == data.VertexId.Index) && (consensusServiceNode.VertexId.Id == data.VertexId.Id) && (data.Release == 1) {
 			consensusServiceNode.VertexId = nil
-			
+
 		}
 	}
 	// newMessage := cons.HandleReceive(&data)
