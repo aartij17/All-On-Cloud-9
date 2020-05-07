@@ -1,4 +1,4 @@
-package nodes
+package application
 
 // This file has all the contracts that are invoked when the consensus is reached and just BEFORE
 // the transactions are executed (in our case, the transactions are additions of the blocks to the blockchain

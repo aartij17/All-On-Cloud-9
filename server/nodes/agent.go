@@ -4,6 +4,7 @@ import (
 	"All-On-Cloud-9/common"
 	"All-On-Cloud-9/config"
 	"All-On-Cloud-9/messenger"
+	"All-On-Cloud-9/server/application"
 	"All-On-Cloud-9/server/blockchain"
 	"context"
 	"encoding/json"
@@ -84,13 +85,13 @@ func (server *Server) startNatsListener(ctx context.Context) {
 func (server *Server) RunApplication(ctx context.Context, appName string) {
 	switch appName {
 	case config.APP_BUYER:
-		startBuyerApplication(ctx)
+		application.StartBuyerApplication(ctx, server.NatsConn)
 	case config.APP_CARRIER:
-		startCarrierApplication(ctx)
+		application.StartCarrierApplication(ctx, server.NatsConn)
 	case config.APP_SUPPLIER:
-		startSupplierApplication(ctx)
+		application.StartSupplierApplication(ctx, server.NatsConn)
 	case config.APP_MANUFACTURER:
-		startManufacturerApplication(ctx)
+		application.StartManufacturerApplication(ctx, server.NatsConn)
 	}
 }
 
