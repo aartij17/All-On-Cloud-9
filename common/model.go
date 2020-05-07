@@ -10,6 +10,13 @@ type Vertex struct {
 	Index int `json:"index"`
 	Id    int `json:"id"`
 }
+
+type ConsensusMessage struct {
+	VertexId *Vertex   `json:"vertex"`
+	Release  int       `json:"release"` 
+	ProposerId int `json:"proposerId"`
+}
+
 type Transaction struct {
 	LocalXNum  string        `json:"local_transaction_number"`
 	GlobalXNum string        `json:"global_transaction_number"`

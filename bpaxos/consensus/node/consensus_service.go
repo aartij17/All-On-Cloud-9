@@ -13,6 +13,13 @@ import (
 )
 
 type ConsensusServiceNode struct {
+	VertexId *common.Vertex
+}
+
+func NewConsensusServiceNode() ConsensusServiceNode {
+	consensusNode := ConsensusServiceNode{}
+	consensusNode.VertexId = nil
+	return consensusNode
 }
 
 func (consensusServiceNode *ConsensusServiceNode) HandleReceive(message *common.MessageEvent) common.MessageEvent {
@@ -29,21 +36,46 @@ func (consensusServiceNode *ConsensusServiceNode) ReachConsensus() bool {
 	return true
 }
 
-func ProcessConsensusMessage(m *nats.Msg, nc *nats.Conn, ctx context.Context, cons *ConsensusServiceNode) {
+func (consensusServiceNode *ConsensusServiceNode) ProcessConsensusMessage(m *nats.Msg, nc *nats.Conn, ctx context.Context, cons *ConsensusServiceNode) {
 	fmt.Println("Received proposer to consensus")
-	data := common.MessageEvent{}
-	json.Unmarshal(m.Data, &data)
-	newMessage := cons.HandleReceive(&data)
-	sentMessage, err := json.Marshal(&newMessage)
-
-	if err == nil {
-		fmt.Println("consensus can publish a message to proposer")
-		messenger.PublishNatsMessage(ctx, nc, common.CONSENSUS_TO_PROPOSER, sentMessage)
-
-	} else {
-		fmt.Println("json marshal failed")
-		fmt.Println(err.Error())
+	data := common.ConsensusMessage{}
+	err := json.Unmarshal(m.Data, &data)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"err":            err.Error(),
+		}).Error("error unmarshal message from proposer")
+		return
 	}
+
+	if consensusServiceNode.VertexId == nil {
+		consensusServiceNode.VertexId = data.VertexId
+		sub := fmt.Sprintf("%s%d", common.CONSENSUS_TO_PROPOSER, data.ProposerId)
+
+		sentMessage, err := json.Marshal(&data.VertexId)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"err":            err.Error(),
+			}).Error("error marshal consensus vertex message")
+			return
+		}
+		messenger.PublishNatsMessage(ctx, nc, sub, sentMessage)
+	} else {
+		// release vote
+		if (consensusServiceNode.VertexId.Index == data.VertexId.Index) && (consensusServiceNode.VertexId.Id == data.VertexId.Id) && (data.Release == 1) {
+			consensusServiceNode.VertexId = nil
+		}
+	}
+	// newMessage := cons.HandleReceive(&data)
+	// sentMessage, err := json.Marshal(&newMessage)
+
+	// if err == nil {
+	// 	fmt.Println("consensus can publish a message to proposer")
+	// 	messenger.PublishNatsMessage(ctx, nc, common.CONSENSUS_TO_PROPOSER, sentMessage)
+
+	// } else {
+	// 	fmt.Println("json marshal failed")
+	// 	fmt.Println(err.Error())
+	// }
 }
 
 func StartConsensus(ctx context.Context, nc *nats.Conn) {
@@ -67,7 +99,7 @@ func StartConsensus(ctx context.Context, nc *nats.Conn) {
 		for {
 			select {
 			case natsMsg = <-NatsMessage:
-				ProcessConsensusMessage(natsMsg, nc, ctx, cons)
+				cons.ProcessConsensusMessage(natsMsg, nc, ctx, cons)
 			}
 		}
 	}(nc, &cons)
