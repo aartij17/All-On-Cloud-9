@@ -3,6 +3,7 @@ package main
 import (
 	"All-On-Cloud-9/bpaxos"
 	"All-On-Cloud-9/common"
+	"All-On-Cloud-9/messenger"
 	"github.com/nats-io/nats.go"
 	"context"
 	"All-On-Cloud-9/config"
@@ -64,14 +65,22 @@ func main() {
 
 	config.LoadConfig(ctx, "config/config.json")
 
-	bpaxos.SetupBPaxos(ctx, true)
+	nc, err := messenger.NatsConnect(ctx)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err.Error(),
+		}).Error("error Replica connecting to nats server")
+		return
+	}
+
+	bpaxos.SetupBPaxos(ctx, nc, true, true, true, true, true)
 	time.Sleep(20000 * time.Millisecond)
 	fmt.Println("Starting. Please work")
 	socket := Socket{}
 	_ = socket.Connect(nats.DefaultURL)
 	socket.Publish(common.NATS_CONSENSUS_INITIATE_MSG, []byte("bitch"))
-	// socket.Publish(LeaderToProposer, sentMessage)
-	// socket.Publish(ProposerToReplica, sentMessage)
+	// socket.Publish(LEADER_TO_PROPOSER, sentMessage)
+	// socket.Publish(PROPOSER_TO_REPLICA, sentMessage)
 	socket.Subscribe(common.NATS_CONSENSUS_DONE, func(m *nats.Msg) {
 		fmt.Println("Received")
 	})

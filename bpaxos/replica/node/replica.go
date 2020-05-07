@@ -10,14 +10,13 @@ import (
 	"context"
 	"os"
 	"os/signal"
-	"github.com/hashicorp/terraform/dag"
+	// "github.com/hashicorp/terraform/dag"
 )
-var (
-	m = make(map[string]string)
-)
+// var (
+// 	m = make(map[string]string)
+// )
 
 type Replica struct {
-	Graph       dag.AcyclicGraph
 	NumReplicas int
 }
 
@@ -36,13 +35,13 @@ func (replica *Replica) HandleReceive(message *common.MessageEvent) string {
 func (replica *Replica) AddDepsToGraph(message *common.MessageEvent) {
 	fmt.Println("add dependency to graph")
 	// newNode := &GraphNode {VertexId:message.VertexId.Id, LeaderIndex:message.VertexId.Index, Message:message.Message}
-	strkey := fmt.Sprintf("%d:%d", message.VertexId.Id, message.VertexId.Index)
-	m[strkey] = message.Message
-	replica.Graph.add(strkey)
-	for index, dep := range message.Deps {
-		strkeyDep := fmt.Sprintf("%d:%d", dep.VertexId.Id, dep.VertexId.Index)
-		replica.Graph.Connect(BasicEdge(strkeyDep, strkey))
-	}
+	// strkey := fmt.Sprintf("%d:%d", message.VertexId.Id, message.VertexId.Index)
+	// m[strkey] = message.Message
+	// replica.Graph.add(strkey)
+	// for index, dep := range message.Deps {
+	// 	strkeyDep := fmt.Sprintf("%d:%d", dep.VertexId.Id, dep.VertexId.Index)
+	// 	replica.Graph.Connect(BasicEdge(strkeyDep, strkey))
+	// }
 
 }
 
@@ -57,44 +56,46 @@ func (replica *Replica) ExecVertices() string {
 	}
 }
 
-func StartReplica(ctx context.Context) {
-	nc, err := messenger.NatsConnect(ctx)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"error": err.Error(),
-		}).Error("error Replica connecting to nats server")
-		return
+func ProcessReplicaMessage(m *nats.Msg, nc *nats.Conn, ctx context.Context, rep *Replica) {
+	fmt.Println("Received proposer to replica")
+	data := common.MessageEvent{}
+	json.Unmarshal(m.Data, &data)
+	newMessage := rep.HandleReceive(&data)
+	sentMessage, err := json.Marshal(&newMessage)
+	// Respond back to the client
+	if err == nil {
+		fmt.Println("leader can publish a message to deps")
+		messenger.PublishNatsMessage(ctx, nc, common.NATS_CONSENSUS_DONE, sentMessage)
+
+	} else {
+		fmt.Println("json marshal failed")
+		fmt.Println(err.Error())
 	}
+}
+
+func StartReplica(ctx context.Context, nc *nats.Conn) {
 
 	rep := Replica{}
 	go func(nc *nats.Conn, rep *Replica) {
-		_, err = nc.Subscribe(common.ProposerToReplica, func(m *nats.Msg) {
-			fmt.Println("Received proposer to replica")
-			data := common.MessageEvent{}
-			json.Unmarshal(m.Data, &data)
-			newMessage := rep.HandleReceive(&data)
-			sentMessage, err := json.Marshal(&newMessage)
-			// Respond back to the client
-			if err == nil {
-				fmt.Println("leader can publish a message to deps")
-				err = nc.Publish(common.NATS_CONSENSUS_DONE, sentMessage)
-				if err != nil {
-					log.WithFields(log.Fields{
-						"error": err.Error(),
-					}).Error("error publish NATS_CONSENSUS_DONE")
-				}
-			} else {
-				fmt.Println("json marshal failed")
-				fmt.Println(err.Error())
-			}
-
-		})
+		NatsMessage := make(chan *nats.Msg)
+		err := messenger.SubscribeToInbox(ctx, nc, common.PROPOSER_TO_REPLICA, NatsMessage)
+	
 		if err != nil {
 			log.WithFields(log.Fields{
 				"error": err.Error(),
-			}).Error("error subscribe ProposerToReplica")
+			}).Error("error subscribe PROPOSER_TO_REPLICA")
+		}
+		var (
+			natsMsg *nats.Msg
+		)
+		for {
+			select {
+			case natsMsg = <-NatsMessage:
+				ProcessReplicaMessage(natsMsg, nc, ctx, rep)
+			}
 		}
 	}(nc, &rep)
+
 	signalChan := make(chan os.Signal, 1)
 	cleanupDone := make(chan bool)
 	signal.Notify(signalChan, os.Interrupt)

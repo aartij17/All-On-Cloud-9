@@ -42,7 +42,7 @@ func (depsServiceNode *DepsServiceNode) HandleReceive(message *common.MessageEve
 	deps := depsServiceNode.ComputeConflictingMessages(message)
 
 	// Append message to Cmds if it is not already inside
-	key := Messagekey{message.VertexId, message.Message}
+	key := Messagekey{message.VertexId, string(message.Message)}
 	if !depsServiceNode.CmdsMap[key] {
 		depsServiceNode.Cmds = append(depsServiceNode.Cmds, message)
 		depsServiceNode.CmdsMap[key] = true
@@ -55,48 +55,47 @@ func (depsServiceNode *DepsServiceNode) HandleReceive(message *common.MessageEve
 
 }
 
-func (depsServiceNode *DepsServiceNode) Stub() {
-	fmt.Println("Dependency Service Node: STUB PLS REMOVE")
+func ProcessDepMessage(m *nats.Msg, nc *nats.Conn, ctx context.Context, dep_node *DepsServiceNode) {
+	fmt.Println("Received leader to deps")
+	data := common.MessageEvent{}
+	json.Unmarshal(m.Data, &data)
+	newMessage := dep_node.HandleReceive(&data)
+	sentMessage, err := json.Marshal(&newMessage)
+
+	if err == nil {
+		fmt.Println("deps can publish a message to leader")
+		messenger.PublishNatsMessage(ctx, nc, common.DEPS_TO_LEADER, sentMessage)
+	
+	} else {
+		fmt.Println("json marshal failed")
+		fmt.Println(err.Error())
+	}
 }
 
-func StartDependencyService(ctx context.Context) {
-	nc, err := messenger.NatsConnect(ctx)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"error": err.Error(),
-		}).Error("error DependencyService connecting to nats server")
-		return
-	}
+func StartDependencyService(ctx context.Context, nc *nats.Conn) {
 	dependency_node := NewDepsServiceNode()
 	// dependency_node.Stub()
 	go func(nc *nats.Conn, dep_node *DepsServiceNode) {
-		_, err = nc.Subscribe(common.LeaderToDeps, func(m *nats.Msg) {
-			fmt.Println("Received leader to deps")
-			data := common.MessageEvent{}
-			json.Unmarshal(m.Data, &data)
-			newMessage := dep_node.HandleReceive(&data)
-			sentMessage, err := json.Marshal(&newMessage)
+		NatsMessage := make(chan *nats.Msg)
+		err := messenger.SubscribeToInbox(ctx, nc, common.LEADER_TO_DEPS, NatsMessage)
 
-			if err == nil {
-				fmt.Println("deps can publish a message to leader")
-				err = nc.Publish(common.DepsToLeader, sentMessage)
-				if err != nil {
-					log.WithFields(log.Fields{
-						"error": err.Error(),
-					}).Error("error publish DepsToLeader")
-				}
-			} else {
-				fmt.Println("json marshal failed")
-				fmt.Println(err.Error())
-			}
-
-		})
 		if err != nil {
 			log.WithFields(log.Fields{
 				"error": err.Error(),
-			}).Error("error subscribe LeaderToDeps")
+			}).Error("error subscribe LEADER_TO_DEPS")
+		}
+
+		var (
+			natsMsg *nats.Msg
+		)
+		for {
+			select {
+			case natsMsg = <-NatsMessage:
+				ProcessDepMessage(natsMsg, nc, ctx, dep_node)
+			}
 		}
 	}(nc, &dependency_node)
+
 	signalChan := make(chan os.Signal, 1)
 	cleanupDone := make(chan bool)
 	signal.Notify(signalChan, os.Interrupt)

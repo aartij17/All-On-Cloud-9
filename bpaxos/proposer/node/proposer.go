@@ -22,47 +22,58 @@ func (proposer *Proposer) SendResult(message *common.MessageEvent) {
 	fmt.Println("send consensus result")
 }
 
-func StartProposer(ctx context.Context) {
-	nc, err := messenger.NatsConnect(ctx)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"error": err.Error(),
-		}).Error("error Proposer connecting to nats server")
-		return
-	}
+func ProcessMessageFromLeader(m *nats.Msg, nc *nats.Conn, ctx context.Context) {
+	fmt.Println("Received leader to proposer")
+	messenger.PublishNatsMessage(ctx, nc, common.PROPOSER_TO_CONSENSUS, m.Data)
+}
+
+func ProcessMessageFromConsensus(m *nats.Msg, nc *nats.Conn, ctx context.Context) {
+	fmt.Println("Received consensus to proposer")
+	messenger.PublishNatsMessage(ctx, nc, common.PROPOSER_TO_REPLICA, m.Data)
+}
+
+func StartProposer(ctx context.Context, nc *nats.Conn) {
 	p := Proposer{}
 
 	go func(nc *nats.Conn, proposer *Proposer) {
-		_, err = nc.Subscribe(common.LeaderToProposer, func(m *nats.Msg) {
-			fmt.Println("Received leader to proposer")
-			err = nc.Publish(common.ProposerToConsensus, m.Data)
-			if err != nil {
-				log.WithFields(log.Fields{
-					"error": err.Error(),
-				}).Error("error publish ProposerToConsensus")
-			}
-		})
+		NatsMessage := make(chan *nats.Msg)
+		err := messenger.SubscribeToInbox(ctx, nc, common.LEADER_TO_PROPOSER, NatsMessage)
+
 		if err != nil {
 			log.WithFields(log.Fields{
 				"error": err.Error(),
-			}).Error("error subscribe LeaderToProposer")
+			}).Error("error subscribe LEADER_TO_PROPOSER")
+		}
+
+		var (
+			natsMsg *nats.Msg
+		)
+		for {
+			select {
+			case natsMsg = <-NatsMessage:
+				ProcessMessageFromLeader(natsMsg, nc, ctx)
+			}
 		}
 	}(nc, &p)
 
 	go func(nc *nats.Conn, proposer *Proposer) {
-		_, err = nc.Subscribe(common.ConsensusToProposer, func(m *nats.Msg) {
-			fmt.Println("Received consensus to proposer")
-			err = nc.Publish(common.ProposerToReplica, m.Data)
-			if err != nil {
-				log.WithFields(log.Fields{
-					"error": err.Error(),
-				}).Error("error publish ProposerToReplica")
-			}
-		})
+		NatsMessage := make(chan *nats.Msg)
+		err := messenger.SubscribeToInbox(ctx, nc, common.CONSENSUS_TO_PROPOSER, NatsMessage)
+
 		if err != nil {
 			log.WithFields(log.Fields{
 				"error": err.Error(),
-			}).Error("error subscribe ConsensusToProposer")
+			}).Error("error subscribe CONSENSUS_TO_PROPOSER")
+		}
+
+		var (
+			natsMsg *nats.Msg
+		)
+		for {
+			select {
+			case natsMsg = <-NatsMessage:
+				ProcessMessageFromConsensus(natsMsg, nc, ctx)
+			}
 		}
 	}(nc, &p)
 	signalChan := make(chan os.Signal, 1)

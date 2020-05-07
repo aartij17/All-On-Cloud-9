@@ -2,7 +2,7 @@ package common
 
 type MessageEvent struct {
 	VertexId *Vertex   `json:"vertex"`
-	Message  string    `json:"message"`
+	Message  []byte    `json:"message"`
 	Deps     []*Vertex `json:"dependency,omitempty"`
 }
 

@@ -6,6 +6,7 @@ import (
 	"All-On-Cloud-9/bpaxos/leader/node"
 	"All-On-Cloud-9/bpaxos/proposer/node"
 	"All-On-Cloud-9/bpaxos/replica/node"
+	"github.com/nats-io/nats.go"
 	"context"
 )
 
@@ -15,15 +16,26 @@ var (
 	leader_count = 0
 )
 
-func SetupBPaxos(ctx context.Context, isPrimary bool) {
+func SetupBPaxos(ctx context.Context, nc *nats.Conn, runConsensus bool, runDep bool, runLeader bool, runProposer bool, runReplica bool) {
 
-	if isPrimary {
-		go leadernode.StartLeader(ctx,leader_count)
-		go proposer.StartProposer(ctx)
+	if runLeader {
+		go leadernode.StartLeader(ctx, nc, leader_count)
 		leader_count += 1
 	}
 
-	go depsnode.StartDependencyService(ctx)
-	go consensus.StartConsensus(ctx)
-	go replica.StartReplica(ctx)
+	if runProposer {
+		go proposer.StartProposer(ctx, nc)
+	}
+	
+	if runDep {
+		go depsnode.StartDependencyService(ctx, nc)
+	}
+
+	if runConsensus {
+		go consensus.StartConsensus(ctx, nc)
+	}
+
+	if runReplica {
+		go replica.StartReplica(ctx, nc)
+	}
 }
