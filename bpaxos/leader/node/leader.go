@@ -88,36 +88,36 @@ func (leader *Leader) GetMessagesLen() int {
 	return len(leader.messages)
 }
 
-func ProcessMessageFromDeps(m *nats.Msg, nc *nats.Conn, ctx context.Context, l Leader) {
-	fmt.Println("Received deps to leader")
-	data := common.MessageEvent{}
-	json.Unmarshal(m.Data, &data)
-	l.AddToMessages(&data)
-	if l.GetMessagesLen() > common.F {
-		newMessageEvent := l.HandleReceiveDeps()
+// func ProcessMessageFromDeps(m *nats.Msg, nc *nats.Conn, ctx context.Context, l Leader) {
+// 	fmt.Println("Received deps to leader")
+// 	data := common.MessageEvent{}
+// 	json.Unmarshal(m.Data, &data)
+// 	l.AddToMessages(&data)
+// 	if l.GetMessagesLen() > common.F {
+// 		newMessageEvent := l.HandleReceiveDeps()
 		
-		sentMessage, err := json.Marshal(&newMessageEvent)
-		if err == nil {
-			fmt.Println("leader can publish a message to proposer")
-			messenger.PublishNatsMessage(ctx, nc, common.LEADER_TO_PROPOSER, sentMessage)
-			// messenger.PublishNatsMessage(ctx, nc, common.NATS_CONSENSUS_DONE, sentMessage)
+// 		sentMessage, err := json.Marshal(&newMessageEvent)
+// 		if err == nil {
+// 			fmt.Println("leader can publish a message to proposer")
+// 			messenger.PublishNatsMessage(ctx, nc, common.LEADER_TO_PROPOSER, sentMessage)
+// 			// messenger.PublishNatsMessage(ctx, nc, common.NATS_CONSENSUS_DONE, sentMessage)
 			
-		} else {
-			fmt.Println("json marshal failed")
-			fmt.Println(err.Error())
-		}
-		// should we flush when it fails?
-		l.FlushMessages()
-	}
-}
+// 		} else {
+// 			fmt.Println("json marshal failed")
+// 			fmt.Println(err.Error())
+// 		}
+// 		// should we flush when it fails?
+// 		l.FlushMessages()
+// 	}
+// }
 
 func ProcessMessageFromClient(m *nats.Msg, nc *nats.Conn, ctx context.Context, leader *Leader) {
 	fmt.Println("Received client to leader")
 	newMessage := leader.HandleReceiveCommand(m.Data)
 	sentMessage, err := json.Marshal(&newMessage)
 	if err == nil {
-		fmt.Println("leader can publish a message to deps")
-		messenger.PublishNatsMessage(ctx, nc, common.LEADER_TO_DEPS, sentMessage)
+		fmt.Println("leader can publish a message to proposer")
+		messenger.PublishNatsMessage(ctx, nc, common.LEADER_TO_PROPOSER, sentMessage)
 		// messenger.PublishNatsMessage(ctx, nc, common.NATS_CONSENSUS_DONE, sentMessage)
 	
 	} else {
@@ -129,26 +129,26 @@ func ProcessMessageFromClient(m *nats.Msg, nc *nats.Conn, ctx context.Context, l
 func StartLeader(ctx context.Context, nc *nats.Conn, leaderindex int) {
 	l := NewLeader(leaderindex) // Hard Coded User Id.
 
-	go func(nc *nats.Conn, leader *Leader) {
-		NatsMessage := make(chan *nats.Msg)
-		err := messenger.SubscribeToInbox(ctx, nc, common.DEPS_TO_LEADER, NatsMessage) 
+	// go func(nc *nats.Conn, leader *Leader) {
+	// 	NatsMessage := make(chan *nats.Msg)
+	// 	err := messenger.SubscribeToInbox(ctx, nc, common.DEPS_TO_LEADER, NatsMessage) 
 			
-		if err != nil {
-			log.WithFields(log.Fields{
-				"error": err.Error(),
-			}).Error("error subscribe DEPS_TO_LEADER")
-		}
+	// 	if err != nil {
+	// 		log.WithFields(log.Fields{
+	// 			"error": err.Error(),
+	// 		}).Error("error subscribe DEPS_TO_LEADER")
+	// 	}
 
-		var (
-			natsMsg *nats.Msg
-		)
-		for {
-			select {
-			case natsMsg = <-NatsMessage:
-				ProcessMessageFromDeps(natsMsg, nc, ctx, l)
-			}
-		}
-	}(nc, &l)
+	// 	var (
+	// 		natsMsg *nats.Msg
+	// 	)
+	// 	for {
+	// 		select {
+	// 		case natsMsg = <-NatsMessage:
+	// 			ProcessMessageFromDeps(natsMsg, nc, ctx, l)
+	// 		}
+	// 	}
+	// }(nc, &l)
 
 	go func(nc *nats.Conn, leader *Leader) {
 		NatsMessage := make(chan *nats.Msg)

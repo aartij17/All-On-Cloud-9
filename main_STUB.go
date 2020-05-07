@@ -73,7 +73,7 @@ func main() {
 		return
 	}
 
-	bpaxos.SetupBPaxos(ctx, nc, true, true, true, true, true)
+	bpaxos.SetupBPaxos(ctx, nc, true, true, true, true)
 	time.Sleep(20000 * time.Millisecond)
 	fmt.Println("Starting. Please work")
 	socket := Socket{}
