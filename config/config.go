@@ -15,13 +15,11 @@ const (
 	APP_SUPPLIER     = "APP_SUPPLIER"
 	APP_BUYER        = "APP_BUYER"
 	APP_CARRIER      = "APP_CARRIER"
-	APP_MIDDLEMAN    = "APP_MIDDLEMAN"
 
 	MA_NODE = "MA_NODE_%d"
 	S_NODE  = "S_NODE_%d"
 	B_NODE  = "B_NODE_%d"
 	C_NODE  = "C_NODE_%d"
-	MI_NODE = "MI_NODE_%d"
 
 	// ORDERER nodes which are NOT part of the agents serving the applications
 	ORDERER1 = 1
@@ -34,7 +32,6 @@ var (
 	SUPPLIER_NODES     []string
 	BUYER_NODES        []string
 	CARRIER_NODES      []string
-	MIDDLEMAN_NODES    []string
 
 	APP_ORDERERS = [...]int{ORDERER1, ORDERER2, ORDERER3}
 
@@ -76,14 +73,12 @@ func initNodeIds() {
 		SUPPLIER_NODES = append(SUPPLIER_NODES, fmt.Sprintf(S_NODE, i))
 		BUYER_NODES = append(BUYER_NODES, fmt.Sprintf(B_NODE, i))
 		CARRIER_NODES = append(CARRIER_NODES, fmt.Sprintf(C_NODE, i))
-		MIDDLEMAN_NODES = append(MIDDLEMAN_NODES, fmt.Sprintf(MI_NODE, i))
 	}
 	log.WithFields(log.Fields{
 		"manufacturer": MANUFACTURER_NODES,
 		"supplier":     SUPPLIER_NODES,
 		"buyer":        BUYER_NODES,
 		"carrier":      CARRIER_NODES,
-		"middleman":    MIDDLEMAN_NODES,
 	}).Info("initialized all app nodes with their app IDs")
 }
 

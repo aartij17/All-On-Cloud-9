@@ -33,8 +33,6 @@ func getNodeId(appName string, nodeIdNum int) string {
 		return fmt.Sprintf(config.MA_NODE, nodeIdNum)
 	case config.APP_SUPPLIER:
 		return fmt.Sprintf(config.S_NODE, nodeIdNum)
-	case config.APP_MIDDLEMAN:
-		return fmt.Sprintf(config.MI_NODE, nodeIdNum)
 	case config.APP_CARRIER:
 		return fmt.Sprintf(config.C_NODE, nodeIdNum)
 	case config.APP_BUYER:
@@ -50,8 +48,8 @@ func main() {
 		configFilePath string
 	)
 	flag.IntVar(&nodeIdNum, "nodeId", 1, "node ID(1, 2, 3, 4)")
-	flag.StringVar(&appName, "appName", config.APP_MANUFACTURER, fmt.Sprintf("apps - %s, %s, %s, %s, %s",
-		config.APP_MANUFACTURER, config.APP_BUYER, config.APP_CARRIER, config.APP_MIDDLEMAN, config.APP_SUPPLIER))
+	flag.StringVar(&appName, "appName", config.APP_MANUFACTURER, fmt.Sprintf("apps - %s, %s, %s, %s",
+		config.APP_MANUFACTURER, config.APP_BUYER, config.APP_CARRIER, config.APP_SUPPLIER))
 	flag.StringVar(&configFilePath, "configFilePath", "", "")
 	if configFilePath == "" {
 		log.Error("invalid config file path found, exiting now")
