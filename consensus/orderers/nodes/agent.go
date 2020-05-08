@@ -1,11 +1,13 @@
 package nodes
 
 import (
+	"All-On-Cloud-9/bpaxos"
 	"All-On-Cloud-9/common"
 	"All-On-Cloud-9/messenger"
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/nats-io/nats.go"
 
@@ -13,8 +15,12 @@ import (
 )
 
 var (
-	NatsOrdMessage = make(chan *nats.Msg)
-	ONode          *Orderer
+	NatsOrdMessage        = make(chan *nats.Msg)
+	GlobalConsensusDone   = make(chan *nats.Msg)
+	ONode                 *Orderer
+	numOrderMessagesRecvd = 0
+	numSyncMessagesRecvd  = 0
+	consensusTimeout      = 20 * time.Second
 )
 
 type Orderer struct {
@@ -23,11 +29,19 @@ type Orderer struct {
 	NatsConn  *nats.Conn `json:"nats_connection"`
 }
 
-//ctx, nodeId, appName, nodeIdNum
 func CreateOrderer(ctx context.Context, nodeId int) error {
-	isPrimary := false
+	var (
+		isPrimary    = false
+		runConsensus = false
+		runLeader    = false
+		runProposer  = false
+		runReplica   = false
+	)
 	if nodeId == 1 {
 		isPrimary = true
+		runLeader = true
+	} else {
+		runConsensus = true
 	}
 	log.WithFields(log.Fields{
 		"id":        nodeId,
@@ -47,6 +61,7 @@ func CreateOrderer(ctx context.Context, nodeId int) error {
 		IsPrimary: isPrimary,
 		NatsConn:  nc,
 	}
+	bpaxos.SetupBPaxos(ctx, ONode.NatsConn, runConsensus, runLeader, runProposer, runReplica)
 	go ONode.StartOrdListener(ctx)
 	return nil
 }
@@ -55,6 +70,23 @@ func CreateOrderer(ctx context.Context, nodeId int) error {
 func (o *Orderer) startNatsConsumers(ctx context.Context) {
 	for i := range common.NATS_ORDERER_SUBJECTS {
 		_ = messenger.SubscribeToInbox(ctx, o.NatsConn, common.NATS_ORDERER_SUBJECTS[i], NatsOrdMessage)
+	}
+	_ = messenger.SubscribeToInbox(ctx, o.NatsConn, common.NATS_CONSENSUS_DONE_MSG, GlobalConsensusDone)
+}
+
+func (o *Orderer) initiateGlobalConsensus(ctx context.Context, natsMsg []byte) {
+	messenger.PublishNatsMessage(ctx, o.NatsConn, common.NATS_CONSENSUS_INITIATE_MSG, natsMsg)
+	// start a timer and wait for the global consensus to get over.
+	timer := time.NewTimer(consensusTimeout)
+	for {
+		select {
+		case <-timer.C:
+			log.WithFields(log.Fields{
+				"orderer_id": o.Id,
+			}).Error("global consensus timeout!, no message recvd")
+		case <-GlobalConsensusDone:
+			messenger.PublishNatsMessage(ctx, o.NatsConn, common.NATS_ORD_SYNC, natsMsg)
+		}
 	}
 }
 
@@ -71,9 +103,24 @@ func (o *Orderer) StartOrdListener(ctx context.Context) {
 			_ = json.Unmarshal(natsMsg.Data, &msg)
 			switch natsMsg.Subject {
 			case common.NATS_ORD_ORDER:
-				continue
+				if numOrderMessagesRecvd > common.F && o.IsPrimary {
+					// sufficient number of ORDER messages received, initiate global consensus
+					o.initiateGlobalConsensus(ctx, natsMsg.Data)
+					numOrderMessagesRecvd = 0
+				} else {
+					numOrderMessagesRecvd += 1
+				}
 			case common.NATS_ORD_SYNC:
-				continue
+				// either the sync message is from a `majority` of orderer nodes, OR
+				// it is from the primary orderer node, both are acceptable
+				if msg.IsFromPrimary || (numSyncMessagesRecvd > common.F && o.IsPrimary) {
+					// tell all the application nodes that the transaction can be added to the
+					// blockchain
+					messenger.PublishNatsMessage(ctx, o.NatsConn, common.NATS_ADD_TO_BC, natsMsg.Data)
+					numSyncMessagesRecvd = 0
+				} else {
+					numSyncMessagesRecvd += 1
+				}
 			}
 		}
 	}

@@ -3,6 +3,7 @@ package nodes
 import (
 	"All-On-Cloud-9/common"
 	"All-On-Cloud-9/config"
+	"All-On-Cloud-9/consensus/orderers/nodes"
 	"All-On-Cloud-9/messenger"
 	"All-On-Cloud-9/server/application"
 	"All-On-Cloud-9/server/blockchain"
@@ -34,12 +35,13 @@ type Server struct {
 	LocalConsensusComplete chan bool
 }
 
-func (server *Server) startNatsConsumer(ctx context.Context) {
+func (server *Server) startNatsSubscriber(ctx context.Context) {
 	// this will receive the request message from other applications
 	_ = messenger.SubscribeToInbox(ctx, server.NatsConn, common.NATS_ORD_REQUEST, AppServerNatsChan)
 
 	// subscribe to the NATS inbox for messages from the BPAXOS module
 	_ = messenger.SubscribeToInbox(ctx, server.NatsConn, common.NATS_CONSENSUS_DONE_MSG, AppServerNatsChan)
+	_ = messenger.SubscribeToInbox(ctx, server.NatsConn, common.NATS_ADD_TO_BC, AppServerNatsChan)
 }
 
 func (server *Server) initiateLocalGlobalConsensus(ctx context.Context, fromNodeId string, msg []byte) {
@@ -53,13 +55,25 @@ func (server *Server) initiateLocalGlobalConsensus(ctx context.Context, fromNode
 	// TODO: [Aarti]: Check if the message is valid -- check the signature
 	// TODO: Initiate local consensus - Make sure that true is published to LocalConsensusCompleteChannel
 	<-server.LocalConsensusComplete
+	server.postLocalConsensusProcess(ctx, msg)
 	// initiate global consensus
 	messenger.PublishNatsMessage(ctx, server.NatsConn, common.NATS_CONSENSUS_INITIATE_MSG, msg)
 }
 
-func (server *Server) postConsensusProcessTxn(ctx context.Context, natsMsg *nats.Msg) {
-	// 1. Check the contract if the transaction is legal
-	// 2. Add the transaction to the blockchain
+// postConsensusProcessTxn is called once the local consensus has been reached by the nodes.
+func (server *Server) postLocalConsensusProcess(ctx context.Context, msg []byte) {
+	// send ORDER message to the primary of the orderer node
+	message := nodes.Message{
+		MessageType: common.O_ORDER,
+		Timestamp:   0,
+		Transaction: nil, //TODO: [Aarti] Set the right transaction here
+		Digest:      "",
+		Hash:        "",
+		FromNodeId:  server.Id,
+		FromNodeNum: server.ServerNumId,
+	}
+	jMsg, _ := json.Marshal(message)
+	messenger.PublishNatsMessage(ctx, server.NatsConn, common.NATS_ORD_ORDER, jMsg)
 }
 
 func (server *Server) startNatsListener(ctx context.Context) {
@@ -67,7 +81,7 @@ func (server *Server) startNatsListener(ctx context.Context) {
 		natsMsg *nats.Msg
 		msg     *common.Message
 	)
-	server.startNatsConsumer(ctx)
+	server.startNatsSubscriber(ctx)
 	for {
 		select {
 		case natsMsg = <-AppServerNatsChan:
@@ -76,7 +90,10 @@ func (server *Server) startNatsListener(ctx context.Context) {
 				_ = json.Unmarshal(natsMsg.Data, &msg)
 				server.initiateLocalGlobalConsensus(ctx, msg.FromNodeId, natsMsg.Data)
 			case common.NATS_CONSENSUS_DONE_MSG:
-				server.postConsensusProcessTxn(ctx, natsMsg)
+				log.Debug("NATS_CONSENSUS_DONE_MSG_RCVD, nothing to do")
+			case common.NATS_ADD_TO_BC:
+				// TODO: [Aarti] Take care of this FIRST!!
+				//server.AddNewBlock()
 			}
 		}
 	}
