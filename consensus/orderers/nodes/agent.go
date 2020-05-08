@@ -78,6 +78,13 @@ func (o *Orderer) initiateGlobalConsensus(ctx context.Context, natsMsg []byte) {
 	messenger.PublishNatsMessage(ctx, o.NatsConn, common.NATS_CONSENSUS_INITIATE_MSG, natsMsg)
 	// start a timer and wait for the global consensus to get over.
 	timer := time.NewTimer(consensusTimeout)
+
+	// change the message type to O_SYNC before publishing it to the other applications.
+	var newMsg *Message
+	_ = json.Unmarshal(natsMsg, &newMsg)
+	newMsg.MessageType = common.O_SYNC
+	natsMsg, _ = json.Marshal(newMsg)
+
 	for {
 		select {
 		case <-timer.C:
@@ -95,7 +102,6 @@ func (o *Orderer) StartOrdListener(ctx context.Context) {
 	var (
 		natsMsg *nats.Msg
 		msg     *Message
-		_       error
 	)
 	for {
 		select {

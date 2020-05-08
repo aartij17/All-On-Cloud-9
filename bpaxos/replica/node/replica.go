@@ -76,7 +76,6 @@ func ProcessReplicaMessage(m *nats.Msg, nc *nats.Conn, ctx context.Context, rep 
 }
 
 func StartReplica(ctx context.Context, nc *nats.Conn) {
-
 	rep := Replica{}
 	go func(nc *nats.Conn, rep *Replica) {
 		NatsMessage := make(chan *nats.Msg)

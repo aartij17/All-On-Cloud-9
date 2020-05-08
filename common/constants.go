@@ -1,11 +1,13 @@
 package common
 
 const (
+	LAMBDA_BLOCK = "XXX"
+
 	INTERNAL_TXN  = "INTERNAL_TXN"
 	CROSS_APP_TXN = "CROSS_APPLICATION_TXN"
 
-	LOCAL_TXN_NUM  = "LTXN-%d%d"
-	GLOBAL_TXN_NUM = "GTXN-%d%d-%d"
+	LOCAL_BLOCK_NUM  = "LOCAL_BLOCK-%d%d"
+	GLOBAL_BLOCK_NUM = "GLOBAL_BLOCK-%d%d-%d"
 
 	// Orderer Message Types
 	O_REQUEST = "REQUEST"
@@ -15,7 +17,6 @@ const (
 	// -------------- inter application messages --------------
 	// Message from primary agent of the sender application to the receiver application
 	NATS_ORD_REQUEST = "NATS_ORDERER_REQUEST"
-	NATS_APPS_TXN    = "NATS_APP_TXN"
 
 	// NATS inbox messages
 	// ORDERER MESSAGES

@@ -11,15 +11,12 @@ import (
 )
 
 const (
-	APP_MANUFACTURER = "APP_MANUFACTURER"
-	APP_SUPPLIER     = "APP_SUPPLIER"
-	APP_BUYER        = "APP_BUYER"
-	APP_CARRIER      = "APP_CARRIER"
+	APP_MANUFACTURER = "MANUFACTURER"
+	APP_SUPPLIER     = "SUPPLIER"
+	APP_BUYER        = "BUYER"
+	APP_CARRIER      = "CARRIER"
 
-	MA_NODE = "MA_NODE_%d"
-	S_NODE  = "S_NODE_%d"
-	B_NODE  = "B_NODE_%d"
-	C_NODE  = "C_NODE_%d"
+	NODE_NAME = "%s_%d"
 
 	// ORDERER nodes which are NOT part of the agents serving the applications
 	ORDERER1 = 1
@@ -69,10 +66,10 @@ type Config struct {
 
 func initNodeIds() {
 	for i := 0; i < 5; i++ {
-		MANUFACTURER_NODES = append(MANUFACTURER_NODES, fmt.Sprintf(MA_NODE, i))
-		SUPPLIER_NODES = append(SUPPLIER_NODES, fmt.Sprintf(S_NODE, i))
-		BUYER_NODES = append(BUYER_NODES, fmt.Sprintf(B_NODE, i))
-		CARRIER_NODES = append(CARRIER_NODES, fmt.Sprintf(C_NODE, i))
+		MANUFACTURER_NODES = append(MANUFACTURER_NODES, fmt.Sprintf(NODE_NAME, APP_MANUFACTURER, i))
+		SUPPLIER_NODES = append(SUPPLIER_NODES, fmt.Sprintf(NODE_NAME, APP_SUPPLIER, i))
+		BUYER_NODES = append(BUYER_NODES, fmt.Sprintf(NODE_NAME, APP_BUYER, i))
+		CARRIER_NODES = append(CARRIER_NODES, fmt.Sprintf(NODE_NAME, APP_CARRIER, i))
 	}
 	log.WithFields(log.Fields{
 		"manufacturer": MANUFACTURER_NODES,
