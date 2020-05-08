@@ -67,7 +67,7 @@ func ProcessReplicaMessage(m *nats.Msg, nc *nats.Conn, ctx context.Context, rep 
 	// Respond back to the client
 	if err == nil {
 		fmt.Println("leader can publish a message to deps")
-		messenger.PublishNatsMessage(ctx, nc, common.NATS_CONSENSUS_DONE, sentMessage)
+		messenger.PublishNatsMessage(ctx, nc, common.NATS_CONSENSUS_DONE_MSG, sentMessage)
 
 	} else {
 		fmt.Println("json marshal failed")
