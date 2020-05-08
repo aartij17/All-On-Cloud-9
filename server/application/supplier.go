@@ -33,6 +33,10 @@ func (s *Supplier) subToInterAppNats(ctx context.Context, nc *nats.Conn) {
 	}
 }
 
+func (s *Supplier) processTxn(ctx context.Context, msg *common.Message) {
+
+}
+
 func StartSupplierApplication(ctx context.Context, nc *nats.Conn) {
 	supplier = &Supplier{
 		ContractValid: make(chan bool),
