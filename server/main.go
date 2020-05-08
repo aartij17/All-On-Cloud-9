@@ -30,13 +30,13 @@ func configureLogger(level string) {
 func getNodeId(appName string, nodeIdNum int) string {
 	switch appName {
 	case config.APP_MANUFACTURER:
-		return fmt.Sprintf(config.MA_NODE, nodeIdNum)
+		return fmt.Sprintf(config.NODE_NAME, config.APP_MANUFACTURER, nodeIdNum)
 	case config.APP_SUPPLIER:
-		return fmt.Sprintf(config.S_NODE, nodeIdNum)
+		return fmt.Sprintf(config.NODE_NAME, config.APP_SUPPLIER, nodeIdNum)
 	case config.APP_CARRIER:
-		return fmt.Sprintf(config.C_NODE, nodeIdNum)
+		return fmt.Sprintf(config.NODE_NAME, config.APP_CARRIER, nodeIdNum)
 	case config.APP_BUYER:
-		return fmt.Sprintf(config.B_NODE, nodeIdNum)
+		return fmt.Sprintf(config.NODE_NAME, config.APP_BUYER, nodeIdNum)
 	}
 	return ""
 }

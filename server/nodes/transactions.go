@@ -34,7 +34,7 @@ func (server *Server) AddNewBlock(ctx context.Context, newBlock blockchain.Block
 	blockchain.Blockchain.Connect(edge)
 
 	// add the vertex to the Node map
-	server.VertexMap[newBlock.Transaction.TxnId] = newVertex
+	server.VertexMap[newBlock.BlockId] = newVertex
 
 	// TODO: [Aarti] update the sequence global/local transaction sequence numbers
 

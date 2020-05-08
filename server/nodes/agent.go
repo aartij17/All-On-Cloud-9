@@ -33,15 +33,7 @@ type Server struct {
 	CurrentGlobalTxnSeq    int                   `json:"current_global_txn_seq"`
 	NatsConn               *nats.Conn            `json:"nats_connection"`
 	LocalConsensusComplete chan bool
-}
-
-func (server *Server) startNatsSubscriber(ctx context.Context) {
-	// this will receive the request message from other applications
-	_ = messenger.SubscribeToInbox(ctx, server.NatsConn, common.NATS_ORD_REQUEST, AppServerNatsChan)
-
-	// subscribe to the NATS inbox for messages from the BPAXOS module
-	_ = messenger.SubscribeToInbox(ctx, server.NatsConn, common.NATS_CONSENSUS_DONE_MSG, AppServerNatsChan)
-	_ = messenger.SubscribeToInbox(ctx, server.NatsConn, common.NATS_ADD_TO_BC, AppServerNatsChan)
+	LastAddedBlock         dag.Vertex
 }
 
 func (server *Server) initiateLocalGlobalConsensus(ctx context.Context, fromNodeId string, msg []byte) {
@@ -76,12 +68,25 @@ func (server *Server) postLocalConsensusProcess(ctx context.Context, msg []byte)
 	messenger.PublishNatsMessage(ctx, server.NatsConn, common.NATS_ORD_ORDER, jMsg)
 }
 
+func (server *Server) startNatsSubscriber(ctx context.Context) {
+
+	// this will receive the request message from other applications
+	_ = messenger.SubscribeToInbox(ctx, server.NatsConn, common.NATS_ORD_REQUEST, AppServerNatsChan)
+
+	// subscribe to the NATS inbox for messages from the BPAXOS module.
+	// for orderer based consensus, this message will NEVER be sent to the server agent, instead, it will be
+	// sent to the orderer primary node
+	_ = messenger.SubscribeToInbox(ctx, server.NatsConn, common.NATS_CONSENSUS_DONE_MSG, AppServerNatsChan)
+
+	// subscribe to the NATS inbox to receive result of the final consensus success message
+	_ = messenger.SubscribeToInbox(ctx, server.NatsConn, common.NATS_ADD_TO_BC, AppServerNatsChan)
+}
+
 func (server *Server) startNatsListener(ctx context.Context) {
 	var (
 		natsMsg *nats.Msg
 		msg     *common.Message
 	)
-	server.startNatsSubscriber(ctx)
 	for {
 		select {
 		case natsMsg = <-AppServerNatsChan:
@@ -108,11 +113,15 @@ func (server *Server) RunApplication(ctx context.Context, appName string) {
 	case config.APP_SUPPLIER:
 		application.StartSupplierApplication(ctx, server.NatsConn)
 	case config.APP_MANUFACTURER:
-		application.StartManufacturerApplication(ctx, server.NatsConn)
+		application.StartManufacturerApplication(ctx, server.NatsConn, server.Id,
+			server.ServerNumId, server.IsPrimaryAgent)
 	}
 }
 
 func StartServer(ctx context.Context, nodeId string, appName string, id int) {
+	var (
+		primaryAgent = false
+	)
 	nc, err := messenger.NatsConnect(ctx)
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -120,18 +129,28 @@ func StartServer(ctx context.Context, nodeId string, appName string, id int) {
 		}).Error("error connecting to nats, exiting now...")
 		os.Exit(1)
 	}
+	if id == 1 {
+		primaryAgent = true
+	}
+	// initialize the blockchain
+	genesisBlock := blockchain.InitBlockchain(id)
+
 	AppServer = &Server{
 		Id:                     nodeId,
 		AppName:                appName,
 		ServerNumId:            id,
-		IsPrimaryAgent:         false,
-		VertexMap:              map[string]dag.Vertex{},
+		IsPrimaryAgent:         primaryAgent,
+		VertexMap:              make(map[string]dag.Vertex),
 		NatsConn:               nc,
+		LastAddedBlock:         genesisBlock,
 		LocalConsensusComplete: make(chan bool),
 	}
-	// initialize the public blockchain
-	blockchain.InitBlockchain(id)
-	AppServer.startNatsListener(ctx)
+
+	// add the genesis block to the map
+	AppServer.VertexMap[common.LAMBDA_BLOCK] = genesisBlock
+
+	go AppServer.startNatsSubscriber(ctx)
+	go AppServer.startNatsListener(ctx)
 	// start the application for which the pod is spun up. it HAS to be a goroutine since we want this to be a
 	// non-blocking call and also run some part of this code like a smart contract.
 	go AppServer.RunApplication(ctx, appName)

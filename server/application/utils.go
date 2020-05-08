@@ -17,7 +17,7 @@ func startInterAppNatsListener(ctx context.Context, msgChan chan *nats.Msg) {
 		select {
 		case natsMsg := <-msgChan:
 			_ = json.Unmarshal(natsMsg.Data, &msg)
-			switch msg.FromApp {
+			switch msg.ToApp {
 			case config.APP_MANUFACTURER:
 				manufacturer.processTxn(ctx, msg)
 			case config.APP_SUPPLIER:
