@@ -99,10 +99,10 @@ func handleManufacturerRequest(w http.ResponseWriter, r *http.Request) {
 	sendClientRequestToAppsChan <- txn
 }
 
-func (m *Manufacturer) startClient(ctx context.Context) {
-	http.HandleFunc("/app/manufacturer", handleManufacturerRequest)
-	_ = http.ListenAndServe(":8080", nil)
-}
+// func (m *Manufacturer) startClient(ctx context.Context) {
+// 	http.HandleFunc("/app/manufacturer", handleManufacturerRequest)
+// 	_ = http.ListenAndServe(":8080", nil)
+// }
 
 func StartManufacturerApplication(ctx context.Context, nc *nats.Conn, serverId string,
 	serverNumId int, isPrimary bool) {
@@ -112,7 +112,7 @@ func StartManufacturerApplication(ctx context.Context, nc *nats.Conn, serverId s
 		IsPrimary:     isPrimary,
 	}
 	// has to be a go-routine cause the http handler is a blocking call
-	go manufacturer.startClient(ctx)
+	go startClient(ctx, "/app/manufacturer", "8080", handleManufacturerRequest)
 	// all the other app-specific business logic can come here.
 	manufacturer.subToInterAppNats(ctx, nc, serverId, serverNumId)
 	// following logic has to be taken care of here -

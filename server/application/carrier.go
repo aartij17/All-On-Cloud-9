@@ -12,11 +12,22 @@ import (
 
 var (
 	carrier *Carrier
+
+	// Define some arbitrary shipping rates for each carrier
+	rates = map[string]int{USPS: 1, FEDEX: 2, UPS: 3}
+)
+
+// Define strings for carrier names
+const (
+	USPS = "USPS"
+	FEDEX = "FEDEX"
+	UPS = "UPS"
 )
 
 type Carrier struct {
 	MsgChannel    chan *nats.Msg
 	ContractValid chan bool
+
 }
 
 func (c *Carrier) subToInterAppNats(ctx context.Context, nc *nats.Conn) {

@@ -5,6 +5,7 @@ import (
 	"All-On-Cloud-9/config"
 	"context"
 	"encoding/json"
+	"net/http"
 
 	"github.com/nats-io/nats.go"
 )
@@ -30,3 +31,10 @@ func startInterAppNatsListener(ctx context.Context, msgChan chan *nats.Msg) {
 		}
 	}
 }
+
+func startClient(ctx context.Context, addr string, port string, handler func(http.ResponseWriter, *http.Request)) error {
+	http.HandleFunc(addr, handler)
+	err := http.ListenAndServe(":" + port, nil)
+	return err
+}
+
