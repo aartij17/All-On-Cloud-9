@@ -109,9 +109,11 @@ func (server *Server) RunApplication(ctx context.Context, appName string) {
 	case config.APP_BUYER:
 		application.StartBuyerApplication(ctx, server.NatsConn)
 	case config.APP_CARRIER:
-		application.StartCarrierApplication(ctx, server.NatsConn)
+		application.StartCarrierApplication(ctx, server.NatsConn, server.Id,
+			server.ServerNumId)
 	case config.APP_SUPPLIER:
-		application.StartSupplierApplication(ctx, server.NatsConn)
+		application.StartSupplierApplication(ctx, server.NatsConn, server.Id,
+			server.ServerNumId)
 	case config.APP_MANUFACTURER:
 		application.StartManufacturerApplication(ctx, server.NatsConn, server.Id,
 			server.ServerNumId, server.IsPrimaryAgent)

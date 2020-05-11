@@ -1,8 +1,8 @@
 package application
 
 import (
-	"All-On-Cloud-9/server/blockchain"
 	"All-On-Cloud-9/common"
+	"All-On-Cloud-9/server/blockchain"
 	"encoding/json"
 	log "github.com/Sirupsen/logrus"
 )
@@ -27,7 +27,7 @@ func (supplier *Supplier) runSupplierContract(block blockchain.Block, MessageTyp
 	// There are two types of Supplier transactions: Buy and Sell
 	// (These rules are kinda arbitrary. I made them up as I go)
 	// For Buy requests, each UnitToBuy cost is $5
-	// For Sell requests, The amount paid must include the shipping cost 
+	// For Sell requests, The amount paid must include the shipping cost
 	// (determined by shipping service)
 	switch MessageType {
 	case common.BUY_REQUEST_TYPE:
@@ -39,11 +39,11 @@ func (supplier *Supplier) runSupplierContract(block blockchain.Block, MessageTyp
 			}).Error("error runSupplierContract: BUY_REQUEST_TYPE")
 		}
 
-		if sTxn.NumUnitsToBuy * SUPPLIER_COST_PER_UNIT == sTxn.AmountPaid {
+		if sTxn.NumUnitsToBuy*SUPPLIER_COST_PER_UNIT == sTxn.AmountPaid {
 			supplier.ContractValid <- true
 			return
 		}
-		
+
 	case common.SELL_REQUEST_TYPE:
 		sTxn := SupplierSellRequest{}
 		err = json.Unmarshal(block.Transaction.TxnBody, &sTxn)
@@ -53,9 +53,9 @@ func (supplier *Supplier) runSupplierContract(block blockchain.Block, MessageTyp
 			}).Error("error runSupplierContract: SELL_REQUEST_TYPE")
 		}
 
-		if sTxn.NumUnitsToSell * SUPPLIER_COST_PER_UNIT + sTxn.ShippingCost == sTxn.AmountPaid {
+		if sTxn.NumUnitsToSell*SUPPLIER_COST_PER_UNIT+sTxn.ShippingCost == sTxn.AmountPaid {
 			// Verify that the shipping cost is correct for the given shipping service
-			if val, ok := rates[sTxn.ShippingService]; ok {
+			if _, ok := rates[sTxn.ShippingService]; ok {
 				if rates[sTxn.ShippingService] == sTxn.ShippingCost {
 					supplier.ContractValid <- true
 					return
@@ -69,8 +69,24 @@ func (supplier *Supplier) runSupplierContract(block blockchain.Block, MessageTyp
 	supplier.ContractValid <- false
 }
 
-func (carrier *Carrier) runCarrierContract() {
+func (carrier *Carrier) runCarrierContract(block blockchain.Block) {
 	// business logic here
 	// based on the results, send a true/false value to the channel
-	carrier.ContractValid <- true
+	var err error
+	cTxn := CarrierClientRequest{}
+	err = json.Unmarshal(block.Transaction.TxnBody, &cTxn)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err.Error(),
+		}).Error("error runCarrierContract")
+	}
+
+	if _, ok := rates[cTxn.ShippingService]; ok {
+		if rates[cTxn.ShippingService] == cTxn.ShippingCost {
+			carrier.ContractValid <- true
+			return
+		}
+	}
+
+	carrier.ContractValid <- false
 }

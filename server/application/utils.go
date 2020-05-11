@@ -34,7 +34,6 @@ func startInterAppNatsListener(ctx context.Context, msgChan chan *nats.Msg) {
 
 func startClient(ctx context.Context, addr string, port string, handler func(http.ResponseWriter, *http.Request)) error {
 	http.HandleFunc(addr, handler)
-	err := http.ListenAndServe(":" + port, nil)
+	err := http.ListenAndServe(":"+port, nil)
 	return err
 }
-

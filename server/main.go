@@ -51,6 +51,8 @@ func main() {
 	flag.StringVar(&appName, "appName", config.APP_MANUFACTURER, fmt.Sprintf("apps - %s, %s, %s, %s",
 		config.APP_MANUFACTURER, config.APP_BUYER, config.APP_CARRIER, config.APP_SUPPLIER))
 	flag.StringVar(&configFilePath, "configFilePath", "", "")
+
+	flag.Parse()
 	if configFilePath == "" {
 		log.Error("invalid config file path found, exiting now")
 		os.Exit(1)

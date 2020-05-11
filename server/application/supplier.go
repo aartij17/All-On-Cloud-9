@@ -5,9 +5,10 @@ import (
 	"All-On-Cloud-9/config"
 	"All-On-Cloud-9/messenger"
 	"context"
-	"net/http"
 	"encoding/json"
+	"net/http"
 
+	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/nats-io/nats.go"
 )
@@ -17,7 +18,7 @@ const (
 )
 
 var (
-	supplier *Supplier
+	supplier                      *Supplier
 	sendSupplierRequestToAppsChan = make(chan *common.Transaction)
 )
 
@@ -27,28 +28,28 @@ type Supplier struct {
 }
 
 type SupplierRequest struct {
-	ToApp               string `json:"to_application"`
-	RequestType string `json:"request_type"`
-	BuyRequest SupplierBuyRequest `json:"buy_request,omitempty"`
+	ToApp       string              `json:"to_application"`
+	RequestType string              `json:"request_type"`
+	BuyRequest  SupplierBuyRequest  `json:"buy_request,omitempty"`
 	SellRequest SupplierSellRequest `json:"sell_request,omitempty"`
 }
 
 type SupplierBuyRequest struct {
 	// Supplier needs to purchase units from manufacturer
-	NumUnitsToBuy      int    `json:"num_units_to_buy"`
-	AmountPaid  int    `json:"amount_paid"`
+	NumUnitsToBuy int `json:"num_units_to_buy"`
+	AmountPaid    int `json:"amount_paid"`
 }
 
 type SupplierSellRequest struct {
 	// Supplier needs to sell units to buyer
 	// Supplier also needs to pay the carrier
-	NumUnitsToSell     int    `json:"num_units_to_buy"`
-	AmountPaid  int    `json:"amount_paid"`
+	NumUnitsToSell  int    `json:"num_units_to_buy"`
+	AmountPaid      int    `json:"amount_paid"`
 	ShippingService string `json:"shipping_service"`
-	ShippingCost int `json:"shipping_cost"`
+	ShippingCost    int    `json:"shipping_cost"`
 }
 
-func (s *Supplier) subToInterAppNats(ctx context.Context, nc *nats.Conn) {
+func (s *Supplier) subToInterAppNats(ctx context.Context, nc *nats.Conn, serverId string, serverNumId int) {
 	var (
 		err error
 	)
@@ -60,8 +61,35 @@ func (s *Supplier) subToInterAppNats(ctx context.Context, nc *nats.Conn) {
 			"topic":       common.NATS_SUPPLIER_INBOX,
 		}).Error("error subscribing to the nats topic")
 	}
+	go func() {
+		for {
+			select {
+			// send the client request to the target application
+			case txn := <-sendClientRequestToAppsChan:
+				txn.FromId = serverId
+				txn.FromApp = config.APP_SUPPLIER
+				txn.ToId = fmt.Sprintf(config.NODE_NAME, txn.ToApp, 1)
 
-	
+				// TODO: Fill these fields correctly
+				msg := common.Message{
+					ToApp:       txn.ToApp,
+					FromApp:     config.APP_SUPPLIER,
+					MessageType: "",
+					Timestamp:   0,
+					FromNodeId:  serverId,
+					FromNodeNum: serverNumId,
+					Txn:         txn,
+					Digest:      "",
+					PKeySig:     "",
+				}
+
+				jMsg, _ := json.Marshal(msg)
+				toNatsInbox := fmt.Sprintf("NATS_%s_INBOX", txn.ToApp)
+				messenger.PublishNatsMessage(ctx, nc, toNatsInbox, jMsg)
+			}
+		}
+	}()
+
 }
 
 func (s *Supplier) processTxn(ctx context.Context, msg *common.Message) {
@@ -71,9 +99,9 @@ func (s *Supplier) processTxn(ctx context.Context, msg *common.Message) {
 func handleSupplierRequest(w http.ResponseWriter, r *http.Request) {
 	var (
 		sTxn *SupplierRequest
-		txn *common.Transaction
+		txn  *common.Transaction
 		jTxn []byte
-		err error
+		err  error
 	)
 
 	_ = json.NewDecoder(r.Body).Decode(&sTxn)
@@ -88,7 +116,7 @@ func handleSupplierRequest(w http.ResponseWriter, r *http.Request) {
 			"error": err.Error(),
 		}).Error("error handleSupplierRequest")
 	}
-	
+
 	txn = &common.Transaction{
 		TxnBody: jTxn,
 		FromApp: config.APP_SUPPLIER,
@@ -101,13 +129,14 @@ func handleSupplierRequest(w http.ResponseWriter, r *http.Request) {
 	sendSupplierRequestToAppsChan <- txn
 }
 
-func StartSupplierApplication(ctx context.Context, nc *nats.Conn) {
+func StartSupplierApplication(ctx context.Context, nc *nats.Conn, serverId string,
+	serverNumId int) {
 	supplier = &Supplier{
 		ContractValid: make(chan bool),
 		MsgChannel:    make(chan *nats.Msg),
 	}
 	go startClient(ctx, "/app/supplier", "8080", handleSupplierRequest)
 	// all the other app-specific business logic can come here.
-	supplier.subToInterAppNats(ctx, nc)
+	supplier.subToInterAppNats(ctx, nc, serverId, serverNumId)
 	startInterAppNatsListener(ctx, supplier.MsgChannel)
 }
