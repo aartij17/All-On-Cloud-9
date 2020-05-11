@@ -55,9 +55,11 @@ func (supplier *Supplier) runSupplierContract(block blockchain.Block, MessageTyp
 
 		if sTxn.NumUnitsToSell * SUPPLIER_COST_PER_UNIT + sTxn.ShippingCost == sTxn.AmountPaid {
 			// Verify that the shipping cost is correct for the given shipping service
-			if rates[sTxn.ShippingService] == sTxn.ShippingCost {
-				supplier.ContractValid <- true
-				return
+			if val, ok := rates[sTxn.ShippingService]; ok {
+				if rates[sTxn.ShippingService] == sTxn.ShippingCost {
+					supplier.ContractValid <- true
+					return
+				}
 			}
 		}
 
