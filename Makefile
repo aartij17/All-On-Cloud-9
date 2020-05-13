@@ -2,6 +2,13 @@ BASE_DIR=$(GOPATH)/src/All-On-Cloud-9
 TARGET_DIR=$(BASE_DIR)/target
 BIN_OUT=$(TARGET_DIR)/bin
 
+KUBE_OUT=$(TARGET_DIR)/kubernetes
+SERVICE_OUT=$(KUBE_OUT)/services
+DOCKER_OUT=$(TARGET_DIR)/docker
+TAR_OUT=$(TARGET_DIR)/tar_dir
+
+KUBE_DIR=$(BASE_DIR)/kickstart/kubernetes
+
 GO_PATH=${GOPATH}
 
 # mandatory env variables for us to proceed
@@ -73,5 +80,23 @@ build:
 		fi \
 	done;
 
+copy-instance:
+	scp -r $(BIN_OUT)/* ubuntu@${INSTANCE}:/home/ubuntu/cloud/bin
+	scp -r $(KUBE_OUT)/* ubuntu@${INSTANCE}:/home/ubuntu/cloud/kubernetes
+	scp -r $(DOCKER_DIR)/* ubuntu@${INSTANCE}:/home/ubuntu/cloud/docker
+
+
+prepare-service-files:
+	mkdir -p $(SERVICE_OUT)
+	for i in orderer_service.yaml ; do\
+    		cp $(KUBE_DIR)/$${i} $(SERVICE_OUT); \
+    done
+
+prepare-deployment-files:
+	for j in orderer_deployment.yaml ;do\
+			cp $(KUBE_DIR)/$${j} $(KUBE_OUT); \
+	done
 
 local: clean build
+
+deploy: clean build prepare-service-files prepare-deployment-files copy-instance
