@@ -81,9 +81,9 @@ build:
 	done;
 
 copy-instance:
-	scp -r $(BIN_OUT)/* ubuntu@${INSTANCE}:/home/ubuntu/cloud/bin
-	scp -r $(KUBE_OUT)/* ubuntu@${INSTANCE}:/home/ubuntu/cloud/kubernetes
-	scp -r $(DOCKER_DIR)/* ubuntu@${INSTANCE}:/home/ubuntu/cloud/docker
+	scp -i cloud.pem -r $(BIN_OUT)/* ubuntu@${INSTANCE}:/home/ubuntu/cloud/bin
+	scp -i cloud.pem -r $(KUBE_OUT)/* ubuntu@${INSTANCE}:/home/ubuntu/cloud/kubernetes
+	scp -i cloud.pem -r $(DOCKER_DIR)/* ubuntu@${INSTANCE}:/home/ubuntu/cloud/docker
 
 
 prepare-service-files:
