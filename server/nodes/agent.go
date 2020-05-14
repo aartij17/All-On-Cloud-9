@@ -107,7 +107,8 @@ func (server *Server) startNatsListener(ctx context.Context) {
 func (server *Server) RunApplication(ctx context.Context, appName string) {
 	switch appName {
 	case config.APP_BUYER:
-		application.StartBuyerApplication(ctx, server.NatsConn)
+		application.StartBuyerApplication(ctx, server.NatsConn, server.Id,
+			server.ServerNumId)
 	case config.APP_CARRIER:
 		application.StartCarrierApplication(ctx, server.NatsConn, server.Id,
 			server.ServerNumId)

@@ -6,7 +6,6 @@ import (
 	"All-On-Cloud-9/messenger"
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	log "github.com/Sirupsen/logrus"
@@ -37,38 +36,11 @@ func (m *Manufacturer) subToInterAppNats(ctx context.Context, nc *nats.Conn, ser
 			"topic":       common.NATS_MANUFACTURER_INBOX,
 		}).Error("error subscribing to the nats topic")
 	}
-	go func() {
-		for {
-			select {
-			// send the client request to the target application
-			case txn := <-sendClientRequestToAppsChan:
-				txn.FromId = serverId
-				txn.FromApp = config.APP_MANUFACTURER
-				txn.ToId = fmt.Sprintf(config.NODE_NAME, txn.ToApp, 1)
-
-				// TODO: Fill these fields correctly
-				msg := common.Message{
-					ToApp:       txn.ToApp,
-					FromApp:     config.APP_MANUFACTURER,
-					MessageType: "",
-					Timestamp:   0,
-					FromNodeId:  serverId,
-					FromNodeNum: serverNumId,
-					Txn:         txn,
-					Digest:      "",
-					PKeySig:     "",
-				}
-
-				jMsg, _ := json.Marshal(msg)
-				toNatsInbox := fmt.Sprintf("NATS_%s_INBOX", txn.ToApp)
-				messenger.PublishNatsMessage(ctx, nc, toNatsInbox, jMsg)
-			}
-		}
-	}()
+	go sendTransactionMessage(ctx, nc, sendClientRequestToAppsChan, config.APP_MANUFACTURER, serverId, serverNumId)
 }
 
 func (m *Manufacturer) processTxn(ctx context.Context, msg *common.Message) {
-
+		 
 }
 
 type ManufacturerClientRequest struct {
@@ -98,11 +70,6 @@ func handleManufacturerRequest(w http.ResponseWriter, r *http.Request) {
 	}
 	sendClientRequestToAppsChan <- txn
 }
-
-// func (m *Manufacturer) startClient(ctx context.Context) {
-// 	http.HandleFunc("/app/manufacturer", handleManufacturerRequest)
-// 	_ = http.ListenAndServe(":8080", nil)
-// }
 
 func StartManufacturerApplication(ctx context.Context, nc *nats.Conn, serverId string,
 	serverNumId int, isPrimary bool) {

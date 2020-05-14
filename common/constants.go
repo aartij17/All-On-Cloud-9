@@ -51,8 +51,7 @@ const (
 	NATS_ADD_TO_BC = "NATS_ADD_TO_BLOCKCHAIN"
 
 	// Message Transaction Types
-	BUY_REQUEST_TYPE = "BUY_REQUEST_TYPE"
-	SELL_REQUEST_TYPE = "SELL_REQUEST_TYPE"
+	
 )
 
 var (

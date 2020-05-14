@@ -10,23 +10,12 @@ import (
 	"github.com/nats-io/nats.go"
 
 	"encoding/json"
-	"fmt"
 	"net/http"
 )
 
 var (
 	carrier *Carrier
-
-	// Define some arbitrary shipping rates for each carrier
-	rates                        = map[string]int{USPS: 1, FEDEX: 2, UPS: 3}
 	sendCarrierRequestToAppsChan = make(chan *common.Transaction)
-)
-
-// Define strings for carrier names
-const (
-	USPS  = "USPS"
-	FEDEX = "FEDEX"
-	UPS   = "UPS"
 )
 
 type Carrier struct {
@@ -34,10 +23,11 @@ type Carrier struct {
 	ContractValid chan bool
 }
 
+
 type CarrierClientRequest struct {
 	ToApp           string `json:"to_application"`
-	ShippingService string `json:"shipping_service"`
-	ShippingCost    int    `json:"shipping_cost"`
+	Type string `json:"request_type"`
+	Fee int `json:"fee"`
 }
 
 func handleCarrierRequest(w http.ResponseWriter, r *http.Request) {
@@ -54,7 +44,7 @@ func handleCarrierRequest(w http.ResponseWriter, r *http.Request) {
 		ToApp:   mTxn.ToApp,
 		ToId:    "",
 		FromId:  "",
-		TxnType: "",
+		TxnType: mTxn.Type,
 		Clock:   nil,
 	}
 	sendCarrierRequestToAppsChan <- txn
@@ -72,34 +62,9 @@ func (c *Carrier) subToInterAppNats(ctx context.Context, nc *nats.Conn, serverId
 			"topic":       common.NATS_CARRIER_INBOX,
 		}).Error("error subscribing to the nats topic")
 	}
-	go func() {
-		for {
-			select {
-			// send the client request to the target application
-			case txn := <-sendCarrierRequestToAppsChan:
-				txn.FromId = serverId
-				txn.FromApp = config.APP_CARRIER
-				txn.ToId = fmt.Sprintf(config.NODE_NAME, txn.ToApp, 1)
 
-				// TODO: Fill these fields correctly
-				msg := common.Message{
-					ToApp:       txn.ToApp,
-					FromApp:     config.APP_CARRIER,
-					MessageType: "",
-					Timestamp:   0,
-					FromNodeId:  serverId,
-					FromNodeNum: serverNumId,
-					Txn:         txn,
-					Digest:      "",
-					PKeySig:     "",
-				}
+	go sendTransactionMessage(ctx, nc, sendCarrierRequestToAppsChan, config.APP_CARRIER, serverId, serverNumId)
 
-				jMsg, _ := json.Marshal(msg)
-				toNatsInbox := fmt.Sprintf("NATS_%s_INBOX", txn.ToApp)
-				messenger.PublishNatsMessage(ctx, nc, toNatsInbox, jMsg)
-			}
-		}
-	}()
 }
 
 func (c *Carrier) processTxn(ctx context.Context, msg *common.Message) {
