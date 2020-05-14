@@ -9,6 +9,10 @@ import (
 	"strings"
 )
 
+func _inbox(suffix string) string {
+	return NATS_PBFT_INBOX + suffix
+}
+
 func configureLogger(level string) {
 	log.SetOutput(os.Stderr)
 	switch strings.ToLower(level) {
@@ -27,12 +31,12 @@ func (node *PbftNode) subToInterAppNats(ctx context.Context, nc *nats.Conn, suff
 	var (
 		err error
 	)
-	err = messenger.SubscribeToInbox(ctx, nc, NATS_PBFT_INBOX + suffix, node.MsgChannel)
+	err = messenger.SubscribeToInbox(ctx, nc, _inbox(suffix), node.msgChannel)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error":       err.Error(),
 			"application": APPLICATION,
-			"topic":       NATS_PBFT_INBOX + suffix,
+			"topic":       _inbox(suffix),
 		}).Error("error subscribing to the nats topic")
 	}
 }
@@ -40,6 +44,6 @@ func (node *PbftNode) subToInterAppNats(ctx context.Context, nc *nats.Conn, suff
 func setupPbftNode(ctx context.Context, nc *nats.Conn, suffix string) *PbftNode {
 	node := NewPbftNode()
 	node.subToInterAppNats(ctx, nc, suffix)
-	go node.startInterAppNatsListener(ctx, node.MsgChannel)
+	go node.startInterAppNatsListener(ctx, nc, node.msgChannel)
 	return node
 }
