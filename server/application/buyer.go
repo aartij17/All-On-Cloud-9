@@ -14,13 +14,13 @@ import (
 )
 
 var (
-	buyer *Buyer
+	buyer                      *Buyer
 	sendBuyerRequestToAppsChan = make(chan *common.Transaction)
 )
 
 const (
 	BUYER_RETURN_REQUEST = "RETURN"
-	BUYER_BUY_REQUEST = "BUY"
+	BUYER_BUY_REQUEST    = "BUY"
 )
 
 type Buyer struct {
@@ -29,12 +29,12 @@ type Buyer struct {
 }
 
 type BuyerClientRequest struct {
-	ToApp string `json:"to_application"`
-	Type string `json:"message_type"`
-	UnitsTransferred int `json:"units_transferred"`
-	MoneyTransferred int `json:"money_transferred`
-	ShippingService string `json:"shipping_service"`
-	ShippingCost    int    `json:"shipping_cost"`
+	ToApp            string `json:"to_application"`
+	Type             string `json:"message_type"`
+	UnitsTransferred int    `json:"units_transferred"`
+	MoneyTransferred int    `json:"money_transferred`
+	ShippingService  string `json:"shipping_service"`
+	ShippingCost     int    `json:"shipping_cost"`
 }
 
 func (b *Buyer) subToInterAppNats(ctx context.Context, nc *nats.Conn, serverId string, serverNumId int) {

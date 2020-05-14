@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	carrier *Carrier
+	carrier                      *Carrier
 	sendCarrierRequestToAppsChan = make(chan *common.Transaction)
 )
 
@@ -23,11 +23,10 @@ type Carrier struct {
 	ContractValid chan bool
 }
 
-
 type CarrierClientRequest struct {
-	ToApp           string `json:"to_application"`
-	Type string `json:"request_type"`
-	Fee int `json:"fee"`
+	ToApp string `json:"to_application"`
+	Type  string `json:"request_type"`
+	Fee   int    `json:"fee"`
 }
 
 func handleCarrierRequest(w http.ResponseWriter, r *http.Request) {

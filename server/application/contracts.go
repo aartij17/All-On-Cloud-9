@@ -23,7 +23,7 @@ func (buyer *Buyer) runBuyerContract(block blockchain.Block) {
 		return
 	}
 
-	if bTxn.UnitsTransferred * SupplierCostPerUnit + bTxn.ShippingCost == bTxn.MoneyTransferred{
+	if bTxn.UnitsTransferred*SupplierCostPerUnit+bTxn.ShippingCost == bTxn.MoneyTransferred {
 		// Verify that the shipping cost is correct for the given shipping service
 		if _, ok := rates[bTxn.ShippingService]; ok {
 			if rates[bTxn.ShippingService] == bTxn.ShippingCost {
@@ -38,7 +38,7 @@ func (buyer *Buyer) runBuyerContract(block blockchain.Block) {
 
 func (manufacturer *Manufacturer) runManufacturerContract(block blockchain.Block) {
 	// business logic here
-	// The manufacturer block will advertise how many units it has and 
+	// The manufacturer block will advertise how many units it has and
 	// how much money everyting costs to another application, most likely the seller
 	var err error
 	mTxn := ManufacturerClientRequest{}
@@ -51,7 +51,7 @@ func (manufacturer *Manufacturer) runManufacturerContract(block blockchain.Block
 		return
 	}
 
-	if mTxn.NumUnitsToSell * ManufacturerCostPerUnit == mTxn.AmountToBeCollected {
+	if mTxn.NumUnitsToSell*ManufacturerCostPerUnit == mTxn.AmountToBeCollected {
 		manufacturer.ContractValid <- true
 		return
 	}
@@ -64,19 +64,19 @@ func (supplier *Supplier) runSupplierContract(block blockchain.Block) {
 	// business logic here
 	// The supplier needs to purchase from the
 	var err error
-	
+
 	sTxn := SupplierRequest{}
 	err = json.Unmarshal(block.Transaction.TxnBody, &sTxn)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error": err.Error(),
 		}).Error("error runSupplierContract")
-		supplier.ContractValid <- false;
-		return;
+		supplier.ContractValid <- false
+		return
 	}
 	// Verify the amount needed is correct
-	if sTxn.NumUnitsToBuy*ManufacturerCostPerUnit + sTxn.ShippingCost == sTxn.AmountPaid {
-	
+	if sTxn.NumUnitsToBuy*ManufacturerCostPerUnit+sTxn.ShippingCost == sTxn.AmountPaid {
+
 		// Verify that the shipping cost is correct for the given shipping service
 		if _, ok := rates[sTxn.ShippingService]; ok {
 			if rates[sTxn.ShippingService] == sTxn.ShippingCost {
