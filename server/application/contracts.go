@@ -55,8 +55,6 @@ func (manufacturer *Manufacturer) runManufacturerContract(block blockchain.Block
 		return
 	}
 
-
-
 	// based on the results, send a true/false value to the channel
 	manufacturer.ContractValid <- false
 }
