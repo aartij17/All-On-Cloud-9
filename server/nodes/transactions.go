@@ -69,6 +69,9 @@ func (server *Server) InitiateAddBlock(ctx context.Context, message *common.Mess
 	}
 	edgeLocal := dag.BasicEdge(dag.Vertex(newVertex), dag.Vertex(server.LastAddedLocalBlock))
 	blockchain.Blockchain.Connect(edgeLocal)
+
+	server.VertexMap[blockId] = newVertex
+
 	log.WithFields(log.Fields{
 		"fromVertex": newVertex.VertexId,
 		"toVertex":   server.LastAddedLocalBlock.VertexId,

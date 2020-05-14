@@ -29,10 +29,8 @@ type Vertex struct {
 }
 
 type Block struct {
-	IsGenesis bool   `json:"is_genesis"`
-	BlockId   string `json:"block_id"`
-	//LocalBlockNum  string               `json:"local_block_num,omitempty"`
-	//GlobalBlockNum string               `json:"global_block_num,omitempty"`
+	IsGenesis     bool                 `json:"is_genesis"`
+	BlockId       string               `json:"block_id"`
 	ViewType      string               `json:"block_view_type"` //local/global block
 	CryptoHash    string               `json:"crypto_hash"`
 	Transaction   *common.Transaction  `json:"transaction,omitempty"`
@@ -55,10 +53,6 @@ func InitBlockchain(nodeId int) *Vertex {
 		},
 		CryptoHash: "",
 	}
-	//// increment the count of both the global and local sequence number since the genesis block is
-	//// visible in both local and global view
-	//LocalSeqNumber += 1
-	//GlobalSeqNumber += 1
 
 	// 2. Initialize the DAG
 	newVertex := &Vertex{
