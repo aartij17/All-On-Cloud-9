@@ -23,7 +23,24 @@ var (
 	//GlobalBlockchain dag.AcyclicGraph
 )
 
-func InitBlockchain(nodeId int) dag.Vertex {
+type Vertex struct {
+	VertexId string     `json:"vertex_id"`
+	V        dag.Vertex `json:"vertex"`
+}
+
+type Block struct {
+	IsGenesis bool   `json:"is_genesis"`
+	BlockId   string `json:"block_id"`
+	//LocalBlockNum  string               `json:"local_block_num,omitempty"`
+	//GlobalBlockNum string               `json:"global_block_num,omitempty"`
+	ViewType      string               `json:"block_view_type"` //local/global block
+	CryptoHash    string               `json:"crypto_hash"`
+	Transaction   *common.Transaction  `json:"transaction,omitempty"`
+	InitiatorNode string               `json:"initiator_node,omitempty"`
+	Clock         *common.LamportClock `json:"clock"`
+}
+
+func InitBlockchain(nodeId int) *Vertex {
 	// 1. create the Genesis block
 	genesisBlock := &Block{
 		BlockId:       common.LAMBDA_BLOCK,
@@ -38,26 +55,17 @@ func InitBlockchain(nodeId int) dag.Vertex {
 		},
 		CryptoHash: "",
 	}
-	// increment the count of both the global and local sequence number since the genesis block is
-	// visible in both local and global view
-	LocalSeqNumber += 1
-	GlobalSeqNumber += 1
+	//// increment the count of both the global and local sequence number since the genesis block is
+	//// visible in both local and global view
+	//LocalSeqNumber += 1
+	//GlobalSeqNumber += 1
 
 	// 2. Initialize the DAG
-	newVertex := dag.Vertex(genesisBlock)
+	newVertex := &Vertex{
+		VertexId: common.LAMBDA_BLOCK,
+		V:        dag.Vertex(genesisBlock),
+	}
 	Blockchain.Add(newVertex)
 
 	return newVertex
-}
-
-type Block struct {
-	IsGenesis      bool                 `json:"is_genesis"`
-	BlockId        string               `json:"block_id"`
-	LocalBlockNum  string               `json:"local_block_num"`
-	GlobalBlockNum string               `json:"global_block_num"`
-	ViewType       string               `json:"block_view_type"` //local/global block
-	CryptoHash     string               `json:"crypto_hash"`
-	Transaction    *common.Transaction  `json:"transaction,omitempty"`
-	InitiatorNode  string               `json:"initiator_node,omitempty"`
-	Clock          *common.LamportClock `json:"clock"`
 }

@@ -91,6 +91,7 @@ func (o *Orderer) initiateGlobalConsensus(ctx context.Context, natsMsg []byte) {
 			log.WithFields(log.Fields{
 				"orderer_id": o.Id,
 			}).Error("global consensus timeout!, no message recvd")
+			return
 		case <-GlobalConsensusDone:
 			messenger.PublishNatsMessage(ctx, o.NatsConn, common.NATS_ORD_SYNC, natsMsg)
 		}
@@ -111,7 +112,7 @@ func (o *Orderer) StartOrdListener(ctx context.Context) {
 			case common.NATS_ORD_ORDER:
 				if numOrderMessagesRecvd > common.F && o.IsPrimary {
 					// sufficient number of ORDER messages received, initiate global consensus
-					o.initiateGlobalConsensus(ctx, natsMsg.Data)
+					go o.initiateGlobalConsensus(ctx, natsMsg.Data)
 					numOrderMessagesRecvd = 0
 				} else {
 					numOrderMessagesRecvd += 1

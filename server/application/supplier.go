@@ -23,9 +23,9 @@ type Supplier struct {
 }
 
 type SupplierRequest struct {
-	ToApp       string              `json:"to_application"`
-	NumUnitsToBuy int `json:"num_units_to_buy"`
-	AmountPaid    int `json:"amount_paid"`
+	ToApp           string `json:"to_application"`
+	NumUnitsToBuy   int    `json:"num_units_to_buy"`
+	AmountPaid      int    `json:"amount_paid"`
 	ShippingService string `json:"shipping_service"`
 	ShippingCost    int    `json:"shipping_cost"`
 }
@@ -44,7 +44,7 @@ func (s *Supplier) subToInterAppNats(ctx context.Context, nc *nats.Conn, serverI
 	}
 
 	go sendTransactionMessage(ctx, nc, sendSupplierRequestToAppsChan, config.APP_SUPPLIER, serverId, serverNumId)
-	
+
 }
 
 func (s *Supplier) processTxn(ctx context.Context, msg *common.Message) {
@@ -61,7 +61,7 @@ func handleSupplierRequest(w http.ResponseWriter, r *http.Request) {
 
 	_ = json.NewDecoder(r.Body).Decode(&sTxn)
 	jTxn, err = json.Marshal(sTxn)
-	
+
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error": err.Error(),

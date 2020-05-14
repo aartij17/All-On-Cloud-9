@@ -40,7 +40,7 @@ func (m *Manufacturer) subToInterAppNats(ctx context.Context, nc *nats.Conn, ser
 }
 
 func (m *Manufacturer) processTxn(ctx context.Context, msg *common.Message) {
-		 
+
 }
 
 type ManufacturerClientRequest struct {

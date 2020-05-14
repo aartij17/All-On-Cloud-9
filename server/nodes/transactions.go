@@ -1,41 +1,78 @@
 package nodes
 
 import (
+	"All-On-Cloud-9/common"
 	"All-On-Cloud-9/server/blockchain"
 	"context"
+	"fmt"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/hashicorp/terraform/dag"
 )
 
-func (server *Server) updateGlobalView(ctx context.Context, newBlock blockchain.Block, toVertexId string) {
-
-}
-
-func (server *Server) AddNewBlock(ctx context.Context, newBlock blockchain.Block, toVertexId string) {
+func (server *Server) InitiateAddBlock(ctx context.Context, message *common.Message) {
 	var (
-		OK       bool
-		toVertex dag.Vertex
+		newBlock *blockchain.Block
+		blockId  string
+		isGlobal = false
+		isLocal  = false
 	)
-	// check if the toVertexId exists
-	if toVertex, OK = server.VertexMap[toVertexId]; !OK {
+	// if this is a local txn, the message should be intended for the current application
+	if message.Txn.TxnType == common.LOCAL_TXN && server.AppName != message.FromApp {
 		log.WithFields(log.Fields{
-			"toVertexId": toVertexId,
-		}).Error("toVertex not found")
+			"current app": server.AppName,
+			"block app":   message.Txn.FromApp,
+		}).Info("block received, but not intended for this application")
 		return
 	}
-	// to vertex found, add the new block
-	// create the new vertex first
-	newVertex := dag.Vertex(newBlock)
-	// create an edge b/w the source and destination vertex
-	edge := dag.BasicEdge(newVertex, toVertex)
+	if message.Txn.TxnType == common.LOCAL_TXN && server.AppName == message.FromApp {
+		blockchain.LocalSeqNumber += 1
+		blockId = fmt.Sprintf(common.LOCAL_BLOCK_NUM, server.ServerNumId,
+			blockchain.LocalSeqNumber)
+		isLocal = true
+	} else if message.Txn.TxnType == common.GLOBAL_TXN {
+		// in case of a global transaction, increment both the local and the global sequence numbers
+		blockchain.LocalSeqNumber += 1
+		blockchain.GlobalSeqNumber += 1
+		isGlobal = true
 
-	// add the edge to the DAG
-	blockchain.Blockchain.Connect(edge)
+		blockId = fmt.Sprintf(common.GLOBAL_BLOCK_NUM, server.ServerNumId, blockchain.LocalSeqNumber,
+			blockchain.GlobalSeqNumber)
+	}
 
-	// add the vertex to the Node map
-	server.VertexMap[newBlock.BlockId] = newVertex
+	newBlock = &blockchain.Block{
+		IsGenesis:     false,
+		CryptoHash:    "",
+		Transaction:   message.Txn,
+		InitiatorNode: message.FromNodeId,
+		Clock:         nil,
+	}
 
-	// TODO: [Aarti] update the sequence global/local transaction sequence numbers
+	if isGlobal {
+		newBlock.BlockId = blockId
+		newBlock.ViewType = common.GLOBAL_TXN
+	} else if isLocal {
+		newBlock.BlockId = blockId
+		newBlock.ViewType = common.LOCAL_TXN
+	}
+	newVertex := &blockchain.Vertex{
+		VertexId: blockId,
+		V:        dag.Vertex(newBlock),
+	}
+	if isGlobal {
+		edgeGlobal := dag.BasicEdge(dag.Vertex(newVertex), dag.Vertex(server.LastAddedGlobalBlock))
+		blockchain.Blockchain.Connect(edgeGlobal)
+		log.WithFields(log.Fields{
+			"fromVertex": newVertex.VertexId,
+			"toVertex":   server.LastAddedGlobalBlock.VertexId,
+		}).Debug("added new edge for global block")
+	}
+	edgeLocal := dag.BasicEdge(dag.Vertex(newVertex), dag.Vertex(server.LastAddedLocalBlock))
+	blockchain.Blockchain.Connect(edgeLocal)
+	log.WithFields(log.Fields{
+		"fromVertex": newVertex.VertexId,
+		"toVertex":   server.LastAddedLocalBlock.VertexId,
+	}).Debug("added new edge for local block")
 
+	return
 }

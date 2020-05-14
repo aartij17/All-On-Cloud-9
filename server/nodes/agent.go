@@ -14,8 +14,6 @@ import (
 	log "github.com/Sirupsen/logrus"
 
 	"github.com/nats-io/nats.go"
-
-	"github.com/hashicorp/terraform/dag"
 )
 
 var (
@@ -24,16 +22,22 @@ var (
 )
 
 type Server struct {
-	Id                     string                `json:"server_id"`
-	AppName                string                `json:"appname"`
-	ServerNumId            int                   `json:"numeric_id"`
-	IsPrimaryAgent         bool                  `json:"is_primary_agent"`
-	VertexMap              map[string]dag.Vertex `json:"vertex_map"`
-	CurrentLocalTxnSeq     int                   `json:"current_local_txn_seq"`
-	CurrentGlobalTxnSeq    int                   `json:"current_global_txn_seq"`
-	NatsConn               *nats.Conn            `json:"nats_connection"`
+	Id                     string                        `json:"server_id"`
+	AppName                string                        `json:"appname"`
+	ServerNumId            int                           `json:"numeric_id"`
+	IsPrimaryAgent         bool                          `json:"is_primary_agent"`
+	VertexMap              map[string]*blockchain.Vertex `json:"vertex_map"`
+	CurrentLocalTxnSeq     int                           `json:"current_local_txn_seq"`
+	CurrentGlobalTxnSeq    int                           `json:"current_global_txn_seq"`
+	NatsConn               *nats.Conn                    `json:"nats_connection"`
 	LocalConsensusComplete chan bool
-	LastAddedBlock         dag.Vertex
+	LastAddedLocalBlock    *blockchain.Vertex
+	LastAddedGlobalBlock   *blockchain.Vertex
+}
+
+func (server *Server) startLocalConsensus() {
+	// TODO: [Aarti]: This is a placeholder for now.
+	server.LocalConsensusComplete <- true
 }
 
 func (server *Server) initiateLocalGlobalConsensus(ctx context.Context, fromNodeId string, msg []byte) {
@@ -45,7 +49,8 @@ func (server *Server) initiateLocalGlobalConsensus(ctx context.Context, fromNode
 		return
 	}
 	// TODO: [Aarti]: Check if the message is valid -- check the signature
-	// TODO: Initiate local consensus - Make sure that true is published to LocalConsensusCompleteChannel
+	// TODO: THIS WILL BLOCK! Initiate local consensus - Make sure that true is published to LocalConsensusCompleteChannel
+	server.startLocalConsensus()
 	<-server.LocalConsensusComplete
 	server.postLocalConsensusProcess(ctx, msg)
 	// initiate global consensus
@@ -54,11 +59,14 @@ func (server *Server) initiateLocalGlobalConsensus(ctx context.Context, fromNode
 
 // postConsensusProcessTxn is called once the local consensus has been reached by the nodes.
 func (server *Server) postLocalConsensusProcess(ctx context.Context, msg []byte) {
+	var commonMessage *common.Message
+	_ = json.Unmarshal(msg, &commonMessage)
 	// send ORDER message to the primary of the orderer node
 	message := nodes.Message{
-		MessageType: common.O_ORDER,
-		Timestamp:   0,
-		Transaction: nil, //TODO: [Aarti] Set the right transaction here
+		MessageType:   common.O_ORDER,
+		Timestamp:     0,
+		CommonMessage: commonMessage,
+		//Transaction:   nil, //TODO: [Aarti] Set the right transaction here
 		Digest:      "",
 		Hash:        "",
 		FromNodeId:  server.Id,
@@ -70,8 +78,8 @@ func (server *Server) postLocalConsensusProcess(ctx context.Context, msg []byte)
 
 func (server *Server) startNatsSubscriber(ctx context.Context) {
 
-	// this will receive the request message from other applications
-	_ = messenger.SubscribeToInbox(ctx, server.NatsConn, common.NATS_ORD_REQUEST, AppServerNatsChan)
+	//// this will receive the request message from other applications
+	//_ = messenger.SubscribeToInbox(ctx, server.NatsConn, common.NATS_ORD_REQUEST, AppServerNatsChan)
 
 	// subscribe to the NATS inbox for messages from the BPAXOS module.
 	// for orderer based consensus, this message will NEVER be sent to the server agent, instead, it will be
@@ -80,28 +88,30 @@ func (server *Server) startNatsSubscriber(ctx context.Context) {
 
 	// subscribe to the NATS inbox to receive result of the final consensus success message
 	_ = messenger.SubscribeToInbox(ctx, server.NatsConn, common.NATS_ADD_TO_BC, AppServerNatsChan)
-}
 
-func (server *Server) startNatsListener(ctx context.Context) {
-	var (
-		natsMsg *nats.Msg
-		msg     *common.Message
-	)
-	for {
-		select {
-		case natsMsg = <-AppServerNatsChan:
-			switch natsMsg.Subject {
-			case common.NATS_ORD_REQUEST:
-				_ = json.Unmarshal(natsMsg.Data, &msg)
-				server.initiateLocalGlobalConsensus(ctx, msg.FromNodeId, natsMsg.Data)
-			case common.NATS_CONSENSUS_DONE_MSG:
-				log.Debug("NATS_CONSENSUS_DONE_MSG_RCVD, nothing to do")
-			case common.NATS_ADD_TO_BC:
-				// TODO: [Aarti] Take care of this FIRST!!
-				//server.AddNewBlock()
+	go func() {
+		var (
+			natsMsg *nats.Msg
+			msg     *common.Message
+		)
+		for {
+			select {
+			case msg = <-application.AppAgentChan:
+				jMsg, _ := json.Marshal(msg)
+				// TODO: [Aarti]: choose which consensus has to be initiated here. Orderer based or otherwise?
+				server.initiateLocalGlobalConsensus(ctx, msg.FromNodeId, jMsg)
+			case natsMsg = <-AppServerNatsChan:
+				switch natsMsg.Subject {
+				case common.NATS_CONSENSUS_DONE_MSG:
+					log.Debug("NATS_CONSENSUS_DONE_MSG_RCVD, nothing to do")
+				case common.NATS_ADD_TO_BC:
+					var ordererMsg *nodes.Message
+					_ = json.Unmarshal(natsMsg.Data, &ordererMsg)
+					server.InitiateAddBlock(ctx, ordererMsg.CommonMessage)
+				}
 			}
 		}
-	}
+	}()
 }
 
 func (server *Server) RunApplication(ctx context.Context, appName string) {
@@ -143,9 +153,10 @@ func StartServer(ctx context.Context, nodeId string, appName string, id int) {
 		AppName:                appName,
 		ServerNumId:            id,
 		IsPrimaryAgent:         primaryAgent,
-		VertexMap:              make(map[string]dag.Vertex),
+		VertexMap:              make(map[string]*blockchain.Vertex),
 		NatsConn:               nc,
-		LastAddedBlock:         genesisBlock,
+		LastAddedLocalBlock:    genesisBlock,
+		LastAddedGlobalBlock:   genesisBlock,
 		LocalConsensusComplete: make(chan bool),
 	}
 
@@ -153,7 +164,6 @@ func StartServer(ctx context.Context, nodeId string, appName string, id int) {
 	AppServer.VertexMap[common.LAMBDA_BLOCK] = genesisBlock
 
 	go AppServer.startNatsSubscriber(ctx)
-	go AppServer.startNatsListener(ctx)
 	// start the application for which the pod is spun up. it HAS to be a goroutine since we want this to be a
 	// non-blocking call and also run some part of this code like a smart contract.
 	go AppServer.RunApplication(ctx, appName)
