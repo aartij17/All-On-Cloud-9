@@ -1,6 +1,0 @@
-package pbft
-
-const (
-	APPLICATION = "APP_PBFT"
-	NATS_PBFT_INBOX = "NATS_PBFT_INBOX"
-)

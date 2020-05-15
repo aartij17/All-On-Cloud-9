@@ -39,7 +39,7 @@ func (server *Server) startNatsConsumer(ctx context.Context) {
 	_ = messenger.SubscribeToInbox(ctx, server.NatsConn, common.NATS_ORD_REQUEST, AppServerNatsChan)
 
 	// subscribe to the NATS inbox for messages from the BPAXOS module
-	_ = messenger.SubscribeToInbox(ctx, server.NatsConn, common.NATS_CONSENSUS_DONE_MSG, AppServerNatsChan)
+	_ = messenger.SubscribeToInbox(ctx, server.NatsConn, common.NATS_CONSENSUS_DONE, AppServerNatsChan)
 }
 
 func (server *Server) initiateLocalGlobalConsensus(ctx context.Context, fromNodeId string, msg []byte) {
@@ -75,7 +75,7 @@ func (server *Server) startNatsListener(ctx context.Context) {
 			case common.NATS_ORD_REQUEST:
 				_ = json.Unmarshal(natsMsg.Data, &msg)
 				server.initiateLocalGlobalConsensus(ctx, msg.FromNodeId, natsMsg.Data)
-			case common.NATS_CONSENSUS_DONE_MSG:
+			case common.NATS_CONSENSUS_DONE:
 				server.postConsensusProcessTxn(ctx, natsMsg)
 			}
 		}

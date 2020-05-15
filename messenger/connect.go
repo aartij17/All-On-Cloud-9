@@ -36,9 +36,9 @@ func SubscribeToInbox(ctx context.Context, nc *nats.Conn, subject string, messag
 			}).Error("error subscribing to NATS inbox")
 			return
 		}
-		log.WithFields(log.Fields{
-			"message": string(m.Data),
-		}).Info("Received a message from NATS")
+		//log.WithFields(log.Fields{
+		//	"message": string(m.Data),
+		//}).Info("Received a message from NATS")
 		messageChannel <- m
 	})
 

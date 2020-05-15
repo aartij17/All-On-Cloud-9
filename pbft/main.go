@@ -1,16 +1,15 @@
 package pbft
 
 import (
-	"All-On-Cloud-9/messenger"
 	"context"
+	log "github.com/Sirupsen/logrus"
 	"github.com/nats-io/nats.go"
-	log "github.com/sirupsen/logrus"
 	"os"
 	"strings"
 )
 
 func _inbox(suffix string) string {
-	return NATS_PBFT_INBOX + suffix
+	return NATS_PBFT_INBOX + "_" + suffix
 }
 
 func configureLogger(level string) {
@@ -27,23 +26,9 @@ func configureLogger(level string) {
 	}
 }
 
-func (node *PbftNode) subToInterAppNats(ctx context.Context, nc *nats.Conn, suffix string) {
-	var (
-		err error
-	)
-	err = messenger.SubscribeToInbox(ctx, nc, _inbox(suffix), node.msgChannel)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"error":       err.Error(),
-			"application": APPLICATION,
-			"topic":       _inbox(suffix),
-		}).Error("error subscribing to the nats topic")
-	}
-}
-
-func setupPbftNode(ctx context.Context, nc *nats.Conn, suffix string) *PbftNode {
-	node := NewPbftNode()
-	node.subToInterAppNats(ctx, nc, suffix)
-	go node.startInterAppNatsListener(ctx, nc, node.msgChannel)
+func NewPbftNode(ctx context.Context, nc *nats.Conn, application string, failureTolerance int, totalNodes int, id int) *PbftNode {
+	node := newPbftNode(ctx, nc, application, failureTolerance, totalNodes, id)
+	node.subToNatsChannels(application)
+	go node.startMessageListeners(node.msgChannel)
 	return node
 }
