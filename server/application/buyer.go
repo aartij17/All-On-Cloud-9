@@ -5,6 +5,7 @@ import (
 	"All-On-Cloud-9/config"
 	"All-On-Cloud-9/messenger"
 	"context"
+	"strconv"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/nats-io/nats.go"
@@ -83,7 +84,8 @@ func StartBuyerApplication(ctx context.Context, nc *nats.Conn, serverId string, 
 		MsgChannel:    make(chan *nats.Msg),
 	}
 	// all the other app-specific business logic can come here.
-	go startClient(ctx, "/app/buyer", "8080", handleBuyerRequest)
+	go startClient(ctx, "/app/buyer",
+		strconv.Itoa(config.SystemConfig.AppInstance.AppBuyer.Servers[serverNumId].Port), handleBuyerRequest)
 	buyer.subToInterAppNats(ctx, nc, serverId, serverNumId)
 	startInterAppNatsListener(ctx, buyer.MsgChannel)
 }

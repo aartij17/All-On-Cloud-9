@@ -5,6 +5,7 @@ import (
 	"All-On-Cloud-9/config"
 	"All-On-Cloud-9/messenger"
 	"context"
+	"strconv"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/nats-io/nats.go"
@@ -76,7 +77,8 @@ func StartCarrierApplication(ctx context.Context, nc *nats.Conn, serverId string
 		ContractValid: make(chan bool),
 		MsgChannel:    make(chan *nats.Msg),
 	}
-	go startClient(ctx, "/app/carrier", "8080", handleCarrierRequest)
+	go startClient(ctx, "/app/carrier",
+		strconv.Itoa(config.SystemConfig.AppInstance.AppCarrier.Servers[serverNumId].Port), handleCarrierRequest)
 	// all the other app-specific business logic can come here.
 	carrier.subToInterAppNats(ctx, nc, serverId, serverNumId)
 	startInterAppNatsListener(ctx, carrier.MsgChannel)

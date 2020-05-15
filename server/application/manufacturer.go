@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	log "github.com/Sirupsen/logrus"
 
@@ -79,7 +80,8 @@ func StartManufacturerApplication(ctx context.Context, nc *nats.Conn, serverId s
 		IsPrimary:     isPrimary,
 	}
 	// has to be a go-routine cause the http handler is a blocking call
-	go startClient(ctx, "/app/manufacturer", "8080", handleManufacturerRequest)
+	go startClient(ctx, "/app/manufacturer",
+		strconv.Itoa(config.SystemConfig.AppInstance.AppManufacturer.Servers[serverNumId].Port), handleManufacturerRequest)
 	// all the other app-specific business logic can come here.
 	manufacturer.subToInterAppNats(ctx, nc, serverId, serverNumId)
 	// following logic has to be taken care of here -

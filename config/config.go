@@ -43,7 +43,7 @@ type Servers struct {
 type Applications struct {
 	AppManufacturer *ApplicationInstance `json:"MANUFACTURER,omitempty"`
 	AppBuyer        *ApplicationInstance `json:"BUYER,omitempty"`
-	AppSeller       *ApplicationInstance `json:"SELLER,omitempty"`
+	AppSupplier     *ApplicationInstance `json:"SUPPLIER,omitempty"`
 	AppCarrier      *ApplicationInstance `json:"CARRIER,omitempty"`
 }
 

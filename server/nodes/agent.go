@@ -52,13 +52,13 @@ func (server *Server) initiateLocalGlobalConsensus(ctx context.Context, fromNode
 	// TODO: THIS WILL BLOCK! Initiate local consensus - Make sure that true is published to LocalConsensusCompleteChannel
 	server.startLocalConsensus()
 	<-server.LocalConsensusComplete
-	server.postLocalConsensusProcess(ctx, msg)
+	server.startGlobalConsensusProcess(ctx, msg)
 	// initiate global consensus
 	messenger.PublishNatsMessage(ctx, server.NatsConn, common.NATS_CONSENSUS_INITIATE_MSG, msg)
 }
 
 // postConsensusProcessTxn is called once the local consensus has been reached by the nodes.
-func (server *Server) postLocalConsensusProcess(ctx context.Context, msg []byte) {
+func (server *Server) startGlobalConsensusProcess(ctx context.Context, msg []byte) {
 	var commonMessage *common.Message
 	_ = json.Unmarshal(msg, &commonMessage)
 	// send ORDER message to the primary of the orderer node
@@ -66,11 +66,10 @@ func (server *Server) postLocalConsensusProcess(ctx context.Context, msg []byte)
 		MessageType:   common.O_ORDER,
 		Timestamp:     0,
 		CommonMessage: commonMessage,
-		//Transaction:   nil, //TODO: [Aarti] Set the right transaction here
-		Digest:      "",
-		Hash:        "",
-		FromNodeId:  server.Id,
-		FromNodeNum: server.ServerNumId,
+		Digest:        "",
+		Hash:          "",
+		FromNodeId:    server.Id,
+		FromNodeNum:   server.ServerNumId,
 	}
 	jMsg, _ := json.Marshal(message)
 	messenger.PublishNatsMessage(ctx, server.NatsConn, common.NATS_ORD_ORDER, jMsg)

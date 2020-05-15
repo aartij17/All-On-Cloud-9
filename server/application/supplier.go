@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/nats-io/nats.go"
@@ -86,7 +87,8 @@ func StartSupplierApplication(ctx context.Context, nc *nats.Conn, serverId strin
 		ContractValid: make(chan bool),
 		MsgChannel:    make(chan *nats.Msg),
 	}
-	go startClient(ctx, "/app/supplier", "8080", handleSupplierRequest)
+	go startClient(ctx, "/app/supplier",
+		strconv.Itoa(config.SystemConfig.AppInstance.AppSupplier.Servers[serverNumId].Port), handleSupplierRequest)
 	// all the other app-specific business logic can come here.
 	supplier.subToInterAppNats(ctx, nc, serverId, serverNumId)
 	startInterAppNatsListener(ctx, supplier.MsgChannel)
