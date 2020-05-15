@@ -41,9 +41,10 @@ type Servers struct {
 }
 
 type Applications struct {
-	Application1 *ApplicationInstance `json:"APPLICATION_1,omitempty"`
-	Application2 *ApplicationInstance `json:"APPLICATION_2,omitempty"`
-	Application3 *ApplicationInstance `json:"APPLICATION_3,omitempty"`
+	AppManufacturer *ApplicationInstance `json:"MANUFACTURER,omitempty"`
+	AppBuyer        *ApplicationInstance `json:"BUYER,omitempty"`
+	AppSeller       *ApplicationInstance `json:"SELLER,omitempty"`
+	AppCarrier      *ApplicationInstance `json:"CARRIER,omitempty"`
 }
 
 type ApplicationInstance struct {
@@ -105,5 +106,4 @@ func LoadConfig(ctx context.Context, filepath string) {
 //// STUB: For testing only
 //func main() {
 //	LoadConfig(nil, "/Users/aartij17/go/src/All-On-Cloud-9/config/config.json")
-//	fmt.Println(SystemConfig.Nats.Servers)
 //}
