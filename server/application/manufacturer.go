@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"fmt"
 
 	log "github.com/Sirupsen/logrus"
 
@@ -57,9 +58,11 @@ func handleManufacturerRequest(w http.ResponseWriter, r *http.Request) {
 		mTxn *ManufacturerClientRequest
 		txn  *common.Transaction
 	)
+	fmt.Println("HandleManufacturerRequest")
 	_ = json.NewDecoder(r.Body).Decode(&mTxn)
+	fmt.Println(mTxn)
 	jTxn, _ := json.Marshal(mTxn)
-
+	
 	txn = &common.Transaction{
 		TxnBody: jTxn,
 		FromApp: config.APP_MANUFACTURER,
@@ -69,6 +72,7 @@ func handleManufacturerRequest(w http.ResponseWriter, r *http.Request) {
 		TxnType: "",
 		Clock:   nil,
 	}
+	
 	sendClientRequestToAppsChan <- txn
 }
 
@@ -79,6 +83,7 @@ func StartManufacturerApplication(ctx context.Context, nc *nats.Conn, serverId s
 		MsgChannel:    make(chan *nats.Msg),
 		IsPrimary:     isPrimary,
 	}
+	
 	// has to be a go-routine cause the http handler is a blocking call
 	go startClient(ctx, "/app/manufacturer",
 		strconv.Itoa(config.SystemConfig.AppInstance.AppManufacturer.Servers[serverNumId].Port), handleManufacturerRequest)

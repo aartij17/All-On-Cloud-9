@@ -56,6 +56,8 @@ func sendTransactionMessage(ctx context.Context, nc *nats.Conn, channel chan *co
 		select {
 		// send the client request to the target application
 		case txn := <-channel:
+			fmt.Println("sendTransactionMessage")
+			fmt.Println(fromApp)
 			txn.FromId = serverId
 			txn.FromApp = fromApp
 			txn.ToId = fmt.Sprintf(config.NODE_NAME, txn.ToApp, 1)
