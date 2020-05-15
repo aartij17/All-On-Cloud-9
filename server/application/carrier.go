@@ -6,7 +6,7 @@ import (
 	"All-On-Cloud-9/messenger"
 	"context"
 	"strconv"
-
+	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/nats-io/nats.go"
 
@@ -26,7 +26,6 @@ type Carrier struct {
 
 type CarrierClientRequest struct {
 	ToApp string `json:"to_application"`
-	Type  string `json:"request_type"`
 	Fee   int    `json:"fee"`
 }
 
@@ -35,8 +34,10 @@ func handleCarrierRequest(w http.ResponseWriter, r *http.Request) {
 		mTxn *CarrierClientRequest
 		txn  *common.Transaction
 	)
+	fmt.Println("HandleCarrierRequest")
 	_ = json.NewDecoder(r.Body).Decode(&mTxn)
 	jTxn, _ := json.Marshal(mTxn)
+	fmt.Println(mTxn)
 
 	txn = &common.Transaction{
 		TxnBody: jTxn,
@@ -44,7 +45,7 @@ func handleCarrierRequest(w http.ResponseWriter, r *http.Request) {
 		ToApp:   mTxn.ToApp,
 		ToId:    "",
 		FromId:  "",
-		TxnType: mTxn.Type,
+		TxnType: "",
 		Clock:   nil,
 	}
 	sendCarrierRequestToAppsChan <- txn

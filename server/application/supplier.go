@@ -8,7 +8,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
-
+	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/nats-io/nats.go"
 )
@@ -59,9 +59,10 @@ func handleSupplierRequest(w http.ResponseWriter, r *http.Request) {
 		jTxn []byte
 		err  error
 	)
-
+	fmt.Println("HandleSupplierRequest")
 	_ = json.NewDecoder(r.Body).Decode(&sTxn)
 	jTxn, err = json.Marshal(sTxn)
+	fmt.Println(sTxn)
 
 	if err != nil {
 		log.WithFields(log.Fields{

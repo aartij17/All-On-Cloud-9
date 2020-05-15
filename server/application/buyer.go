@@ -6,7 +6,7 @@ import (
 	"All-On-Cloud-9/messenger"
 	"context"
 	"strconv"
-
+	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/nats-io/nats.go"
 
@@ -59,7 +59,10 @@ func handleBuyerRequest(w http.ResponseWriter, r *http.Request) {
 		mTxn *BuyerClientRequest
 		txn  *common.Transaction
 	)
+	fmt.Println("HandleBuyerRequest")
 	_ = json.NewDecoder(r.Body).Decode(&mTxn)
+	fmt.Println(mTxn)
+
 	jTxn, _ := json.Marshal(mTxn)
 
 	txn = &common.Transaction{
