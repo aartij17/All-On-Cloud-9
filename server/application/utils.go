@@ -14,7 +14,7 @@ import (
 
 var (
 	// Define some arbitrary shipping rates for each carrier
-	rates                   = map[string]int{"USPS": 1, "FEDEX": 2, "UPS": 3}
+	Rates                   = map[string]int{"USPS": 1, "FEDEX": 2, "UPS": 3}
 	ManufacturerCostPerUnit = 5 // default value
 	SupplierCostPerUnit     = 5 // Default value
 

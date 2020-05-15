@@ -25,8 +25,8 @@ func (buyer *Buyer) RunBuyerContract(block blockchain.Block) {
 
 	if bTxn.UnitsTransferred*SupplierCostPerUnit+bTxn.ShippingCost == bTxn.MoneyTransferred {
 		// Verify that the shipping cost is correct for the given shipping service
-		if _, ok := rates[bTxn.ShippingService]; ok {
-			if rates[bTxn.ShippingService] == bTxn.ShippingCost {
+		if _, ok := Rates[bTxn.ShippingService]; ok {
+			if Rates[bTxn.ShippingService] == bTxn.ShippingCost {
 				buyer.ContractValid <- true
 				return
 			}
@@ -78,8 +78,8 @@ func (supplier *Supplier) RunSupplierContract(block blockchain.Block) {
 	if sTxn.NumUnitsToBuy*ManufacturerCostPerUnit+sTxn.ShippingCost == sTxn.AmountPaid {
 
 		// Verify that the shipping cost is correct for the given shipping service
-		if _, ok := rates[sTxn.ShippingService]; ok {
-			if rates[sTxn.ShippingService] == sTxn.ShippingCost {
+		if _, ok := Rates[sTxn.ShippingService]; ok {
+			if Rates[sTxn.ShippingService] == sTxn.ShippingCost {
 				supplier.ContractValid <- true
 				return
 			}
