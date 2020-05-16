@@ -21,6 +21,7 @@ var (
 	QueueTrigger = make(chan bool, common.F) // Max of F requests
 	QueueRelease = make(chan bool)
 	mux          sync.Mutex
+	timer *time.Timer
 )
 
 type Proposer struct {
@@ -64,11 +65,12 @@ func (proposer *Proposer) processMessageFromLeader(data common.MessageEvent, nc 
 		return
 	}
 	messenger.PublishNatsMessage(ctx, nc, common.PROPOSER_TO_CONSENSUS, sentMessage)
-	go proposer.timeout(common.CONSENSUS_TIMEOUT_MILLISECONDS)
+	timer = time.NewTimer(time.Duration(common.CONSENSUS_TIMEOUT_MILLISECONDS) * time.Millisecond)
+	go proposer.timeout()
 }
 
-func (proposer *Proposer) timeout(duration_ms int) {
-	time.Sleep(time.Duration(duration_ms) * time.Millisecond)
+func (proposer *Proposer) timeout() {
+	<-timer.C
 	log.Info("[BPAXOS] taking timeout lock for proposer")
 	mux.Lock()
 	defer mux.Unlock()
@@ -102,6 +104,7 @@ func (proposer *Proposer) ProcessMessageFromConsensus(m *nats.Msg, nc *nats.Conn
 	}
 
 	if proposer.VoteCount > common.F {
+		timer.Stop()
 		replicaMessage, err := json.Marshal(&proposer.Message)
 		if err != nil {
 			log.WithFields(log.Fields{
@@ -110,15 +113,15 @@ func (proposer *Proposer) ProcessMessageFromConsensus(m *nats.Msg, nc *nats.Conn
 			return
 		}
 		messenger.PublishNatsMessage(ctx, nc, common.PROPOSER_TO_REPLICA, replicaMessage)
-		// consensusMessage := common.ConsensusMessage{VertexId: proposer.Message.VertexId, ProposerId: proposer.ProposerId, Release: 1}
-		// sentConsensusMessage, err := json.Marshal(&consensusMessage)
-		// if err != nil {
-		// 	log.WithFields(log.Fields{
-		// 		"err": err.Error(),
-		// 	}).Error("error marshal proposer release message")
-		// 	return
-		// }
-		// messenger.PublishNatsMessage(ctx, nc, common.PROPOSER_TO_CONSENSUS, sentConsensusMessage)
+		consensusMessage := common.ConsensusMessage{VertexId: proposer.Message.VertexId, ProposerId: proposer.ProposerId, Release: 1}
+		sentConsensusMessage, err := json.Marshal(&consensusMessage)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"err": err.Error(),
+			}).Error("error marshal proposer release message")
+			return
+		}
+		messenger.PublishNatsMessage(ctx, nc, common.PROPOSER_TO_CONSENSUS, sentConsensusMessage)
 
 		proposer.Message.VertexId.Id = -1
 		proposer.Message.VertexId.Index = -1
