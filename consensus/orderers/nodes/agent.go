@@ -49,6 +49,8 @@ func CreateOrderer(ctx context.Context, nodeId int) error {
 		runProposer = true
 	case 2, 3, 4:
 		runConsensus = true
+	case 5:
+		runReplica = true
 	}
 
 	log.WithFields(log.Fields{
