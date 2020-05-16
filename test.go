@@ -10,7 +10,7 @@ import (
 
 func testPbft(ctx context.Context, id int) {
 	nc, _ := messenger.NatsConnect(ctx)
-	node := pbft.NewPbftNode(ctx, nc, "TEST", 1, 4, id)
+	node := pbft.NewPbftNode(ctx, nc, "TEST", 1, 4, 1, 1, id, 1)
 	
 	if id == 0 {
 		node.MessageIn <- &common.Transaction{
