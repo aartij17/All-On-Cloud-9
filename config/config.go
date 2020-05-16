@@ -3,7 +3,6 @@ package config
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"os"
 
@@ -65,23 +64,17 @@ type Config struct {
 	Nats        *NatsServers  `json:"nats"`
 }
 
-func initNodeIds() {
-	for i := 0; i < 5; i++ {
-		MANUFACTURER_NODES = append(MANUFACTURER_NODES, fmt.Sprintf(NODE_NAME, APP_MANUFACTURER, i))
-		SUPPLIER_NODES = append(SUPPLIER_NODES, fmt.Sprintf(NODE_NAME, APP_SUPPLIER, i))
-		BUYER_NODES = append(BUYER_NODES, fmt.Sprintf(NODE_NAME, APP_BUYER, i))
-		CARRIER_NODES = append(CARRIER_NODES, fmt.Sprintf(NODE_NAME, APP_CARRIER, i))
-	}
-	log.WithFields(log.Fields{
-		"manufacturer": MANUFACTURER_NODES,
-		"supplier":     SUPPLIER_NODES,
-		"buyer":        BUYER_NODES,
-		"carrier":      CARRIER_NODES,
-	}).Info("initialized all app nodes with their app IDs")
-}
+//func initNodeIds() {
+//	for i := 0; i < 5; i++ {
+//		MANUFACTURER_NODES = append(MANUFACTURER_NODES, fmt.Sprintf(NODE_NAME, APP_MANUFACTURER, i))
+//		SUPPLIER_NODES = append(SUPPLIER_NODES, fmt.Sprintf(NODE_NAME, APP_SUPPLIER, i))
+//		BUYER_NODES = append(BUYER_NODES, fmt.Sprintf(NODE_NAME, APP_BUYER, i))
+//		CARRIER_NODES = append(CARRIER_NODES, fmt.Sprintf(NODE_NAME, APP_CARRIER, i))
+//	}
+//}
 
 func LoadConfig(ctx context.Context, filepath string) {
-	initNodeIds()
+	//initNodeIds()
 	jsonFile, err := os.Open(filepath)
 	if err != nil {
 		log.WithFields(log.Fields{
