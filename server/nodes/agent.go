@@ -56,8 +56,6 @@ func (server *Server) initiateLocalGlobalConsensus(ctx context.Context, fromNode
 	go server.startLocalConsensus()
 	<-server.LocalConsensusComplete
 	server.startGlobalConsensusProcess(ctx, msg)
-	// initiate global consensus
-	messenger.PublishNatsMessage(ctx, server.NatsConn, common.NATS_CONSENSUS_INITIATE_MSG, msg)
 }
 
 // postConsensusProcessTxn is called once the local consensus has been reached by the nodes.
@@ -87,10 +85,10 @@ func (server *Server) startNatsSubscriber(ctx context.Context) {
 	// subscribe to the NATS inbox for messages from the BPAXOS module.
 	// for orderer based consensus, this message will NEVER be sent to the server agent, instead, it will be
 	// sent to the orderer primary node
-	_ = messenger.SubscribeToInbox(ctx, server.NatsConn, common.NATS_CONSENSUS_DONE_MSG, AppServerNatsChan)
+	// _ = messenger.SubscribeToInbox(ctx, server.NatsConn, common.NATS_CONSENSUS_DONE_MSG, AppServerNatsChan, false)
 
 	// subscribe to the NATS inbox to receive result of the final consensus success message
-	_ = messenger.SubscribeToInbox(ctx, server.NatsConn, common.NATS_ADD_TO_BC, AppServerNatsChan)
+	_ = messenger.SubscribeToInbox(ctx, server.NatsConn, common.NATS_ADD_TO_BC, AppServerNatsChan, false)
 
 	go func() {
 		var (

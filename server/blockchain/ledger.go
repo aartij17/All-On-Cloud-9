@@ -3,6 +3,7 @@ package blockchain
 import (
 	"All-On-Cloud-9/common"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/hashicorp/terraform/dag"
 )
 
@@ -36,6 +37,10 @@ type Block struct {
 	Transaction   *common.Transaction  `json:"transaction,omitempty"`
 	InitiatorNode string               `json:"initiator_node,omitempty"`
 	Clock         *common.LamportClock `json:"clock"`
+}
+
+func PrintBlockchain() {
+	log.Info(Blockchain.String())
 }
 
 func InitBlockchain(nodeId int) *Vertex {

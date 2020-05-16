@@ -56,7 +56,7 @@ func (c *Carrier) subToInterAppNats(ctx context.Context, nc *nats.Conn, serverId
 	var (
 		err error
 	)
-	err = messenger.SubscribeToInbox(ctx, nc, common.NATS_CARRIER_INBOX, c.MsgChannel)
+	err = messenger.SubscribeToInbox(ctx, nc, common.NATS_CARRIER_INBOX, c.MsgChannel, false)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error":       err.Error(),

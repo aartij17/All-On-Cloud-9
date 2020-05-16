@@ -1,7 +1,7 @@
 package main
 
 import (
-	"All-On-Cloud-9/bpaxos/leader/node"
+	leadernode "All-On-Cloud-9/bpaxos/leader/node"
 	"All-On-Cloud-9/common"
 	"testing"
 )

@@ -17,6 +17,9 @@ func (server *Server) InitiateAddBlock(ctx context.Context, message *common.Mess
 		isGlobal = false
 		isLocal  = false
 	)
+	log.WithFields(log.Fields{
+		"fromApp": message.FromApp,
+	})
 	// if this is a local txn, the message should be intended for the current application
 	if message.Txn.TxnType == common.LOCAL_TXN && server.AppName != message.FromApp {
 		log.WithFields(log.Fields{
@@ -25,7 +28,7 @@ func (server *Server) InitiateAddBlock(ctx context.Context, message *common.Mess
 		}).Info("block received, but not intended for this application")
 		return
 	}
-	if message.Txn.TxnType == common.LOCAL_TXN && server.AppName == message.FromApp {
+	if message.Txn.TxnType == common.LOCAL_TXN && server.AppName == message.ToApp {
 		blockchain.LocalSeqNumber += 1
 		blockId = fmt.Sprintf(common.LOCAL_BLOCK_NUM, server.ServerNumId,
 			blockchain.LocalSeqNumber)
@@ -65,7 +68,7 @@ func (server *Server) InitiateAddBlock(ctx context.Context, message *common.Mess
 		log.WithFields(log.Fields{
 			"fromVertex": newVertex.VertexId,
 			"toVertex":   server.LastAddedGlobalBlock.VertexId,
-		}).Debug("added new edge for global block")
+		}).Info("added new edge for global block")
 	}
 	edgeLocal := dag.BasicEdge(dag.Vertex(newVertex), dag.Vertex(server.LastAddedLocalBlock))
 	blockchain.Blockchain.Connect(edgeLocal)
@@ -75,7 +78,8 @@ func (server *Server) InitiateAddBlock(ctx context.Context, message *common.Mess
 	log.WithFields(log.Fields{
 		"fromVertex": newVertex.VertexId,
 		"toVertex":   server.LastAddedLocalBlock.VertexId,
-	}).Debug("added new edge for local block")
+	}).Info("added new edge for local block")
 
+	blockchain.PrintBlockchain()
 	return
 }
