@@ -18,6 +18,7 @@ import (
 var (
 	mux            sync.Mutex
 	timeoutTrigger = make(chan bool)
+	timer *time.Timer
 )
 
 type ConsensusServiceNode struct {
@@ -30,8 +31,8 @@ func NewConsensusServiceNode() ConsensusServiceNode {
 	return consensusNode
 }
 
-func Timeout(duration_ms int, consensusNode *ConsensusServiceNode) {
-	time.Sleep(time.Duration(duration_ms) * time.Millisecond)
+func Timeout( consensusNode *ConsensusServiceNode ) {
+	<-timer.C
 	log.Error("gained lock before timeout")
 	mux.Lock()
 	if consensusNode.VertexId != nil {
@@ -69,6 +70,7 @@ func (consensusServiceNode *ConsensusServiceNode) ProcessConsensusMessage(m *nat
 		return
 	}
 
+	mux.Lock()
 	if (consensusServiceNode.VertexId == nil) && (data.Release == 0) {
 		consensusServiceNode.VertexId = data.VertexId
 		sub := fmt.Sprintf("%s%d", common.CONSENSUS_TO_PROPOSER, data.ProposerId)
@@ -81,17 +83,20 @@ func (consensusServiceNode *ConsensusServiceNode) ProcessConsensusMessage(m *nat
 			return
 		}
 		messenger.PublishNatsMessage(ctx, nc, sub, sentMessage)
-		go Timeout(common.CONSENSUS_TIMEOUT_MILLISECONDS, consensusServiceNode)
+		timer = time.NewTimer(time.Duration(common.CONSENSUS_TIMEOUT_MILLISECONDS) * time.Millisecond)
+		go Timeout(consensusServiceNode)
 	} else {
 		// release vote
 		fmt.Println(data.Release)
 		// TODO: [D&M]:
 		if (consensusServiceNode.VertexId.Index == data.VertexId.Index) &&
 			(consensusServiceNode.VertexId.Id == data.VertexId.Id) && (data.Release == 1) {
+			timer.Stop()
 			consensusServiceNode.VertexId = nil
 
 		}
 	}
+	mux.Unlock()
 }
 
 func StartConsensus(ctx context.Context, nc *nats.Conn) {
@@ -115,11 +120,11 @@ func StartConsensus(ctx context.Context, nc *nats.Conn) {
 		for {
 			select {
 			case natsMsg = <-natsMessage:
-				log.Error("gained lock before ProcessConsensusMessage")
+				log.Info("gained lock before ProcessConsensusMessage")
 				mux.Lock()
 				cons.ProcessConsensusMessage(natsMsg, nc, ctx, cons)
 				mux.Unlock()
-				log.Error("released lock after ProcessConsensusMessage")
+				log.Info("released lock after ProcessConsensusMessage")
 			}
 		}
 	}(nc, &cons)

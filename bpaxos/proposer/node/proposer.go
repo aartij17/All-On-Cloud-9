@@ -78,7 +78,7 @@ func (proposer *Proposer) timeout(duration_ms int) {
 		proposer.Message.VertexId.Id = -1
 		proposer.Message.VertexId.Index = -1
 		QueueRelease <- true
-		log.Error("Proposer timeout")
+		log.Info("Proposer timeout")
 	}
 	log.Info("[BPAXOS] release timeout lock for proposer")
 }
