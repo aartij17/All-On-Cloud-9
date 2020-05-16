@@ -71,7 +71,6 @@ func (consensusServiceNode *ConsensusServiceNode) ProcessConsensusMessage(m *nat
 	}
 	// log.Info("trying to take lock in ProcessConsensusMessage")
 	// log.Info("got lock in ProcessConsensusMessage")
-	defer mux.Unlock()
 	if (consensusServiceNode.VertexId == nil) && (data.Release == 0) {
 		consensusServiceNode.VertexId = data.VertexId
 		sub := fmt.Sprintf("%s%d", common.CONSENSUS_TO_PROPOSER, data.ProposerId)
