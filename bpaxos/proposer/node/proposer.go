@@ -21,7 +21,7 @@ var (
 	QueueTrigger = make(chan bool, common.F) // Max of F requests
 	QueueRelease = make(chan bool)
 	mux          sync.Mutex
-	timer *time.Timer
+	timer        *time.Timer
 )
 
 type Proposer struct {
@@ -135,7 +135,7 @@ func StartProposer(ctx context.Context, nc *nats.Conn) {
 	go func(nc *nats.Conn, proposer *Proposer) {
 		natsMessage := make(chan *nats.Msg)
 		subj := fmt.Sprintf("%s%d", common.LEADER_TO_PROPOSER, proposer.ProposerId)
-		err := messenger.SubscribeToInbox(ctx, nc, subj, natsMessage)
+		err := messenger.SubscribeToInbox(ctx, nc, subj, natsMessage, false)
 
 		if err != nil {
 			log.WithFields(log.Fields{
@@ -175,7 +175,7 @@ func StartProposer(ctx context.Context, nc *nats.Conn) {
 	go func(nc *nats.Conn, proposer *Proposer) {
 		NatsMessage := make(chan *nats.Msg)
 		sub := fmt.Sprintf("%s%d", common.CONSENSUS_TO_PROPOSER, proposer.ProposerId)
-		err := messenger.SubscribeToInbox(ctx, nc, sub, NatsMessage)
+		err := messenger.SubscribeToInbox(ctx, nc, sub, NatsMessage, false)
 
 		if err != nil {
 			log.WithFields(log.Fields{

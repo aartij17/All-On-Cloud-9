@@ -18,7 +18,7 @@ import (
 var (
 	mux            sync.Mutex
 	timeoutTrigger = make(chan bool)
-	timer *time.Timer
+	timer          *time.Timer
 )
 
 type ConsensusServiceNode struct {
@@ -31,7 +31,7 @@ func NewConsensusServiceNode() ConsensusServiceNode {
 	return consensusNode
 }
 
-func Timeout( consensusNode *ConsensusServiceNode ) {
+func Timeout(consensusNode *ConsensusServiceNode) {
 	<-timer.C
 	log.Error("gained lock before timeout")
 	mux.Lock()
@@ -57,7 +57,8 @@ func (consensusServiceNode *ConsensusServiceNode) ReachConsensus() bool {
 	return true
 }
 
-func (consensusServiceNode *ConsensusServiceNode) ProcessConsensusMessage(m *nats.Msg, nc *nats.Conn, ctx context.Context, cons *ConsensusServiceNode) {
+func (consensusServiceNode *ConsensusServiceNode) ProcessConsensusMessage(m *nats.Msg,
+	nc *nats.Conn, ctx context.Context) {
 	log.WithFields(log.Fields{
 		"consensusNodeId": consensusServiceNode.VertexId,
 	}).Info("received message from proposer to consensus")
@@ -69,8 +70,6 @@ func (consensusServiceNode *ConsensusServiceNode) ProcessConsensusMessage(m *nat
 		}).Error("error unmarshal message from proposer")
 		return
 	}
-	// log.Info("trying to take lock in ProcessConsensusMessage")
-	// log.Info("got lock in ProcessConsensusMessage")
 	if (consensusServiceNode.VertexId == nil) && (data.Release == 0) {
 		consensusServiceNode.VertexId = data.VertexId
 		sub := fmt.Sprintf("%s%d", common.CONSENSUS_TO_PROPOSER, data.ProposerId)
@@ -102,7 +101,7 @@ func StartConsensus(ctx context.Context, nc *nats.Conn) {
 
 		natsMessage := make(chan *nats.Msg)
 
-		err := messenger.SubscribeToInbox(ctx, nc, common.PROPOSER_TO_CONSENSUS, natsMessage)
+		err := messenger.SubscribeToInbox(ctx, nc, common.PROPOSER_TO_CONSENSUS, natsMessage, false)
 
 		if err != nil {
 			log.WithFields(log.Fields{
@@ -118,7 +117,7 @@ func StartConsensus(ctx context.Context, nc *nats.Conn) {
 			case natsMsg = <-natsMessage:
 				log.Error("gained lock before ProcessConsensusMessage")
 				mux.Lock()
-				cons.ProcessConsensusMessage(natsMsg, nc, ctx, cons)
+				cons.ProcessConsensusMessage(natsMsg, nc, ctx)
 				mux.Unlock()
 				log.Error("released lock after ProcessConsensusMessage")
 			}

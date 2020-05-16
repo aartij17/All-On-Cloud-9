@@ -83,13 +83,15 @@ func CreateOrderer(ctx context.Context, nodeId int) error {
 // startNatsConsumers subscribes to all the NATS orderer consensus subjects
 func (o *Orderer) startNatsConsumers(ctx context.Context) {
 	for i := range common.NATS_ORDERER_SUBJECTS {
-		_ = messenger.SubscribeToInbox(ctx, o.NatsConn, common.NATS_ORDERER_SUBJECTS[i], NatsOrdMessage)
+		_ = messenger.SubscribeToInbox(ctx, o.NatsConn, common.NATS_ORDERER_SUBJECTS[i], NatsOrdMessage, false)
 	}
-	_ = messenger.SubscribeToInbox(ctx, o.NatsConn, common.NATS_CONSENSUS_DONE_MSG, GlobalConsensusDone)
 }
 
 func (o *Orderer) initiateGlobalConsensus(ctx context.Context, natsMsg []byte) {
 	messenger.PublishNatsMessage(ctx, o.NatsConn, common.NATS_CONSENSUS_INITIATE_MSG, natsMsg)
+
+	// subscribe to NATS inbox only when consensus is initiated
+	_ = messenger.SubscribeToInbox(ctx, o.NatsConn, common.NATS_CONSENSUS_DONE_MSG, GlobalConsensusDone, false)
 	// start a timer and wait for the global consensus to get over.
 	timer := time.NewTimer(consensusTimeout)
 
@@ -107,6 +109,7 @@ func (o *Orderer) initiateGlobalConsensus(ctx context.Context, natsMsg []byte) {
 			}).Error("global consensus timeout!, no message recvd")
 			return
 		case <-GlobalConsensusDone:
+			_ = messenger.SubscribeToInbox(ctx, o.NatsConn, common.NATS_CONSENSUS_DONE_MSG, GlobalConsensusDone, true)
 			messenger.PublishNatsMessage(ctx, o.NatsConn, common.NATS_ORD_SYNC, natsMsg)
 		}
 	}
@@ -124,12 +127,11 @@ func (o *Orderer) StartOrdListener(ctx context.Context) {
 			_ = json.Unmarshal(natsMsg.Data, &msg)
 			switch natsMsg.Subject {
 			case common.NATS_ORD_ORDER:
-				if numOrderMessagesRecvd > common.F && o.IsPrimary {
+				numOrderMessagesRecvd += 1
+				if numOrderMessagesRecvd >= common.F && o.IsPrimary {
 					// sufficient number of ORDER messages received, initiate global consensus
 					go o.initiateGlobalConsensus(ctx, natsMsg.Data)
 					numOrderMessagesRecvd = 0
-				} else {
-					numOrderMessagesRecvd += 1
 				}
 			case common.NATS_ORD_SYNC:
 				// either the sync message is from a `majority` of orderer nodes, OR

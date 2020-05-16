@@ -137,7 +137,7 @@ func StartLeader(ctx context.Context, nc *nats.Conn, leaderindex int) {
 
 	go func(nc *nats.Conn, leader *Leader) {
 		natsMessage := make(chan *nats.Msg)
-		err := messenger.SubscribeToInbox(ctx, nc, common.NATS_CONSENSUS_INITIATE_MSG, natsMessage)
+		err := messenger.SubscribeToInbox(ctx, nc, common.NATS_CONSENSUS_INITIATE_MSG, natsMessage, false)
 
 		if err != nil {
 			log.WithFields(log.Fields{

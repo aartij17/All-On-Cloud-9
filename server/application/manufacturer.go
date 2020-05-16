@@ -29,7 +29,7 @@ func (m *Manufacturer) subToInterAppNats(ctx context.Context, nc *nats.Conn, ser
 	var (
 		err error
 	)
-	err = messenger.SubscribeToInbox(ctx, nc, common.NATS_MANUFACTURER_INBOX, m.MsgChannel)
+	err = messenger.SubscribeToInbox(ctx, nc, common.NATS_MANUFACTURER_INBOX, m.MsgChannel, false)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error":       err.Error(),
