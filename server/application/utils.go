@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net/http"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/nats-io/nats.go"
 )
 
@@ -46,8 +47,6 @@ func sendTransactionMessage(ctx context.Context, nc *nats.Conn, channel chan *co
 		select {
 		// send the client request to the target application
 		case txn := <-channel:
-			fmt.Println("sendTransactionMessage")
-			fmt.Println(fromApp)
 			txn.FromId = serverId
 			txn.FromApp = fromApp
 			txn.ToId = fmt.Sprintf(config.NODE_NAME, txn.ToApp, 0)
@@ -67,6 +66,7 @@ func sendTransactionMessage(ctx context.Context, nc *nats.Conn, channel chan *co
 
 			jMsg, _ := json.Marshal(msg)
 			toNatsInbox := fmt.Sprintf("NATS_%s_INBOX", txn.ToApp)
+			log.Info("ready to send a message to nats")
 			messenger.PublishNatsMessage(ctx, nc, toNatsInbox, jMsg)
 		}
 	}

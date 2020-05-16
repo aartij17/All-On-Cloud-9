@@ -6,7 +6,6 @@ import (
 	"All-On-Cloud-9/messenger"
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -58,10 +57,12 @@ func handleManufacturerRequest(w http.ResponseWriter, r *http.Request) {
 		mTxn *ManufacturerClientRequest
 		txn  *common.Transaction
 	)
-	fmt.Println("HandleManufacturerRequest")
 	_ = json.NewDecoder(r.Body).Decode(&mTxn)
-	fmt.Println(mTxn)
 	jTxn, _ := json.Marshal(mTxn)
+
+	log.WithFields(log.Fields{
+		"request": mTxn,
+	}).Info("handling manufacturer request")
 
 	txn = &common.Transaction{
 		TxnBody: jTxn,
@@ -83,6 +84,9 @@ func StartManufacturerApplication(ctx context.Context, nc *nats.Conn, serverId s
 		MsgChannel:    make(chan *nats.Msg),
 		IsPrimary:     isPrimary,
 	}
+	log.WithFields(log.Fields{
+		"app": config.APP_MANUFACTURER,
+	}).Info("Starting the application")
 
 	// has to be a go-routine cause the http handler is a blocking call
 	go startClient(ctx, "/app/manufacturer",

@@ -42,7 +42,7 @@ func (server *Server) startLocalConsensus() {
 
 func (server *Server) initiateLocalGlobalConsensus(ctx context.Context, fromNodeId string, msg []byte) {
 	// check if the request was received on a primary agent
-	if server.ServerNumId != 1 {
+	if server.ServerNumId != 0 {
 		log.WithFields(log.Fields{
 			"receiverNodeId": fromNodeId,
 		}).Error("request received on a non-primary agent, no action taken")
