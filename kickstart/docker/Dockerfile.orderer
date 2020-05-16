@@ -2,7 +2,7 @@ FROM alpine:3.3
 
 RUN mkdir /orderer/
 
-COPY target/bin/orderers /orderer
+COPY ($BINPATH)/bin/orderers /orderer
 
 WORKDIR /orderer
 
