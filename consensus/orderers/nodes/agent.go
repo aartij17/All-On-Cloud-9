@@ -24,9 +24,13 @@ var (
 )
 
 type Orderer struct {
-	IsPrimary bool       `json:"is_primary"`
-	Id        int        `json:"agent_id"`
-	NatsConn  *nats.Conn `json:"nats_connection"`
+	IsPrimary       bool       `json:"is_primary"`
+	Id              int        `json:"agent_id"`
+	NatsConn        *nats.Conn `json:"nats_connection"`
+	isConsensusNode bool
+	isLeader        bool
+	isProposer      bool
+	isReplica       bool
 }
 
 func CreateOrderer(ctx context.Context, nodeId int) error {
@@ -57,9 +61,13 @@ func CreateOrderer(ctx context.Context, nodeId int) error {
 	}
 
 	ONode = &Orderer{
-		Id:        nodeId,
-		IsPrimary: isPrimary,
-		NatsConn:  nc,
+		Id:              nodeId,
+		IsPrimary:       isPrimary,
+		NatsConn:        nc,
+		isLeader:        runLeader,
+		isProposer:      runProposer,
+		isReplica:       runReplica,
+		isConsensusNode: runConsensus,
 	}
 	bpaxos.SetupBPaxos(ctx, ONode.NatsConn, runConsensus, runLeader, runProposer, runReplica)
 	go ONode.StartOrdListener(ctx)

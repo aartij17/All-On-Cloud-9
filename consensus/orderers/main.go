@@ -32,8 +32,12 @@ func main() {
 		configFilePath string
 		err            error
 	)
-	flag.IntVar(&nodeId, "nodeId", 1, "node ID(1, 2, 3, 4)")
-	flag.StringVar(&configFilePath, "configFilePath", "", "")
+	flag.IntVar(&nodeId, "nodeId", 0, "node ID(0, 1, 2, 3)")
+	flag.StringVar(&configFilePath, "configFilePath",
+		"/Users/aartij17/go/src/All-On-Cloud-9/config/config.json", "")
+
+	flag.Parse()
+
 	if configFilePath == "" {
 		log.Error("invalid config file path, exiting now")
 		os.Exit(1)
@@ -42,7 +46,6 @@ func main() {
 	cleanupDone := make(chan bool)
 
 	config.LoadConfig(ctx, configFilePath)
-
 	err = nodes.CreateOrderer(ctx, nodeId)
 	if err != nil {
 		cancel()
