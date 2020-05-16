@@ -78,7 +78,7 @@ func (proposer *Proposer) timeout(duration_ms int) {
 		proposer.Message.VertexId.Id = -1
 		proposer.Message.VertexId.Index = -1
 		QueueRelease <- true
-		log.Info("Proposer timeout")
+		log.Error("Proposer timeout")
 	}
 	log.Info("[BPAXOS] release timeout lock for proposer")
 }
@@ -107,15 +107,15 @@ func (proposer *Proposer) ProcessMessageFromConsensus(m *nats.Msg, nc *nats.Conn
 			return
 		}
 		messenger.PublishNatsMessage(ctx, nc, common.PROPOSER_TO_REPLICA, replicaMessage)
-		consensusMessage := common.ConsensusMessage{VertexId: proposer.Message.VertexId, ProposerId: proposer.ProposerId, Release: 1}
-		sentConsensusMessage, err := json.Marshal(&consensusMessage)
-		if err != nil {
-			log.WithFields(log.Fields{
-				"err": err.Error(),
-			}).Error("error marshal proposer release message")
-			return
-		}
-		messenger.PublishNatsMessage(ctx, nc, common.PROPOSER_TO_CONSENSUS, sentConsensusMessage)
+		// consensusMessage := common.ConsensusMessage{VertexId: proposer.Message.VertexId, ProposerId: proposer.ProposerId, Release: 1}
+		// sentConsensusMessage, err := json.Marshal(&consensusMessage)
+		// if err != nil {
+		// 	log.WithFields(log.Fields{
+		// 		"err": err.Error(),
+		// 	}).Error("error marshal proposer release message")
+		// 	return
+		// }
+		// messenger.PublishNatsMessage(ctx, nc, common.PROPOSER_TO_CONSENSUS, sentConsensusMessage)
 
 		proposer.Message.VertexId.Id = -1
 		proposer.Message.VertexId.Index = -1

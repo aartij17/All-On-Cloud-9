@@ -83,6 +83,7 @@ func (consensusServiceNode *ConsensusServiceNode) ProcessConsensusMessage(m *nat
 			return
 		}
 		messenger.PublishNatsMessage(ctx, nc, sub, sentMessage)
+		mux.Unlock()
 		timer = time.NewTimer(time.Duration(common.CONSENSUS_TIMEOUT_MILLISECONDS) * time.Millisecond)
 		go Timeout(consensusServiceNode)
 	} else {
@@ -95,8 +96,9 @@ func (consensusServiceNode *ConsensusServiceNode) ProcessConsensusMessage(m *nat
 			consensusServiceNode.VertexId = nil
 
 		}
+		mux.Unlock()
 	}
-	mux.Unlock()
+	
 }
 
 func StartConsensus(ctx context.Context, nc *nats.Conn) {
@@ -120,11 +122,11 @@ func StartConsensus(ctx context.Context, nc *nats.Conn) {
 		for {
 			select {
 			case natsMsg = <-natsMessage:
-				log.Info("gained lock before ProcessConsensusMessage")
+				log.Error("gained lock before ProcessConsensusMessage")
 				mux.Lock()
 				cons.ProcessConsensusMessage(natsMsg, nc, ctx, cons)
 				mux.Unlock()
-				log.Info("released lock after ProcessConsensusMessage")
+				log.Error("released lock after ProcessConsensusMessage")
 			}
 		}
 	}(nc, &cons)
