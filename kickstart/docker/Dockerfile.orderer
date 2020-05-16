@@ -2,7 +2,7 @@ FROM alpine:3.3
 
 RUN mkdir /orderer/
 
-COPY $(GOPATH)/src/All-On-Cloud-9/target/bin/orderers /orderer
+COPY target/bin/orderers /orderer
 
 WORKDIR /orderer
 

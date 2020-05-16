@@ -13,7 +13,9 @@ spec:
        app: orderer
    spec:
      containers:
-     - name: orderer
-       image: test-app:latest
+     
+     - name: test-app
+       imagePullPolicy: IfNotPresent
+       image: test-app:v1
        ports:
        - containerPort: 3000
