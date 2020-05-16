@@ -37,10 +37,14 @@ func SubscribeToInbox(ctx context.Context, nc *nats.Conn, subject string, messag
 			return
 		}
 		log.WithFields(log.Fields{
-			"message": string(m.Data),
+			"subject": subject,
 		}).Info("Received a message from NATS")
 		messageChannel <- m
 	})
+
+	log.WithFields(log.Fields{
+		"topic": subject,
+	}).Info("subscribed to NATS inbox")
 
 	return nil
 }
@@ -59,5 +63,5 @@ func PublishNatsMessage(ctx context.Context, nc *nats.Conn, reqSubj string, mess
 	}
 	log.WithFields(log.Fields{
 		"requestSubj": reqSubj,
-	}).Debug("published request to NATS")
+	}).Info("published request to NATS")
 }

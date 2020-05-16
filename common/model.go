@@ -18,18 +18,18 @@ type ConsensusMessage struct {
 }
 
 type Transaction struct {
-	LocalXNum  string        `json:"local_transaction_number"`
-	GlobalXNum string        `json:"global_transaction_number"`
-	Type       string        `json:"transaction_type"` // local/global transaction type
-	TxnId      string        `json:"txn_id"`
-	ToId       string        `json:"to_id"`
-	FromId     string        `json:"from_id"`
-	CryptoHash string        `json:"crypto_hash"`
-	TxnType    string        `json:"transaction_type"`
-	Clock      *LamportClock `json:"lamport_clock"`
+	TxnBody []byte        `json:"txn_body"`
+	FromApp string        `json:"from_app"`
+	ToApp   string        `json:"to_app"`
+	ToId    string        `json:"to_id,omitempty"`
+	FromId  string        `json:"from_id,omitempty"`
+	TxnType string        `json:"transaction_type"`
+	Clock   *LamportClock `json:"lamport_clock"`
 }
 
 type Message struct {
+	ToApp       string       `json:"to_application"`
+	FromApp     string       `json:"from_application"`
 	MessageType string       `json:"message_type"`
 	Timestamp   int          `json:"client_timestamp,omitempty"`
 	FromNodeId  string       `json:"from_node_id"`

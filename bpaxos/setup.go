@@ -16,7 +16,8 @@ var (
 	leader_count = 0
 )
 
-func SetupBPaxos(ctx context.Context, nc *nats.Conn, runConsensus bool, runLeader bool, runProposer bool, runReplica bool) {
+func SetupBPaxos(ctx context.Context, nc *nats.Conn, runConsensus bool,
+	runLeader bool, runProposer bool, runReplica bool) {
 
 	if runLeader {
 		go leadernode.StartLeader(ctx, nc, leader_count)

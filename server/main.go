@@ -30,15 +30,13 @@ func configureLogger(level string) {
 func getNodeId(appName string, nodeIdNum int) string {
 	switch appName {
 	case config.APP_MANUFACTURER:
-		return fmt.Sprintf(config.MA_NODE, nodeIdNum)
+		return fmt.Sprintf(config.NODE_NAME, config.APP_MANUFACTURER, nodeIdNum)
 	case config.APP_SUPPLIER:
-		return fmt.Sprintf(config.S_NODE, nodeIdNum)
-	case config.APP_MIDDLEMAN:
-		return fmt.Sprintf(config.MI_NODE, nodeIdNum)
+		return fmt.Sprintf(config.NODE_NAME, config.APP_SUPPLIER, nodeIdNum)
 	case config.APP_CARRIER:
-		return fmt.Sprintf(config.C_NODE, nodeIdNum)
+		return fmt.Sprintf(config.NODE_NAME, config.APP_CARRIER, nodeIdNum)
 	case config.APP_BUYER:
-		return fmt.Sprintf(config.B_NODE, nodeIdNum)
+		return fmt.Sprintf(config.NODE_NAME, config.APP_BUYER, nodeIdNum)
 	}
 	return ""
 }
@@ -49,10 +47,14 @@ func main() {
 		appName        string
 		configFilePath string
 	)
-	flag.IntVar(&nodeIdNum, "nodeId", 1, "node ID(1, 2, 3, 4)")
-	flag.StringVar(&appName, "appName", config.APP_MANUFACTURER, fmt.Sprintf("apps - %s, %s, %s, %s, %s",
-		config.APP_MANUFACTURER, config.APP_BUYER, config.APP_CARRIER, config.APP_MIDDLEMAN, config.APP_SUPPLIER))
-	flag.StringVar(&configFilePath, "configFilePath", "", "")
+	flag.IntVar(&nodeIdNum, "nodeId", 0, "node ID(0, 1, 2, 3)")
+	flag.StringVar(&appName, "appName", config.APP_MANUFACTURER, fmt.Sprintf("apps - %s, %s, %s, %s",
+		config.APP_MANUFACTURER, config.APP_BUYER, config.APP_CARRIER, config.APP_SUPPLIER))
+	flag.StringVar(&configFilePath, "configFilePath",
+		"/Users/aartij17/go/src/All-On-Cloud-9/config/config.json", "")
+
+	flag.Parse()
+
 	if configFilePath == "" {
 		log.Error("invalid config file path found, exiting now")
 		os.Exit(1)
