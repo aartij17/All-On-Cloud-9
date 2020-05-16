@@ -79,7 +79,7 @@ func StartReplica(ctx context.Context, nc *nats.Conn) {
 	rep := Replica{}
 	go func(nc *nats.Conn, rep *Replica) {
 		NatsMessage := make(chan *nats.Msg)
-		err := messenger.SubscribeToInbox(ctx, nc, common.PROPOSER_TO_REPLICA, NatsMessage)
+		err := messenger.SubscribeToInbox(ctx, nc, common.PROPOSER_TO_REPLICA, NatsMessage, false)
 
 		if err != nil {
 			log.WithFields(log.Fields{
