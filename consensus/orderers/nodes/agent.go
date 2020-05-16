@@ -134,15 +134,14 @@ func (o *Orderer) StartOrdListener(ctx context.Context) {
 					numOrderMessagesRecvd = 0
 				}
 			case common.NATS_ORD_SYNC:
+				numSyncMessagesRecvd += 1
 				// either the sync message is from a `majority` of orderer nodes, OR
 				// it is from the primary orderer node, both are acceptable
-				if msg.IsFromPrimary || (numSyncMessagesRecvd > common.F && o.IsPrimary) {
+				if msg.IsFromPrimary || (numSyncMessagesRecvd >= common.F && o.IsPrimary) {
 					// tell all the application nodes that the transaction can be added to the
 					// blockchain
 					messenger.PublishNatsMessage(ctx, o.NatsConn, common.NATS_ADD_TO_BC, natsMsg.Data)
 					numSyncMessagesRecvd = 0
-				} else {
-					numSyncMessagesRecvd += 1
 				}
 			}
 		}
