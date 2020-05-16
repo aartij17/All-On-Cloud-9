@@ -87,7 +87,7 @@ func (consensusServiceNode *ConsensusServiceNode) ProcessConsensusMessage(m *nat
 		go Timeout(consensusServiceNode)
 	} else {
 		// release vote
-		if (consensusServiceNode.VertexId.Index == data.VertexId.Index) &&
+		if (consensusServiceNode.VertexId != nil) && (consensusServiceNode.VertexId.Index == data.VertexId.Index) &&
 			(consensusServiceNode.VertexId.Id == data.VertexId.Id) && (data.Release == 1) {
 			timer.Stop()
 			consensusServiceNode.VertexId = nil
