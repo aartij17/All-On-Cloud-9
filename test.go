@@ -16,7 +16,7 @@ func testPbft(ctx context.Context, id int) {
 		node.MessageIn <- &common.Transaction{
 			LocalXNum:  "A",
 			GlobalXNum: "d",
-			Type:       "23",
+			Type:       "LOCAL",
 			TxnId:      "",
 			ToId:       "",
 			FromId:     "",

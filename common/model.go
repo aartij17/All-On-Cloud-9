@@ -20,7 +20,7 @@ type ConsensusMessage struct {
 type Transaction struct {
 	LocalXNum  string        `json:"local_transaction_number"`
 	GlobalXNum string        `json:"global_transaction_number"`
-	Type       string        `json:"transaction_type"` // local/global transaction type
+	Type       string        `json:"type"` // local/global transaction type
 	TxnId      string        `json:"txn_id"`
 	ToId       string        `json:"to_id"`
 	FromId     string        `json:"from_id"`
