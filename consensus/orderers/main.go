@@ -32,7 +32,7 @@ func main() {
 		configFilePath string
 		err            error
 	)
-	flag.IntVar(&nodeId, "nodeId", 0, "node ID(0, 1, 2, 3)")
+	flag.IntVar(&nodeId, "nodeId", 0, "node ID(0 - leader, 1 - proposer, 2, 3, 4 - consensus)")
 	flag.StringVar(&configFilePath, "configFilePath",
 		"/Users/aartij17/go/src/All-On-Cloud-9/config/config.json", "")
 

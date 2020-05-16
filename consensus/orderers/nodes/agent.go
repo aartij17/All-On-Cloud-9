@@ -41,12 +41,16 @@ func CreateOrderer(ctx context.Context, nodeId int) error {
 		runProposer  = false
 		runReplica   = false
 	)
-	if nodeId == 0 {
+	switch nodeId {
+	case 0:
 		isPrimary = true
 		runLeader = true
-	} else {
+	case 1:
+		runProposer = true
+	case 2, 3, 4:
 		runConsensus = true
 	}
+
 	log.WithFields(log.Fields{
 		"id":        nodeId,
 		"isPrimary": isPrimary,

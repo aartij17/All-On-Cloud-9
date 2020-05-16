@@ -29,7 +29,7 @@ type Proposer struct {
 	ProposerId int
 }
 
-func NewProposer() Proposer {
+func newProposer() Proposer {
 	proposer := Proposer{}
 	proposer.VoteCount = 0
 	proposer.ProposerId = id_count
@@ -45,8 +45,11 @@ func (proposer *Proposer) SendResult(message *common.MessageEvent) {
 	fmt.Println("send consensus result")
 }
 
-func (proposer *Proposer) ProcessMessageFromLeader(data common.MessageEvent, nc *nats.Conn, ctx context.Context) {
-	fmt.Println("Received leader to proposer")
+func (proposer *Proposer) processMessageFromLeader(data common.MessageEvent, nc *nats.Conn, ctx context.Context) {
+
+	log.WithFields(log.Fields{
+		"proposerId": proposer.ProposerId,
+	}).Info("received message from leader to proposer")
 
 	proposer.VoteCount = 0
 	proposer.Message = data
@@ -61,20 +64,23 @@ func (proposer *Proposer) ProcessMessageFromLeader(data common.MessageEvent, nc 
 		return
 	}
 	messenger.PublishNatsMessage(ctx, nc, common.PROPOSER_TO_CONSENSUS, sentMessage)
-	go Timeout(common.CONSENSUS_TIMEOUT_MILLISECONDS, proposer)
+	go proposer.timeout(common.CONSENSUS_TIMEOUT_MILLISECONDS)
 }
 
-func Timeout(duration_ms int, proposer *Proposer) {
+func (proposer *Proposer) timeout(duration_ms int) {
 	time.Sleep(time.Duration(duration_ms) * time.Millisecond)
+	log.Info("[BPAXOS] taking timeout lock for proposer")
 	mux.Lock()
-	if (len(requestQ) > 0) && (requestQ[0].VertexId.Id == proposer.Message.VertexId.Id) && (requestQ[0].VertexId.Index == proposer.Message.VertexId.Index) {
+	defer mux.Unlock()
+	if (len(requestQ) > 0) && (requestQ[0].VertexId.Id == proposer.Message.VertexId.Id) &&
+		(requestQ[0].VertexId.Index == proposer.Message.VertexId.Index) {
 		// Set Message Vertex to -1 so it will ignore any subsequent message related to this vertex
 		proposer.Message.VertexId.Id = -1
 		proposer.Message.VertexId.Index = -1
 		QueueRelease <- true
 		log.Error("Proposer timeout")
 	}
-	mux.Unlock()
+	log.Info("[BPAXOS] release timeout lock for proposer")
 }
 
 func (proposer *Proposer) ProcessMessageFromConsensus(m *nats.Msg, nc *nats.Conn, ctx context.Context) {
@@ -118,12 +124,12 @@ func (proposer *Proposer) ProcessMessageFromConsensus(m *nats.Msg, nc *nats.Conn
 }
 
 func StartProposer(ctx context.Context, nc *nats.Conn) {
-	p := NewProposer()
+	p := newProposer()
 
 	go func(nc *nats.Conn, proposer *Proposer) {
-		NatsMessage := make(chan *nats.Msg)
+		natsMessage := make(chan *nats.Msg)
 		subj := fmt.Sprintf("%s%d", common.LEADER_TO_PROPOSER, proposer.ProposerId)
-		err := messenger.SubscribeToInbox(ctx, nc, subj, NatsMessage)
+		err := messenger.SubscribeToInbox(ctx, nc, subj, natsMessage)
 
 		if err != nil {
 			log.WithFields(log.Fields{
@@ -136,8 +142,7 @@ func StartProposer(ctx context.Context, nc *nats.Conn) {
 		)
 		for {
 			select {
-			case m = <-NatsMessage:
-
+			case m = <-natsMessage:
 				data := common.MessageEvent{}
 				err := json.Unmarshal(m.Data, &data)
 				if err != nil {
@@ -148,9 +153,16 @@ func StartProposer(ctx context.Context, nc *nats.Conn) {
 				}
 				requestQ = append(requestQ, data)
 				QueueTrigger <- true
-				// proposer.ProcessMessageFromLeader(natsMsg, nc, ctx)
-
 			}
+		}
+	}(nc, &p)
+
+	go func(nc *nats.Conn, proposer *Proposer) {
+		for {
+			<-QueueTrigger
+			proposer.processMessageFromLeader(requestQ[0], nc, ctx)
+			<-QueueRelease
+			requestQ = requestQ[1:]
 		}
 	}(nc, &p)
 
@@ -175,15 +187,6 @@ func StartProposer(ctx context.Context, nc *nats.Conn) {
 				proposer.ProcessMessageFromConsensus(natsMsg, nc, ctx)
 				mux.Unlock()
 			}
-		}
-	}(nc, &p)
-
-	go func(nc *nats.Conn, proposer *Proposer) {
-		for {
-			<-QueueTrigger
-			proposer.ProcessMessageFromLeader(requestQ[0], nc, ctx)
-			<-QueueRelease
-			requestQ = requestQ[1:]
 		}
 	}(nc, &p)
 

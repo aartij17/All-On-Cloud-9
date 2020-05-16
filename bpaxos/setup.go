@@ -1,10 +1,10 @@
 package bpaxos
 
 import (
-	"All-On-Cloud-9/bpaxos/consensus/node"
-	"All-On-Cloud-9/bpaxos/leader/node"
-	"All-On-Cloud-9/bpaxos/proposer/node"
-	"All-On-Cloud-9/bpaxos/replica/node"
+	consensus "All-On-Cloud-9/bpaxos/consensus/node"
+	leadernode "All-On-Cloud-9/bpaxos/leader/node"
+	proposer "All-On-Cloud-9/bpaxos/proposer/node"
+	replica "All-On-Cloud-9/bpaxos/replica/node"
 	"context"
 
 	log "github.com/Sirupsen/logrus"

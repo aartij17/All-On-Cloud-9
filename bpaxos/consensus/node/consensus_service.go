@@ -32,12 +32,14 @@ func NewConsensusServiceNode() ConsensusServiceNode {
 
 func Timeout(duration_ms int, consensusNode *ConsensusServiceNode) {
 	time.Sleep(time.Duration(duration_ms) * time.Millisecond)
+	log.Error("gained lock before timeout")
 	mux.Lock()
 	if consensusNode.VertexId != nil {
 		consensusNode.VertexId = nil
 		log.Error("Consensus timeout")
 	}
 	mux.Unlock()
+	log.Error("released lock after timeout")
 }
 
 func (consensusServiceNode *ConsensusServiceNode) HandleReceive(message *common.MessageEvent) common.MessageEvent {
@@ -55,7 +57,9 @@ func (consensusServiceNode *ConsensusServiceNode) ReachConsensus() bool {
 }
 
 func (consensusServiceNode *ConsensusServiceNode) ProcessConsensusMessage(m *nats.Msg, nc *nats.Conn, ctx context.Context, cons *ConsensusServiceNode) {
-	fmt.Println("Received proposer to consensus")
+	log.WithFields(log.Fields{
+		"consensusNodeId": consensusServiceNode.VertexId,
+	}).Info("received message from proposer to consensus")
 	data := common.ConsensusMessage{}
 	err := json.Unmarshal(m.Data, &data)
 	if err != nil {
@@ -80,22 +84,14 @@ func (consensusServiceNode *ConsensusServiceNode) ProcessConsensusMessage(m *nat
 		go Timeout(common.CONSENSUS_TIMEOUT_MILLISECONDS, consensusServiceNode)
 	} else {
 		// release vote
-		if (consensusServiceNode.VertexId.Index == data.VertexId.Index) && (consensusServiceNode.VertexId.Id == data.VertexId.Id) && (data.Release == 1) {
+		fmt.Println(data.Release)
+		// TODO: [D&M]:
+		if (consensusServiceNode.VertexId.Index == data.VertexId.Index) &&
+			(consensusServiceNode.VertexId.Id == data.VertexId.Id) && (data.Release == 1) {
 			consensusServiceNode.VertexId = nil
 
 		}
 	}
-	// newMessage := cons.HandleReceive(&data)
-	// sentMessage, err := json.Marshal(&newMessage)
-
-	// if err == nil {
-	// 	fmt.Println("consensus can publish a message to proposer")
-	// 	messenger.PublishNatsMessage(ctx, nc, common.CONSENSUS_TO_PROPOSER, sentMessage)
-
-	// } else {
-	// 	fmt.Println("json marshal failed")
-	// 	fmt.Println(err.Error())
-	// }
 }
 
 func StartConsensus(ctx context.Context, nc *nats.Conn) {
@@ -103,9 +99,9 @@ func StartConsensus(ctx context.Context, nc *nats.Conn) {
 
 	go func(nc *nats.Conn, cons *ConsensusServiceNode) {
 
-		NatsMessage := make(chan *nats.Msg)
+		natsMessage := make(chan *nats.Msg)
 
-		err := messenger.SubscribeToInbox(ctx, nc, common.PROPOSER_TO_CONSENSUS, NatsMessage)
+		err := messenger.SubscribeToInbox(ctx, nc, common.PROPOSER_TO_CONSENSUS, natsMessage)
 
 		if err != nil {
 			log.WithFields(log.Fields{
@@ -118,10 +114,12 @@ func StartConsensus(ctx context.Context, nc *nats.Conn) {
 		)
 		for {
 			select {
-			case natsMsg = <-NatsMessage:
+			case natsMsg = <-natsMessage:
+				log.Error("gained lock before ProcessConsensusMessage")
 				mux.Lock()
 				cons.ProcessConsensusMessage(natsMsg, nc, ctx, cons)
 				mux.Unlock()
+				log.Error("released lock after ProcessConsensusMessage")
 			}
 		}
 	}(nc, &cons)

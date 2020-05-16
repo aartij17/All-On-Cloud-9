@@ -56,8 +56,6 @@ func (server *Server) initiateLocalGlobalConsensus(ctx context.Context, fromNode
 	go server.startLocalConsensus()
 	<-server.LocalConsensusComplete
 	server.startGlobalConsensusProcess(ctx, msg)
-	// initiate global consensus
-	messenger.PublishNatsMessage(ctx, server.NatsConn, common.NATS_CONSENSUS_INITIATE_MSG, msg)
 }
 
 // postConsensusProcessTxn is called once the local consensus has been reached by the nodes.
@@ -76,7 +74,7 @@ func (server *Server) startGlobalConsensusProcess(ctx context.Context, msg []byt
 		FromNodeNum:   server.ServerNumId,
 	}
 	jMsg, _ := json.Marshal(message)
-	messenger.PublishNatsMessage(ctx, server.NatsConn, common.NATS_ORD_ORDER, jMsg)
+	messenger.PublishNatsMessage(ctx, server.NatsConn, common.NATS_CONSENSUS_INITIATE_MSG, jMsg)
 }
 
 func (server *Server) startNatsSubscriber(ctx context.Context) {
