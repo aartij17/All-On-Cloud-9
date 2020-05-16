@@ -96,6 +96,9 @@ func (proposer *Proposer) ProcessMessageFromConsensus(m *nats.Msg, nc *nats.Conn
 
 	if (data.Index == proposer.Message.VertexId.Index) && (data.Id == proposer.Message.VertexId.Id) {
 		proposer.VoteCount += 1
+		log.WithFields(log.Fields{
+			"proposer vote count": proposer.VoteCount,
+		}).Info("incrementing proposer vote count")
 	}
 
 	if proposer.VoteCount > common.F {

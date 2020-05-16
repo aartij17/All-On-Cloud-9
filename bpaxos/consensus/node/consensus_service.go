@@ -69,8 +69,9 @@ func (consensusServiceNode *ConsensusServiceNode) ProcessConsensusMessage(m *nat
 		}).Error("error unmarshal message from proposer")
 		return
 	}
-
-	mux.Lock()
+	// log.Info("trying to take lock in ProcessConsensusMessage")
+	// log.Info("got lock in ProcessConsensusMessage")
+	defer mux.Unlock()
 	if (consensusServiceNode.VertexId == nil) && (data.Release == 0) {
 		consensusServiceNode.VertexId = data.VertexId
 		sub := fmt.Sprintf("%s%d", common.CONSENSUS_TO_PROPOSER, data.ProposerId)
@@ -83,22 +84,16 @@ func (consensusServiceNode *ConsensusServiceNode) ProcessConsensusMessage(m *nat
 			return
 		}
 		messenger.PublishNatsMessage(ctx, nc, sub, sentMessage)
-		mux.Unlock()
 		timer = time.NewTimer(time.Duration(common.CONSENSUS_TIMEOUT_MILLISECONDS) * time.Millisecond)
 		go Timeout(consensusServiceNode)
 	} else {
 		// release vote
-		fmt.Println(data.Release)
-		// TODO: [D&M]:
 		if (consensusServiceNode.VertexId.Index == data.VertexId.Index) &&
 			(consensusServiceNode.VertexId.Id == data.VertexId.Id) && (data.Release == 1) {
 			timer.Stop()
 			consensusServiceNode.VertexId = nil
-
 		}
-		mux.Unlock()
 	}
-	
 }
 
 func StartConsensus(ctx context.Context, nc *nats.Conn) {
