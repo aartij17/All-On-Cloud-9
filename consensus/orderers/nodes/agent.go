@@ -37,7 +37,7 @@ func CreateOrderer(ctx context.Context, nodeId int) error {
 		runProposer  = false
 		runReplica   = false
 	)
-	if nodeId == 1 {
+	if nodeId == 0 {
 		isPrimary = true
 		runLeader = true
 	} else {

@@ -29,17 +29,7 @@ func startInterAppNatsListener(ctx context.Context, msgChan chan *nats.Msg) {
 		select {
 		case natsMsg := <-msgChan:
 			_ = json.Unmarshal(natsMsg.Data, &msg)
-			switch msg.ToApp {
-			case config.APP_MANUFACTURER:
-				// tell the main app server to kick-start the consensus process
-				AppAgentChan <- msg
-			case config.APP_SUPPLIER:
-				supplier.processTxn(ctx, msg)
-			case config.APP_CARRIER:
-				carrier.processTxn(ctx, msg)
-			case config.APP_BUYER:
-				buyer.processTxn(ctx, msg)
-			}
+			AppAgentChan <- msg
 		}
 	}
 }
@@ -60,7 +50,7 @@ func sendTransactionMessage(ctx context.Context, nc *nats.Conn, channel chan *co
 			fmt.Println(fromApp)
 			txn.FromId = serverId
 			txn.FromApp = fromApp
-			txn.ToId = fmt.Sprintf(config.NODE_NAME, txn.ToApp, 1)
+			txn.ToId = fmt.Sprintf(config.NODE_NAME, txn.ToApp, 0)
 
 			// TODO: Fill these fields correctly
 			msg := common.Message{

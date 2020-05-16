@@ -47,7 +47,7 @@ func main() {
 		appName        string
 		configFilePath string
 	)
-	flag.IntVar(&nodeIdNum, "nodeId", 1, "node ID(1, 2, 3, 4)")
+	flag.IntVar(&nodeIdNum, "nodeId", 0, "node ID(0, 1, 2, 3)")
 	flag.StringVar(&appName, "appName", config.APP_MANUFACTURER, fmt.Sprintf("apps - %s, %s, %s, %s",
 		config.APP_MANUFACTURER, config.APP_BUYER, config.APP_CARRIER, config.APP_SUPPLIER))
 	flag.StringVar(&configFilePath, "configFilePath", "", "")

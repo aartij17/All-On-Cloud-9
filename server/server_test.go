@@ -5,8 +5,9 @@ import (
 	"All-On-Cloud-9/server/application"
 	"All-On-Cloud-9/server/blockchain"
 	"encoding/json"
-	"github.com/nats-io/nats.go"
 	"testing"
+
+	"github.com/nats-io/nats.go"
 )
 
 func TestCarrierContractSuccess(t *testing.T) {

@@ -141,7 +141,7 @@ func StartServer(ctx context.Context, nodeId string, appName string, id int) {
 		}).Error("error connecting to nats, exiting now...")
 		os.Exit(1)
 	}
-	if id == 1 {
+	if id == 0 {
 		primaryAgent = true
 	}
 	// initialize the blockchain

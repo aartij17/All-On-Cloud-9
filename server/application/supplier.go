@@ -7,10 +7,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
-	"github.com/nats-io/nats.go"
 	"net/http"
 	"strconv"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/nats-io/nats.go"
 )
 
 var (
