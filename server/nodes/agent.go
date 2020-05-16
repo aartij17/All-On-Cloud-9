@@ -36,6 +36,7 @@ type Server struct {
 }
 
 func (server *Server) startLocalConsensus() {
+	log.Info("starting local consensus")
 	// TODO: [Aarti]: This is a placeholder for now.
 	server.LocalConsensusComplete <- true
 }
@@ -50,7 +51,9 @@ func (server *Server) initiateLocalGlobalConsensus(ctx context.Context, fromNode
 	}
 	// TODO: [Aarti]: Check if the message is valid -- check the signature
 	// TODO: THIS WILL BLOCK! Initiate local consensus - Make sure that true is published to LocalConsensusCompleteChannel
-	server.startLocalConsensus()
+	// [Aarti]: This needs to be a go routine since we want to ensure that we appropriately wait for the
+	// local consensus to finish
+	go server.startLocalConsensus()
 	<-server.LocalConsensusComplete
 	server.startGlobalConsensusProcess(ctx, msg)
 	// initiate global consensus
@@ -59,6 +62,7 @@ func (server *Server) initiateLocalGlobalConsensus(ctx context.Context, fromNode
 
 // postConsensusProcessTxn is called once the local consensus has been reached by the nodes.
 func (server *Server) startGlobalConsensusProcess(ctx context.Context, msg []byte) {
+	log.Info("LET'S START THE GLOBAL CONSENSUS, HERE WE GOOOOO")
 	var commonMessage *common.Message
 	_ = json.Unmarshal(msg, &commonMessage)
 	// send ORDER message to the primary of the orderer node
@@ -96,6 +100,10 @@ func (server *Server) startNatsSubscriber(ctx context.Context) {
 		for {
 			select {
 			case msg = <-application.AppAgentChan:
+				log.WithFields(log.Fields{
+					"fromApp": msg.FromApp,
+					"toApp":   msg.ToApp,
+				}).Info("recieved a message from one of the applications")
 				jMsg, _ := json.Marshal(msg)
 				// TODO: [Aarti]: choose which consensus has to be initiated here. Orderer based or otherwise?
 				server.initiateLocalGlobalConsensus(ctx, msg.FromNodeId, jMsg)

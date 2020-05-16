@@ -21,15 +21,15 @@
       "servers": [
         {
           "host": "0.0.0.0",
-          "port": 9001
+          "port": 11001
         },
         {
           "host": "0.0.0.0",
-          "port": 9002
+          "port": 11002
         },
         {
           "host": "0.0.0.0",
-          "port": 9003
+          "port": 11003
         }
       ]
     },
@@ -37,15 +37,15 @@
       "servers": [
         {
           "host": "0.0.0.0",
-          "port": 9001
+          "port": 12001
         },
         {
           "host": "0.0.0.0",
-          "port": 9002
+          "port": 12002
         },
         {
           "host": "0.0.0.0",
-          "port": 9003
+          "port": 12003
         }
       ]
     },
@@ -53,15 +53,15 @@
       "servers": [
         {
           "host": "0.0.0.0",
-          "port": 9001
+          "port": 13001
         },
         {
           "host": "0.0.0.0",
-          "port": 9002
+          "port": 13002
         },
         {
           "host": "0.0.0.0",
-          "port": 9003
+          "port": 13003
         }
       ]
     }
@@ -71,15 +71,15 @@
       {
         "_comment": "by default, the first node in this list is the primary node",
         "host": "0.0.0.0",
-        "port": 9001
+        "port": 14001
       },
       {
         "host": "0.0.0.0",
-        "port": 9002
+        "port": 14002
       },
       {
         "host": "0.0.0.0",
-        "port": 9003
+        "port": 14003
       }
     ]
   },
