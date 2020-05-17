@@ -2,8 +2,10 @@ package blockchain
 
 import (
 	"All-On-Cloud-9/common"
+	"fmt"
 
 	log "github.com/Sirupsen/logrus"
+	guuid "github.com/google/uuid"
 	"github.com/hashicorp/terraform/dag"
 )
 
@@ -40,10 +42,13 @@ type Block struct {
 }
 
 func PrintBlockchain() {
+	Blockchain.String()
+
 	log.Info(Blockchain.String())
 }
 
-func InitBlockchain(nodeId int) *Vertex {
+func InitBlockchain(nodeId string) *Vertex {
+	id := guuid.New()
 	// 1. create the Genesis block
 	genesisBlock := &Block{
 		BlockId:       common.LAMBDA_BLOCK,
@@ -53,8 +58,8 @@ func InitBlockchain(nodeId int) *Vertex {
 		// TODO: [Aarti]: Do we even need this?!
 		Clock: &common.LamportClock{
 			// TODO: [Aarti] Confirm if this is right
-			PID:   nodeId,
-			Clock: LocalSeqNumber,
+			PID:   fmt.Sprintf("%s-%s", nodeId, id.String()),
+			Clock: common.GlobalClock,
 		},
 		CryptoHash: "",
 	}

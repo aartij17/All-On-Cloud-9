@@ -44,9 +44,6 @@ func (s *Supplier) subToInterAppNats(ctx context.Context, nc *nats.Conn, serverI
 			"topic":       common.NATS_SUPPLIER_INBOX,
 		}).Error("error subscribing to the nats topic")
 	}
-
-	go sendTransactionMessage(ctx, nc, sendSupplierRequestToAppsChan, config.APP_SUPPLIER, serverId, serverNumId)
-
 }
 
 func (s *Supplier) processTxn(ctx context.Context, msg *common.Message) {
@@ -89,6 +86,7 @@ func StartSupplierApplication(ctx context.Context, nc *nats.Conn, serverId strin
 		ContractValid: make(chan bool),
 		MsgChannel:    make(chan *nats.Msg),
 	}
+	go advertiseTransactionMessage(ctx, nc, config.APP_SUPPLIER, serverId, serverNumId)
 	go startClient(ctx, "/app/supplier",
 		strconv.Itoa(config.SystemConfig.AppInstance.AppSupplier.Servers[serverNumId].Port), handleSupplierRequest)
 	// all the other app-specific business logic can come here.

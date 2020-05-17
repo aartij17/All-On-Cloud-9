@@ -28,19 +28,20 @@ type Transaction struct {
 }
 
 type Message struct {
-	ToApp       string       `json:"to_application"`
-	FromApp     string       `json:"from_application"`
-	MessageType string       `json:"message_type"`
-	Timestamp   int          `json:"client_timestamp,omitempty"`
-	FromNodeId  string       `json:"from_node_id"`
-	FromNodeNum int          `json:"from_node_num"`
-	Txn         *Transaction `json:"transaction,omitempty"`
-	Digest      string       `json:"digest"`
-	PKeySig     string       `json:"pkey_sig"`
+	ToApp       string        `json:"to_application"`
+	FromApp     string        `json:"from_application"`
+	MessageType string        `json:"message_type"`
+	Timestamp   int           `json:"client_timestamp,omitempty"`
+	FromNodeId  string        `json:"from_node_id"`
+	FromNodeNum int           `json:"from_node_num"`
+	Txn         *Transaction  `json:"transaction,omitempty"`
+	Digest      string        `json:"digest"`
+	PKeySig     string        `json:"pkey_sig"`
+	Clock       *LamportClock `json:"lamport_clock"`
 }
 
 // LamportClock is used for ordering the local/global transactions
 type LamportClock struct {
-	PID   int `json:"pid"`
-	Clock int `json:"clock"`
+	PID   string `json:"pid"`
+	Clock int    `json:"clock"`
 }

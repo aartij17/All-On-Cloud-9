@@ -64,9 +64,6 @@ func (c *Carrier) subToInterAppNats(ctx context.Context, nc *nats.Conn, serverId
 			"topic":       common.NATS_CARRIER_INBOX,
 		}).Error("error subscribing to the nats topic")
 	}
-
-	go sendTransactionMessage(ctx, nc, sendCarrierRequestToAppsChan, config.APP_CARRIER, serverId, serverNumId)
-
 }
 
 func (c *Carrier) processTxn(ctx context.Context, msg *common.Message) {
@@ -79,6 +76,7 @@ func StartCarrierApplication(ctx context.Context, nc *nats.Conn, serverId string
 		ContractValid: make(chan bool),
 		MsgChannel:    make(chan *nats.Msg),
 	}
+	go advertiseTransactionMessage(ctx, nc, config.APP_CARRIER, serverId, serverNumId)
 	go startClient(ctx, "/app/carrier",
 		strconv.Itoa(config.SystemConfig.AppInstance.AppCarrier.Servers[serverNumId].Port), handleCarrierRequest)
 	// all the other app-specific business logic can come here.

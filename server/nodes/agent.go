@@ -112,6 +112,8 @@ func (server *Server) startNatsSubscriber(ctx context.Context) {
 				case common.NATS_ADD_TO_BC:
 					var ordererMsg *nodes.Message
 					_ = json.Unmarshal(natsMsg.Data, &ordererMsg)
+					//log.Info(ordererMsg.CommonMessage.Clock)
+					common.UpdateGlobalClock(ordererMsg.CommonMessage.Clock.Clock, false)
 					server.InitiateAddBlock(ctx, ordererMsg.CommonMessage)
 				}
 			}
@@ -151,7 +153,7 @@ func StartServer(ctx context.Context, nodeId string, appName string, id int) {
 		primaryAgent = true
 	}
 	// initialize the blockchain
-	genesisBlock := blockchain.InitBlockchain(id)
+	genesisBlock := blockchain.InitBlockchain(nodeId)
 
 	AppServer = &Server{
 		Id:                     nodeId,

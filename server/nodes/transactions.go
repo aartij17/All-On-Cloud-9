@@ -18,14 +18,47 @@ func (server *Server) InitiateAddBlock(ctx context.Context, message *common.Mess
 		isLocal  = false
 	)
 	log.WithFields(log.Fields{
-		"fromApp": message.FromApp,
-	})
+		"fromApp":  message.FromApp,
+		"toApp":    message.ToApp,
+		"txn type": message.Txn.TxnType,
+	}).Info("message details for the new block")
+
+	if message.Txn.TxnType == common.LOCAL_TXN {
+		if server.LastAddedLocalBlock.V.(*blockchain.Block).Clock.Clock > message.Clock.Clock {
+			log.WithFields(log.Fields{
+				"lastAddedTS": server.LastAddedLocalBlock.V.(*blockchain.Block).Clock.Clock,
+				"incomingTS":  message.Clock.Clock,
+			}).Warn("not going to add an older local block, skipping..")
+			return
+		}
+		if server.LastAddedLocalBlock.V.(*blockchain.Block).Clock.PID == message.Clock.PID {
+			log.WithFields(log.Fields{
+				"messageClockId": message.Clock.PID,
+			}).Warn("local block already added to the blockchain, nothing to do")
+			return
+		}
+	} else if message.Txn.TxnType == common.GLOBAL_TXN {
+		if server.LastAddedGlobalBlock.V.(*blockchain.Block).Clock.Clock > message.Clock.Clock {
+			log.WithFields(log.Fields{
+				"lastAddedTS": server.LastAddedGlobalBlock.V.(*blockchain.Block).Clock.Clock,
+				"incomingTS":  message.Clock.Clock,
+			}).Warn("not going to add an older global block, skipping..")
+			return
+		}
+		if server.LastAddedGlobalBlock.V.(*blockchain.Block).Clock.PID == message.Clock.PID {
+			log.WithFields(log.Fields{
+				"messageClockId": message.Clock.PID,
+			}).Warn("global block already added to the blockchain, nothing to do")
+			return
+		}
+	}
+
 	// if this is a local txn, the message should be intended for the current application
-	if message.Txn.TxnType == common.LOCAL_TXN && server.AppName != message.FromApp {
+	if message.Txn.TxnType == common.LOCAL_TXN && server.AppName != message.ToApp {
 		log.WithFields(log.Fields{
 			"current app": server.AppName,
 			"block app":   message.Txn.FromApp,
-		}).Info("block received, but not intended for this application")
+		}).Info("local block received, but not intended for this application")
 		return
 	}
 	if message.Txn.TxnType == common.LOCAL_TXN && server.AppName == message.ToApp {
@@ -48,7 +81,7 @@ func (server *Server) InitiateAddBlock(ctx context.Context, message *common.Mess
 		CryptoHash:    "",
 		Transaction:   message.Txn,
 		InitiatorNode: message.FromNodeId,
-		Clock:         nil,
+		Clock:         message.Clock,
 	}
 
 	if isGlobal {
@@ -75,6 +108,11 @@ func (server *Server) InitiateAddBlock(ctx context.Context, message *common.Mess
 
 	server.VertexMap[blockId] = newVertex
 
+	if isLocal {
+		server.LastAddedLocalBlock = newVertex
+	} else if isGlobal {
+		server.LastAddedGlobalBlock = newVertex
+	}
 	log.WithFields(log.Fields{
 		"fromVertex": newVertex.VertexId,
 		"toVertex":   server.LastAddedLocalBlock.VertexId,
