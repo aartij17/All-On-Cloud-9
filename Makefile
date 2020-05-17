@@ -44,6 +44,8 @@ show:
 
 format:
 	gofmt -w `find . -mindepth 1 -maxdepth 1 -type d | cut -c 3- | grep -vE '^\.'`
+	goimports -w `find . -mindepth 1 -maxdepth 1 -type d | cut -c 3- | grep -vE '^\.'`
+
 
 # Note that we're not using cd to get into the directories.
 # That’s because not knowing how deep in the file structure we’ll go,

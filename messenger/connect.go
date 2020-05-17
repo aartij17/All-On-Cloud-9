@@ -24,11 +24,14 @@ func NatsConnect(ctx context.Context) (*nats.Conn, error) {
 	return nc, nil
 }
 
-func SubscribeToInbox(ctx context.Context, nc *nats.Conn, subject string, messageChannel chan *nats.Msg) error {
-	var err error
+func SubscribeToInbox(ctx context.Context, nc *nats.Conn, subject string, messageChannel chan *nats.Msg, unsubscribe bool) error {
+	var (
+		err error
+		sub *nats.Subscription
+	)
 	// run another routine to listen to the messages that you are expecting from the server
 
-	_, err = nc.Subscribe(subject, func(m *nats.Msg) {
+	sub, err = nc.Subscribe(subject, func(m *nats.Msg) {
 		if err != nil {
 			log.WithFields(log.Fields{
 				"error":   err.Error(),
@@ -37,10 +40,20 @@ func SubscribeToInbox(ctx context.Context, nc *nats.Conn, subject string, messag
 			return
 		}
 		log.WithFields(log.Fields{
-			"message": string(m.Data),
+			"subject": subject,
 		}).Info("Received a message from NATS")
 		messageChannel <- m
 	})
+	if unsubscribe {
+		log.WithFields(log.Fields{
+			"subject": subject,
+		}).Info("unsubscribed to NATS inbox")
+		_ = sub.Unsubscribe()
+		return nil
+	}
+	log.WithFields(log.Fields{
+		"topic": subject,
+	}).Info("subscribed to NATS inbox")
 
 	return nil
 }
@@ -59,5 +72,5 @@ func PublishNatsMessage(ctx context.Context, nc *nats.Conn, reqSubj string, mess
 	}
 	log.WithFields(log.Fields{
 		"requestSubj": reqSubj,
-	}).Debug("published request to NATS")
+	}).Info("published request to NATS")
 }
