@@ -12,10 +12,14 @@ spec:
      labels:
        app: orderer
    spec:
+
      containers:
-     
-     - name: test-app
+     - name: orderer-carrier
        imagePullPolicy: IfNotPresent
-       image: test-app:v1
+       image: orderer-carrier:v1
+       envFrom:
+        - configMapRef:
+            name: orderer-configmap 
        ports:
        - containerPort: 3000
+       

@@ -4,10 +4,12 @@ BIN_OUT=$(TARGET_DIR)/bin
 
 KUBE_OUT=$(TARGET_DIR)/kubernetes
 SERVICE_OUT=$(KUBE_OUT)/services
-DOCKER_OUT=$(TARGET_DIR)/docker
+DOCKER_OUT=$(TARGET_DIR)
 TAR_OUT=$(TARGET_DIR)/tar_dir
+CONFIG_FILE=$(BASE_DIR)/config/config.json
 
 KUBE_DIR=$(BASE_DIR)/kickstart/kubernetes
+DOCKER_DIR=$(BASE_DIR)/kickstart/docker
 
 GO_PATH=${GOPATH}
 
@@ -82,10 +84,12 @@ build:
 		fi \
 	done;
 
+
 copy-instance:
 	scp -i cloud.pem -r $(BIN_OUT)/* ubuntu@${INSTANCE}:/home/ubuntu/cloud/bin
 	scp -i cloud.pem -r $(KUBE_OUT)/* ubuntu@${INSTANCE}:/home/ubuntu/cloud/kubernetes
-	scp -i cloud.pem -r $(DOCKER_DIR)/* ubuntu@${INSTANCE}:/home/ubuntu/cloud/docker
+	scp -i cloud.pem -r $(DOCKER_OUT)/* ubuntu@${INSTANCE}:/home/ubuntu/cloud
+	scp -i cloud.pem $(CONFIG_FILE) ubuntu@${INSTANCE}:/home/ubuntu/cloud
 
 
 prepare-service-files:
@@ -99,6 +103,14 @@ prepare-deployment-files:
 			cp $(KUBE_DIR)/$${j} $(KUBE_OUT); \
 	done
 
+prepare-kubernetes-files:
+	mkdir -p $(KUBE_OUT)
+	cp -r $(KUBE_DIR)/* $(KUBE_OUT)
+
+prepare-docker-files:
+	mkdir -p $(DOCKER_OUT)
+	cp -r $(DOCKER_DIR)/* $(DOCKER_OUT)/
+
 local: clean build
 
-deploy: clean build prepare-service-files prepare-deployment-files copy-instance
+deploy: clean build prepare-kubernetes-files prepare-docker-files copy-instance
