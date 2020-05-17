@@ -16,8 +16,7 @@ import (
 )
 
 var (
-	buyer                      *Buyer
-	sendBuyerRequestToAppsChan = make(chan *common.Transaction)
+	buyer *Buyer
 )
 
 const (
@@ -31,10 +30,11 @@ type Buyer struct {
 }
 
 type BuyerClientRequest struct {
+	TxnType          string `json:"transaction_type"`
 	ToApp            string `json:"to_application"`
 	Type             string `json:"message_type"`
 	UnitsTransferred int    `json:"units_transferred"`
-	MoneyTransferred int    `json:"money_transferred`
+	MoneyTransferred int    `json:"money_transferred"`
 	ShippingService  string `json:"shipping_service"`
 	ShippingCost     int    `json:"shipping_cost"`
 }
@@ -72,7 +72,7 @@ func handleBuyerRequest(w http.ResponseWriter, r *http.Request) {
 		TxnType: mTxn.Type,
 		Clock:   nil,
 	}
-	sendBuyerRequestToAppsChan <- txn
+	sendClientRequestToAppsChan <- txn
 }
 
 func StartBuyerApplication(ctx context.Context, nc *nats.Conn, serverId string, serverNumId int) {

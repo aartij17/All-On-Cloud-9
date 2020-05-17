@@ -21,7 +21,8 @@ var (
 	ManufacturerCostPerUnit = 5 // default value
 	SupplierCostPerUnit     = 5 // Default value
 
-	AppAgentChan = make(chan *common.Message)
+	AppAgentChan                = make(chan *common.Message)
+	sendClientRequestToAppsChan = make(chan *common.Transaction)
 )
 
 func startInterAppNatsListener(ctx context.Context, msgChan chan *nats.Msg) {
@@ -51,6 +52,7 @@ func advertiseTransactionMessage(ctx context.Context, nc *nats.Conn,
 		select {
 		// send the client request to the target application
 		case txn := <-sendClientRequestToAppsChan:
+			log.Info("GOTCHA")
 			txn.FromId = serverId
 			txn.FromApp = fromApp
 			txn.ToId = fmt.Sprintf(config.NODE_NAME, txn.ToApp, 0)

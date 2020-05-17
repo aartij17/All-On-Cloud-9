@@ -15,8 +15,7 @@ import (
 )
 
 var (
-	manufacturer                *Manufacturer
-	sendClientRequestToAppsChan = make(chan *common.Transaction)
+	manufacturer *Manufacturer
 )
 
 type Manufacturer struct {
@@ -41,6 +40,7 @@ func (m *Manufacturer) subToInterAppNats(ctx context.Context, nc *nats.Conn, ser
 }
 
 type ManufacturerClientRequest struct {
+	TxnType             string `json:"transaction_type"`
 	ToApp               string `json:"to_application"`
 	NumUnitsToSell      int    `json:"num_units_to_sell"`
 	AmountToBeCollected int    `json:"amount_to_be_collected"`
@@ -69,7 +69,7 @@ func handleManufacturerRequest(w http.ResponseWriter, r *http.Request) {
 		ToApp:   mTxn.ToApp,
 		ToId:    "",
 		FromId:  "",
-		TxnType: common.LOCAL_TXN,
+		TxnType: mTxn.TxnType,
 		Clock:   nil,
 	}
 

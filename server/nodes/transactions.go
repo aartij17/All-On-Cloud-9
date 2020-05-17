@@ -104,6 +104,7 @@ func (server *Server) InitiateAddBlock(ctx context.Context, message *common.Mess
 		VertexId: blockId,
 		V:        dag.Vertex(newBlock),
 	}
+	blockchain.Blockchain.Add(dag.Vertex((newVertex)))
 	if isGlobal {
 		edgeGlobal := dag.BasicEdge(dag.Vertex(newVertex), dag.Vertex(server.LastAddedGlobalBlock))
 		blockchain.Blockchain.Connect(edgeGlobal)
@@ -112,8 +113,6 @@ func (server *Server) InitiateAddBlock(ctx context.Context, message *common.Mess
 			"toVertex":   server.LastAddedGlobalBlock.VertexId,
 		}).Info("added new edge for global block")
 	}
-
-	blockchain.Blockchain.Add(dag.Vertex((newVertex)))
 	edgeLocal := dag.BasicEdge(dag.Vertex(newVertex), dag.Vertex(server.LastAddedLocalBlock))
 	blockchain.Blockchain.Connect(edgeLocal)
 

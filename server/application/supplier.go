@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/nats-io/nats.go"
@@ -25,6 +26,7 @@ type Supplier struct {
 }
 
 type SupplierRequest struct {
+	TxnType         string `json:"transaction_type"`
 	ToApp           string `json:"to_application"`
 	NumUnitsToBuy   int    `json:"num_units_to_buy"`
 	AmountPaid      int    `json:"amount_paid"`
@@ -46,10 +48,6 @@ func (s *Supplier) subToInterAppNats(ctx context.Context, nc *nats.Conn, serverI
 	}
 }
 
-func (s *Supplier) processTxn(ctx context.Context, msg *common.Message) {
-
-}
-
 func handleSupplierRequest(w http.ResponseWriter, r *http.Request) {
 	var (
 		sTxn *SupplierRequest
@@ -66,6 +64,7 @@ func handleSupplierRequest(w http.ResponseWriter, r *http.Request) {
 		log.WithFields(log.Fields{
 			"error": err.Error(),
 		}).Error("error handleSupplierRequest")
+		return
 	}
 
 	txn = &common.Transaction{
@@ -74,10 +73,11 @@ func handleSupplierRequest(w http.ResponseWriter, r *http.Request) {
 		ToApp:   sTxn.ToApp,
 		ToId:    "",
 		FromId:  "",
-		TxnType: "",
+		TxnType: sTxn.TxnType,
 		Clock:   nil,
 	}
-	sendSupplierRequestToAppsChan <- txn
+	log.Info("about to enter -- sendSupplierRequestToAppsChan <- txn")
+	sendClientRequestToAppsChan <- txn
 }
 
 func StartSupplierApplication(ctx context.Context, nc *nats.Conn, serverId string,
@@ -87,6 +87,7 @@ func StartSupplierApplication(ctx context.Context, nc *nats.Conn, serverId strin
 		MsgChannel:    make(chan *nats.Msg),
 	}
 	go advertiseTransactionMessage(ctx, nc, config.APP_SUPPLIER, serverId, serverNumId)
+	time.Sleep(4 * time.Second)
 	go startClient(ctx, "/app/supplier",
 		strconv.Itoa(config.SystemConfig.AppInstance.AppSupplier.Servers[serverNumId].Port), handleSupplierRequest)
 	// all the other app-specific business logic can come here.

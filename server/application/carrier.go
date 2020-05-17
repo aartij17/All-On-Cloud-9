@@ -16,8 +16,7 @@ import (
 )
 
 var (
-	carrier                      *Carrier
-	sendCarrierRequestToAppsChan = make(chan *common.Transaction)
+	carrier *Carrier
 )
 
 type Carrier struct {
@@ -26,8 +25,9 @@ type Carrier struct {
 }
 
 type CarrierClientRequest struct {
-	ToApp string `json:"to_application"`
-	Fee   int    `json:"fee"`
+	TxnType string `json:"transaction_type"`
+	ToApp   string `json:"to_application"`
+	Fee     int    `json:"fee"`
 }
 
 func handleCarrierRequest(w http.ResponseWriter, r *http.Request) {
@@ -46,10 +46,10 @@ func handleCarrierRequest(w http.ResponseWriter, r *http.Request) {
 		ToApp:   mTxn.ToApp,
 		ToId:    "",
 		FromId:  "",
-		TxnType: "",
+		TxnType: mTxn.TxnType,
 		Clock:   nil,
 	}
-	sendCarrierRequestToAppsChan <- txn
+	sendClientRequestToAppsChan <- txn
 }
 
 func (c *Carrier) subToInterAppNats(ctx context.Context, nc *nats.Conn, serverId string, serverNumId int) {

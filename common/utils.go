@@ -26,5 +26,5 @@ func UpdateGlobalClock(currTimestamp int, local bool) {
 	}
 	log.WithFields(log.Fields{
 		"clock": GlobalClock,
-	}).Warn("updated the global clock")
+	}).Debug("updated the global clock")
 }
