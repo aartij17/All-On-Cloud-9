@@ -10,6 +10,7 @@ import (
 	"context"
 	"encoding/json"
 	"os"
+	"sync"
 
 	log "github.com/Sirupsen/logrus"
 
@@ -26,7 +27,9 @@ type Server struct {
 	AppName                string                        `json:"appname"`
 	ServerNumId            int                           `json:"numeric_id"`
 	IsPrimaryAgent         bool                          `json:"is_primary_agent"`
+	MapLock                sync.Mutex                    `json:"lock"`
 	VertexMap              map[string]*blockchain.Vertex `json:"vertex_map"`
+	PIDMap                 map[string]bool               `json:"pid_map"`
 	CurrentLocalTxnSeq     int                           `json:"current_local_txn_seq"`
 	CurrentGlobalTxnSeq    int                           `json:"current_global_txn_seq"`
 	NatsConn               *nats.Conn                    `json:"nats_connection"`
@@ -161,6 +164,7 @@ func StartServer(ctx context.Context, nodeId string, appName string, id int) {
 		ServerNumId:            id,
 		IsPrimaryAgent:         primaryAgent,
 		VertexMap:              make(map[string]*blockchain.Vertex),
+		PIDMap:                 make(map[string]bool),
 		NatsConn:               nc,
 		LastAddedLocalBlock:    genesisBlock,
 		LastAddedGlobalBlock:   genesisBlock,

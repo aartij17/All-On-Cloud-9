@@ -3,10 +3,12 @@ package blockchain
 import (
 	"All-On-Cloud-9/common"
 	"fmt"
+	"sync"
 
 	log "github.com/Sirupsen/logrus"
 	guuid "github.com/google/uuid"
 	"github.com/hashicorp/terraform/dag"
+	"github.com/hashicorp/terraform/tfdiags"
 )
 
 /**
@@ -42,9 +44,17 @@ type Block struct {
 }
 
 func PrintBlockchain() {
-	Blockchain.String()
+	var visits []string
+	var lock sync.Mutex
+	Blockchain.Walk(func(v dag.Vertex) tfdiags.Diagnostics {
+		lock.Lock()
+		defer lock.Unlock()
+		id := v.(*Vertex).V.(*Block).BlockId
+		visits = append(visits, id)
+		return nil
+	})
 
-	log.Info(Blockchain.String())
+	log.Info(visits)
 }
 
 func InitBlockchain(nodeId string) *Vertex {

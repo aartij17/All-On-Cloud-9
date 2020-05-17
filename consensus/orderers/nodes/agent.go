@@ -111,6 +111,7 @@ func (o *Orderer) initiateGlobalConsensus(ctx context.Context, natsMsg []byte) {
 		case <-GlobalConsensusDone:
 			_ = messenger.SubscribeToInbox(ctx, o.NatsConn, common.NATS_CONSENSUS_DONE_MSG, GlobalConsensusDone, true)
 			messenger.PublishNatsMessage(ctx, o.NatsConn, common.NATS_ORD_SYNC, natsMsg)
+			return
 		}
 	}
 }
