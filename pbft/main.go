@@ -41,8 +41,10 @@ func NewPbftNode(
 	globalState := newPbftState(globalFailureTolerance, globalTotalNodes, GLOBAL_APPLICATION)
 	node := newPbftNode(ctx, nc, id, appId, localState, globalState)
 	node.initTimer(localState, node.generateLocalBroadcast())
-	//node.initTimer(globalState, )
+	node.initTimer(globalState, node.generateGlobalBroadcast(localState))
 	node.subToNatsChannels(application)
 	go node.startMessageListeners(node.msgChannel)
+	go node.handleLocalOut(localState)
+	go node.handleGlobalOut(globalState)
 	return node
 }

@@ -7,19 +7,21 @@ import (
 	"encoding/json"
 	log "github.com/Sirupsen/logrus"
 	"github.com/nats-io/nats.go"
+	"reflect"
 	"time"
 )
 
 type PbftNode struct {
-	ctx         context.Context
-	nc          *nats.Conn
-	id          int
-	appId       int
-	msgChannel  chan *nats.Msg
-	MessageIn   chan *common.Transaction
-	MessageOut  chan *common.Transaction
-	localState  *pbftState
-	globalState *pbftState
+	ctx            context.Context
+	nc             *nats.Conn
+	id             int
+	appId          int
+	msgChannel     chan *nats.Msg
+	localConsensus chan *common.Transaction
+	MessageIn      chan *common.Transaction
+	MessageOut     chan *common.Transaction
+	localState     *pbftState
+	globalState    *pbftState
 }
 
 var dummyTxn = common.Transaction{
@@ -36,33 +38,52 @@ var dummyTxn = common.Transaction{
 
 func newPbftNode(ctx context.Context, nc *nats.Conn, id int, appId int, localState *pbftState, globalState *pbftState) *PbftNode {
 	return &PbftNode{
-		ctx:         ctx,
-		nc:          nc,
-		id:          id,
-		appId:       appId,
-		msgChannel:  make(chan *nats.Msg),
-		MessageIn:   make(chan *common.Transaction),
-		MessageOut:  make(chan *common.Transaction),
-		localState:  localState,
-		globalState: globalState,
+		ctx:            ctx,
+		nc:             nc,
+		id:             id,
+		appId:          appId,
+		msgChannel:     make(chan *nats.Msg),
+		localConsensus: make(chan *common.Transaction),
+		MessageIn:      make(chan *common.Transaction),
+		MessageOut:     make(chan *common.Transaction),
+		localState:     localState,
+		globalState:    globalState,
 	}
 }
 
-func (node *PbftNode) generateGetId() func() int {
+func (node *PbftNode) generateLocalGetId() func() int {
 	return func() int {
 		return node.id
 	}
 }
 
+func (node *PbftNode) generateGlobalGetId() func() int {
+	return func() int {
+		return -node.id
+	}
+}
+
 func (node *PbftNode) generateLocalLeader(state *pbftState) func() bool {
 	return func() bool {
-		return state.viewNumber%state.totalNodes == node.id && node.id != 0
+		return state.viewNumber%state.totalNodes == node.id
+	}
+}
+
+func (node *PbftNode) generateGlobalLeader(globalState *pbftState, localState *pbftState) func() bool {
+	return func() bool {
+		return globalState.viewNumber%globalState.totalNodes == node.appId && node.generateLocalLeader(localState)()
 	}
 }
 
 func (node *PbftNode) generateSuggestedLocalLeader(state *pbftState) func(int) bool {
 	return func(id int) bool {
 		return id%state.totalNodes == node.id
+	}
+}
+
+func (node *PbftNode) generateSuggestedGlobalLeader(globalState *pbftState, localState *pbftState) func(int) bool {
+	return func(id int) bool {
+		return id%globalState.totalNodes == node.appId && node.generateLocalLeader(localState)()
 	}
 }
 
@@ -74,6 +95,29 @@ func (node *PbftNode) generateLocalBroadcast() func(common.Message) {
 		}
 		byteMessage, _ := json.Marshal(pckedMsg)
 		messenger.PublishNatsMessage(node.ctx, node.nc, _inbox(node.localState.suffix), byteMessage)
+	}
+}
+
+func (node *PbftNode) generateGlobalBroadcast(localState *pbftState) func(common.Message) {
+	return func(message common.Message) {
+		if node.generateLocalLeader(localState)() {
+			message.Txn.Type = LOCAL_CONSENSUS
+			node.generateLocalBroadcast()(message)
+
+			txn := <-node.localConsensus
+			//log.WithField("txn", txn).Info("BROADCAST RECEIVED TXN")
+			if !reflect.DeepEqual(txn, message.Txn) {
+				node.localConsensus <- txn
+				return
+			}
+			message.Txn.Type = GLOBAL
+			pckedMsg := packedMessage{
+				Msg: message,
+				Txn: *message.Txn,
+			}
+			byteMessage, _ := json.Marshal(pckedMsg)
+			messenger.PublishNatsMessage(node.ctx, node.nc, GLOBAL_APPLICATION, byteMessage)
+		}
 	}
 }
 
@@ -116,8 +160,25 @@ func (node *PbftNode) subToNatsChannels(suffix string) {
 	}
 }
 
-func (node *PbftNode) startMessageListeners(msgChan chan *nats.Msg) {
+func (node *PbftNode) handleLocalOut(state *pbftState) {
+	for {
+		txn := <-state.messageOut
+		if txn.Type == LOCAL {
+			//log.WithField("txn", txn).Info("SUCCESS")
+			node.MessageOut <- txn
+		} else if txn.Type == LOCAL_CONSENSUS {
+			//log.WithField("txn", txn).Info("CONSENSUS OUT")
+			node.localConsensus <- txn
+		}
+	}
+}
 
+func (node *PbftNode) handleGlobalOut(state *pbftState) {
+	txn := <-state.messageOut
+	node.MessageOut <- txn
+}
+
+func (node *PbftNode) startMessageListeners(msgChan chan *nats.Msg) {
 	var (
 		packedMsg packedMessage
 		msg       common.Message
@@ -140,31 +201,41 @@ func (node *PbftNode) startMessageListeners(msgChan chan *nats.Msg) {
 				"msg":         packedMsg.Msg,
 				"txn":         packedMsg.Txn,
 				"id":          node.id,
+				"appId":       node.appId,
 				"application": APPLICATION,
 			}).Info("nats message received")
-			if msg.Txn.Type == LOCAL {
-				txn := node.localState.handleMessage(
+			if msg.Txn.Type == LOCAL || msg.Txn.Type == LOCAL_CONSENSUS {
+				node.localState.handleMessage(
 					msg,
 					node.generateLocalBroadcast(),
 					node.generateLocalLeader(node.localState),
 					node.generateSuggestedLocalLeader(node.localState),
-					node.generateGetId(),
+					node.generateLocalGetId(),
 				)
-
-				if txn != nil {
-					log.WithField("txn", txn).Info("SUCCESS")
-					node.MessageOut <- txn
-				}
 			} else if msg.Txn.Type == GLOBAL {
-				//node.handleGlobalMessage
+				node.globalState.handleMessage(
+					msg,
+					node.generateGlobalBroadcast(node.localState),
+					node.generateGlobalLeader(node.globalState, node.localState),
+					node.generateSuggestedGlobalLeader(node.globalState, node.localState),
+					node.generateGlobalGetId(),
+				)
 			}
 
 		case newMessage := <-node.MessageIn:
-			node.generateLocalBroadcast()(common.Message{
-				MessageType: NEW_MESSAGE,
-				FromNodeNum: node.id,
-				Txn:         newMessage,
-			})
+			if newMessage.Type == LOCAL {
+				go node.generateLocalBroadcast()(common.Message{
+					MessageType: NEW_MESSAGE,
+					FromNodeNum: node.id,
+					Txn:         newMessage,
+				})
+			} else {
+				go node.generateGlobalBroadcast(node.localState)(common.Message{
+					MessageType: NEW_MESSAGE,
+					FromNodeNum: node.id,
+					Txn:         newMessage,
+				})
+			}
 		}
 	}
 }

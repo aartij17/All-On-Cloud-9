@@ -16,7 +16,8 @@ type pbftState struct {
 	suffix            string
 	counter           map[reducedMessage]int
 	timeoutTimer      *time.Timer
-	localLog          []common.Message
+	//localLog          []common.Message
+	messageOut chan *common.Transaction
 }
 
 func newPbftState(failureTolerance int, totalNodes int, suffix string) *pbftState {
@@ -24,14 +25,15 @@ func newPbftState(failureTolerance int, totalNodes int, suffix string) *pbftStat
 		viewNumber:        0,
 		failureTolerance:  failureTolerance,
 		totalNodes:        totalNodes,
-		counter:           make(map[reducedMessage]int),
 		currentTimestamp:  -1,
 		viewChangeCounter: 0,
 		timerIsRunning:    false,
 		candidateNumber:   1,
-		timeoutTimer:      nil,
 		suffix:            suffix,
-		localLog:          make([]common.Message, 0),
+		counter:           make(map[reducedMessage]int),
+		timeoutTimer:      nil,
+		//localLog:          make([]common.Message, 0),
+		messageOut: make(chan *common.Transaction),
 	}
 
 	return &newState
@@ -55,20 +57,20 @@ func (state *pbftState) handleMessage(
 	isLeader func() bool,
 	isSuggestedLeader func(int) bool,
 	getId func() int,
-) *common.Transaction {
+) {
 	switch message.MessageType {
 	case NEW_VIEW:
 		state.viewChangeCounter = 0
-		state.candidateNumber = state.viewNumber + 1
 		state.stopTimer()
 		state.viewNumber = message.Timestamp
+		state.candidateNumber = state.viewNumber + 1
 	case VIEW_CHANGE:
 		if isSuggestedLeader(message.Timestamp) {
 			state.viewChangeCounter++
 			//println("inside VIEW_CHANGE", getId(), state.viewChangeCounter, 2*state.failureTolerance+1)
 			if state.viewChangeCounter == 2*state.failureTolerance+1 {
 				//println("broadcasting NEW_VIEW")
-				broadcast(common.Message{
+				go broadcast(common.Message{
 					MessageType: NEW_VIEW,
 					Timestamp:   message.Timestamp,
 					FromNodeNum: getId(),
@@ -79,7 +81,7 @@ func (state *pbftState) handleMessage(
 	case NEW_MESSAGE:
 		if isLeader() {
 			state.currentTimestamp++
-			broadcast(common.Message{
+			go broadcast(common.Message{
 				MessageType: PRE_PREPARE,
 				Timestamp:   state.currentTimestamp,
 				FromNodeNum: getId(),
@@ -91,7 +93,7 @@ func (state *pbftState) handleMessage(
 	case PRE_PREPARE:
 		// TODO: Check if is from leader
 		state.stopTimer()
-		broadcast(common.Message{
+		go broadcast(common.Message{
 			MessageType: PREPARE,
 			Timestamp:   message.Timestamp,
 			FromNodeNum: getId(),
@@ -105,7 +107,7 @@ func (state *pbftState) handleMessage(
 
 		state.counter[reduced]++
 		if state.counter[reduced] >= 2*state.failureTolerance+1 {
-			broadcast(common.Message{
+			go broadcast(common.Message{
 				MessageType: COMMIT,
 				Timestamp:   message.Timestamp,
 				FromNodeNum: getId(),
@@ -120,7 +122,7 @@ func (state *pbftState) handleMessage(
 
 		state.counter[reduced]++
 		if state.counter[reduced] >= 2*state.failureTolerance+1 {
-			broadcast(common.Message{
+			go broadcast(common.Message{
 				MessageType: COMMITED,
 				Timestamp:   message.Timestamp,
 				FromNodeNum: getId(),
@@ -136,8 +138,7 @@ func (state *pbftState) handleMessage(
 		state.counter[reduced]++
 		if state.counter[reduced] >= state.failureTolerance+1 {
 			state.currentTimestamp = message.Timestamp
-			return message.Txn
+			state.messageOut <- message.Txn
 		}
 	}
-	return nil
 }

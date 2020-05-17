@@ -5,6 +5,7 @@ const (
 	APPLICATION        = "APP_PBFT"
 	NATS_PBFT_INBOX    = "NATS_PBFT_INBOX"
 	LOCAL              = "LOCAL"
+	LOCAL_CONSENSUS    = "LOCAL_CONSENSUS"
 	GLOBAL             = "GLOBAL"
 
 	TIMEOUT     = 3
