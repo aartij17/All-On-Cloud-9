@@ -106,7 +106,7 @@ func (state *pbftState) handleMessage(
 	case PREPARE:
 		reduced := reducedMessage{
 			messageType: PREPARE,
-			Txn:         *_message.Txn,
+			Txn:         newReducedTransaction(*_message.Txn),
 		}
 
 		state.counter[reduced]++
@@ -123,7 +123,7 @@ func (state *pbftState) handleMessage(
 	case COMMIT:
 		reduced := reducedMessage{
 			messageType: COMMIT,
-			Txn:         *_message.Txn,
+			Txn:         newReducedTransaction(*_message.Txn),
 		}
 
 		state.counter[reduced]++
@@ -140,7 +140,7 @@ func (state *pbftState) handleMessage(
 	case COMMITED:
 		reduced := reducedMessage{
 			messageType: COMMITED,
-			Txn:         *_message.Txn,
+			Txn:         newReducedTransaction(*_message.Txn),
 		}
 
 		state.counter[reduced]++

@@ -25,7 +25,7 @@ func TestLocal(t *testing.T) {
 			node := NewPbftNode(ctx, nc, "APP_", 1, 4, 0, 1, id, 0)
 
 			dummyTxn := common.Transaction{
-				Type: LOCAL,
+				TxnType: LOCAL,
 			}
 			if id == 0 {
 				node.MessageIn <- dummyTxn
@@ -61,7 +61,7 @@ func TestGlobalSingleNodeApp(t *testing.T) {
 			node := NewPbftNode(ctx, nc, "APP_"+strconv.Itoa(id), 0, 1, 1, 4, 0, id)
 
 			dummyTxn := common.Transaction{
-				Type: GLOBAL,
+				TxnType: GLOBAL,
 			}
 			if id == 0 {
 				node.MessageIn <- dummyTxn
@@ -102,7 +102,7 @@ func TestGlobalOneMultipleNodeApp(t *testing.T) {
 			node := NewPbftNode(ctx, nc, "APP_0", 1, 4, 1, 4, id, appId)
 
 			dummyTxn := common.Transaction{
-				Type: GLOBAL,
+				TxnType: GLOBAL,
 			}
 			if id == 0 && appId == 0 {
 				node.MessageIn <- dummyTxn
@@ -123,7 +123,7 @@ func TestGlobalOneMultipleNodeApp(t *testing.T) {
 			node := NewPbftNode(ctx, nc, "APP_"+strconv.Itoa(appId), 0, 1, 1, 4, id, appId)
 
 			dummyTxn := common.Transaction{
-				Type: GLOBAL,
+				TxnType: GLOBAL,
 			}
 			txn := <-node.MessageOut
 			if !reflect.DeepEqual(txn, dummyTxn) {
@@ -163,7 +163,7 @@ func TestGlobalMultipleNodeApp(t *testing.T) {
 				node := NewPbftNode(ctx, nc, "APP_"+strconv.Itoa(appId), 1, 4, 1, 4, id, appId)
 
 				dummyTxn := common.Transaction{
-					Type: GLOBAL,
+					TxnType: GLOBAL,
 				}
 				if id == 0 && appId == 0 {
 					node.MessageIn <- dummyTxn
