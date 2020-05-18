@@ -78,7 +78,7 @@ func StartDependencyService(ctx context.Context, nc *nats.Conn) {
 	// dependency_node.Stub()
 	go func(nc *nats.Conn, dep_node *DepsServiceNode) {
 		NatsMessage := make(chan *nats.Msg)
-		err := messenger.SubscribeToInbox(ctx, nc, common.LEADER_TO_DEPS, NatsMessage)
+		err := messenger.SubscribeToInbox(ctx, nc, common.LEADER_TO_DEPS, NatsMessage, false)
 
 		if err != nil {
 			log.WithFields(log.Fields{

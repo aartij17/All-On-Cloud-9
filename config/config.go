@@ -11,17 +11,12 @@ import (
 )
 
 const (
-	APP_MANUFACTURER = "APP_MANUFACTURER"
-	APP_SUPPLIER     = "APP_SUPPLIER"
-	APP_BUYER        = "APP_BUYER"
-	APP_CARRIER      = "APP_CARRIER"
-	APP_MIDDLEMAN    = "APP_MIDDLEMAN"
+	APP_MANUFACTURER = "MANUFACTURER"
+	APP_SUPPLIER     = "SUPPLIER"
+	APP_BUYER        = "BUYER"
+	APP_CARRIER      = "CARRIER"
 
-	MA_NODE = "MA_NODE_%d"
-	S_NODE  = "S_NODE_%d"
-	B_NODE  = "B_NODE_%d"
-	C_NODE  = "C_NODE_%d"
-	MI_NODE = "MI_NODE_%d"
+	NODE_NAME = "%s_%d"
 
 	// ORDERER nodes which are NOT part of the agents serving the applications
 	ORDERER1 = 1
@@ -34,7 +29,6 @@ var (
 	SUPPLIER_NODES     []string
 	BUYER_NODES        []string
 	CARRIER_NODES      []string
-	MIDDLEMAN_NODES    []string
 
 	APP_ORDERERS = [...]int{ORDERER1, ORDERER2, ORDERER3}
 
@@ -47,9 +41,10 @@ type Servers struct {
 }
 
 type Applications struct {
-	Application1 *ApplicationInstance `json:"APPLICATION_1,omitempty"`
-	Application2 *ApplicationInstance `json:"APPLICATION_2,omitempty"`
-	Application3 *ApplicationInstance `json:"APPLICATION_3,omitempty"`
+	AppManufacturer *ApplicationInstance `json:"MANUFACTURER,omitempty"`
+	AppBuyer        *ApplicationInstance `json:"BUYER,omitempty"`
+	AppSupplier     *ApplicationInstance `json:"SUPPLIER,omitempty"`
+	AppCarrier      *ApplicationInstance `json:"CARRIER,omitempty"`
 }
 
 type ApplicationInstance struct {
@@ -72,18 +67,16 @@ type Config struct {
 
 func initNodeIds() {
 	for i := 0; i < 5; i++ {
-		MANUFACTURER_NODES = append(MANUFACTURER_NODES, fmt.Sprintf(MA_NODE, i))
-		SUPPLIER_NODES = append(SUPPLIER_NODES, fmt.Sprintf(S_NODE, i))
-		BUYER_NODES = append(BUYER_NODES, fmt.Sprintf(B_NODE, i))
-		CARRIER_NODES = append(CARRIER_NODES, fmt.Sprintf(C_NODE, i))
-		MIDDLEMAN_NODES = append(MIDDLEMAN_NODES, fmt.Sprintf(MI_NODE, i))
+		MANUFACTURER_NODES = append(MANUFACTURER_NODES, fmt.Sprintf(NODE_NAME, APP_MANUFACTURER, i))
+		SUPPLIER_NODES = append(SUPPLIER_NODES, fmt.Sprintf(NODE_NAME, APP_SUPPLIER, i))
+		BUYER_NODES = append(BUYER_NODES, fmt.Sprintf(NODE_NAME, APP_BUYER, i))
+		CARRIER_NODES = append(CARRIER_NODES, fmt.Sprintf(NODE_NAME, APP_CARRIER, i))
 	}
 	log.WithFields(log.Fields{
 		"manufacturer": MANUFACTURER_NODES,
 		"supplier":     SUPPLIER_NODES,
 		"buyer":        BUYER_NODES,
 		"carrier":      CARRIER_NODES,
-		"middleman":    MIDDLEMAN_NODES,
 	}).Info("initialized all app nodes with their app IDs")
 }
 
@@ -113,5 +106,4 @@ func LoadConfig(ctx context.Context, filepath string) {
 //// STUB: For testing only
 //func main() {
 //	LoadConfig(nil, "/Users/aartij17/go/src/All-On-Cloud-9/config/config.json")
-//	fmt.Println(SystemConfig.Nats.Servers)
 //}

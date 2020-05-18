@@ -62,13 +62,11 @@ func NewLeader(index int) Leader {
 // 	return newMessage
 // }
 
-func (leader *Leader) HandleReceiveCommand(message []byte) common.MessageEvent {
+func (leader *Leader) handleReceiveCommand(message []byte) common.MessageEvent {
 	v := common.Vertex{leader.Index, id_count}
 	id_count += 1
 	newMessageEvent := common.MessageEvent{&v, message, []*common.Vertex{}}
-	// fmt.Println(newMessageEvent.Message)  // STUB
 	return newMessageEvent
-	// send message to dependency
 }
 
 // func (leader *Leader) HandleReceiveDeps() common.MessageEvent {
@@ -113,52 +111,33 @@ func (leader *Leader) GetMessagesLen() int {
 // 	}
 // }
 
-func ProcessMessageFromClient(m *nats.Msg, nc *nats.Conn, ctx context.Context, leader *Leader) {
-	fmt.Println("Received client to leader")
-	newMessage := leader.HandleReceiveCommand(m.Data)
+func processMessageFromClient(m *nats.Msg, nc *nats.Conn, ctx context.Context, leader *Leader) {
+	log.WithFields(log.Fields{
+		"leaderId": leader.Index,
+	}).Info("[BPAXOS] received message from client to leader")
+
+	newMessage := leader.handleReceiveCommand(m.Data)
 	sentMessage, err := json.Marshal(&newMessage)
-	if err == nil {
-		// The leader will forward this request to one of the proposers in a round roubin
-		fmt.Println("leader can publish a message to proposer")
-		subj := fmt.Sprintf("%s%d", common.LEADER_TO_PROPOSER, proposer_id)
-		messenger.PublishNatsMessage(ctx, nc, subj, sentMessage)
 
-		// messenger.PublishNatsMessage(ctx, nc, common.NATS_CONSENSUS_DONE, sentMessage)
-		proposer_id = (proposer_id + 1) % common.NUM_PROPOSERS
-
-	} else {
-		fmt.Println("json marshal failed")
-		fmt.Println(err.Error())
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err.Error(),
+		}).Error("[BPAXOS] json marshal error while processing request to the leader node")
+		return
 	}
+	subj := fmt.Sprintf("%s%d", common.LEADER_TO_PROPOSER, proposer_id)
+	messenger.PublishNatsMessage(ctx, nc, subj, sentMessage)
+
+	// messenger.PublishNatsMessage(ctx, nc, common.NATS_CONSENSUS_DONE, sentMessage)
+	proposer_id = (proposer_id + 1) % common.NUM_PROPOSERS
 }
 
 func StartLeader(ctx context.Context, nc *nats.Conn, leaderindex int) {
 	l := NewLeader(leaderindex) // Hard Coded User Id.
 
-	// go func(nc *nats.Conn, leader *Leader) {
-	// 	NatsMessage := make(chan *nats.Msg)
-	// 	err := messenger.SubscribeToInbox(ctx, nc, common.DEPS_TO_LEADER, NatsMessage)
-
-	// 	if err != nil {
-	// 		log.WithFields(log.Fields{
-	// 			"error": err.Error(),
-	// 		}).Error("error subscribe DEPS_TO_LEADER")
-	// 	}
-
-	// 	var (
-	// 		natsMsg *nats.Msg
-	// 	)
-	// 	for {
-	// 		select {
-	// 		case natsMsg = <-NatsMessage:
-	// 			ProcessMessageFromDeps(natsMsg, nc, ctx, l)
-	// 		}
-	// 	}
-	// }(nc, &l)
-
 	go func(nc *nats.Conn, leader *Leader) {
-		NatsMessage := make(chan *nats.Msg)
-		err := messenger.SubscribeToInbox(ctx, nc, common.NATS_CONSENSUS_INITIATE_MSG, NatsMessage)
+		natsMessage := make(chan *nats.Msg)
+		err := messenger.SubscribeToInbox(ctx, nc, common.NATS_CONSENSUS_INITIATE_MSG, natsMessage, false)
 
 		if err != nil {
 			log.WithFields(log.Fields{
@@ -171,8 +150,8 @@ func StartLeader(ctx context.Context, nc *nats.Conn, leaderindex int) {
 		)
 		for {
 			select {
-			case natsMsg = <-NatsMessage:
-				ProcessMessageFromClient(natsMsg, nc, ctx, leader)
+			case natsMsg = <-natsMessage:
+				processMessageFromClient(natsMsg, nc, ctx, leader)
 			}
 		}
 	}(nc, &l)

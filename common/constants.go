@@ -1,11 +1,13 @@
 package common
 
 const (
-	INTERNAL_TXN  = "INTERNAL_TXN"
-	CROSS_APP_TXN = "CROSS_APPLICATION_TXN"
+	LAMBDA_BLOCK = "XXX"
 
-	LOCAL_TXN_NUM  = "LTXN-%d%d"
-	GLOBAL_TXN_NUM = "GTXN-%d%d-%d"
+	LOCAL_TXN  = "LOCAL_TXN"
+	GLOBAL_TXN = "GLOBAL_TXN"
+
+	LOCAL_BLOCK_NUM  = "LOCAL-BLOCK-%d%d" // LOCAL_BLOCK-<APP_ID><LOCAL_TXN_NUM>
+	GLOBAL_BLOCK_NUM = "GLOBAL-BLOCK-%d%d-%d"
 
 	// Orderer Message Types
 	O_REQUEST = "REQUEST"
@@ -15,7 +17,6 @@ const (
 	// -------------- inter application messages --------------
 	// Message from primary agent of the sender application to the receiver application
 	NATS_ORD_REQUEST = "NATS_ORDERER_REQUEST"
-	NATS_APPS_TXN    = "NATS_APP_TXN"
 
 	// NATS inbox messages
 	// ORDERER MESSAGES
@@ -24,8 +25,9 @@ const (
 
 	// NATS start/stop messages
 	NATS_CONSENSUS_INITIATE_MSG = "NATS_CONSENSUS_START"
-	NATS_CONSENSUS_DONE         = "NATS_CONSENSUS_DONE"
+	NATS_CONSENSUS_DONE_MSG     = "NATS_CONSENSUS_DONE"
 
+	// BPaxos NATS message subjects
 	LEADER_TO_DEPS        = "LEADER_TO_DEPS"
 	DEPS_TO_LEADER        = "DEPS_TO_LEADER"
 	LEADER_TO_PROPOSER    = "LEADER_TO_PROPOSER"
@@ -45,6 +47,8 @@ const (
 	NATS_CARRIER_INBOX      = "NATS_CARRIER_INBOX"
 	NATS_BUYER_INBOX        = "NATS_BUYER_INBOX"
 	NATS_SUPPLIER_INBOX     = "NATS_SUPPLIER_INBOX"
+
+	NATS_ADD_TO_BC = "NATS_ADD_TO_BLOCKCHAIN"
 )
 
 var (

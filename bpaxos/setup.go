@@ -1,11 +1,13 @@
 package bpaxos
 
 import (
-	"All-On-Cloud-9/bpaxos/consensus/node"
-	"All-On-Cloud-9/bpaxos/leader/node"
-	"All-On-Cloud-9/bpaxos/proposer/node"
-	"All-On-Cloud-9/bpaxos/replica/node"
+	consensus "All-On-Cloud-9/bpaxos/consensus/node"
+	leadernode "All-On-Cloud-9/bpaxos/leader/node"
+	proposer "All-On-Cloud-9/bpaxos/proposer/node"
+	replica "All-On-Cloud-9/bpaxos/replica/node"
 	"context"
+
+	log "github.com/Sirupsen/logrus"
 
 	"github.com/nats-io/nats.go"
 )
@@ -16,7 +18,15 @@ var (
 	leader_count = 0
 )
 
-func SetupBPaxos(ctx context.Context, nc *nats.Conn, runConsensus bool, runLeader bool, runProposer bool, runReplica bool) {
+func SetupBPaxos(ctx context.Context, nc *nats.Conn, runConsensus bool,
+	runLeader bool, runProposer bool, runReplica bool) {
+
+	log.WithFields(log.Fields{
+		"isConsensus": runConsensus,
+		"isLeader":    runLeader,
+		"isProposer":  runProposer,
+		"isReplica":   runReplica,
+	}).Info("bootstrapping BPAXOS roles")
 
 	if runLeader {
 		go leadernode.StartLeader(ctx, nc, leader_count)

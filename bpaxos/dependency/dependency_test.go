@@ -1,7 +1,7 @@
 package main
 
 import (
-	"All-On-Cloud-9/bpaxos/dependency/node"
+	depsnode "All-On-Cloud-9/bpaxos/dependency/node"
 	"All-On-Cloud-9/common"
 	"testing"
 )

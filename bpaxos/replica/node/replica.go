@@ -67,7 +67,7 @@ func ProcessReplicaMessage(m *nats.Msg, nc *nats.Conn, ctx context.Context, rep 
 	// Respond back to the client
 	if err == nil {
 		fmt.Println("leader can publish a message to deps")
-		messenger.PublishNatsMessage(ctx, nc, common.NATS_CONSENSUS_DONE, sentMessage)
+		messenger.PublishNatsMessage(ctx, nc, common.NATS_CONSENSUS_DONE_MSG, sentMessage)
 
 	} else {
 		fmt.Println("json marshal failed")
@@ -76,11 +76,10 @@ func ProcessReplicaMessage(m *nats.Msg, nc *nats.Conn, ctx context.Context, rep 
 }
 
 func StartReplica(ctx context.Context, nc *nats.Conn) {
-
 	rep := Replica{}
 	go func(nc *nats.Conn, rep *Replica) {
 		NatsMessage := make(chan *nats.Msg)
-		err := messenger.SubscribeToInbox(ctx, nc, common.PROPOSER_TO_REPLICA, NatsMessage)
+		err := messenger.SubscribeToInbox(ctx, nc, common.PROPOSER_TO_REPLICA, NatsMessage, false)
 
 		if err != nil {
 			log.WithFields(log.Fields{
