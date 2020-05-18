@@ -62,9 +62,6 @@ func (state *pbftState) handleMessage(
 	_message := message
 	_message.Txn = &_txn
 
-	if _message.Txn.FromId != "" {
-		panic("Weird")
-	}
 	switch _message.MessageType {
 	case NEW_VIEW:
 		state.viewChangeCounter = 0

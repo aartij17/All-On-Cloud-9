@@ -109,15 +109,6 @@ func (node *PbftNode) generateGlobalBroadcast(localState *pbftState) func(common
 	return func(message common.Message) {
 		if node.generateLocalLeader(localState)() {
 			_txn := *message.Txn
-			if _txn.FromId != "" {
-				log.WithFields(log.Fields{
-					"txn": message.Txn,
-					"_txn": _txn,
-					"*message.Txn": *message.Txn,
-					"msg": message,
-					"appId": node.appId,
-				}).Panic("!!!?")
-			}
 			_txn.Type = LOCAL_CONSENSUS + "_" + message.MessageType
 			//log.WithFields(log.Fields{
 			//	"txn":         _txn,
@@ -146,7 +137,7 @@ func (node *PbftNode) generateGlobalBroadcast(localState *pbftState) func(common
 				Txn: __txn,
 			}
 			pckedMsg.Txn.Type = GLOBAL
-			pckedMsg.Txn.FromId = strconv.Itoa(node.appId)
+			//pckedMsg.Txn.FromId = strconv.Itoa(node.appId)
 			byteMessage, _ := json.Marshal(pckedMsg)
 			messenger.PublishNatsMessage(node.ctx, node.nc, GLOBAL_APPLICATION, byteMessage)
 		}
@@ -252,7 +243,7 @@ func (node *PbftNode) startMessageListeners(msgChan chan *nats.Msg) {
 			//	"appId":       node.appId,
 			//	"inbox": _inbox(node.localState.suffix),
 			//}).Info("nats message received")
-			msg.Txn.FromId = ""
+			//msg.Txn.FromId = ""
 
 			if msg.Txn.Type == LOCAL || strings.HasPrefix(msg.Txn.Type, LOCAL_CONSENSUS) {
 				node.localState.handleMessage(
