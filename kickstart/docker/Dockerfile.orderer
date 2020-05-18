@@ -1,14 +1,14 @@
 FROM alpine:3.3
-ARG nodeID
 ARG basedir
 ARG configdir
 
 RUN mkdir /orderer/
 
-COPY $basedir/bin/orderers /orderer
+COPY $basedir/bin/orderers /orderer/
+COPY $configdir/config.json /orderer/
 
 WORKDIR /orderer
 
 EXPOSE 8080
 
-ENTRYPOINT ["/orderer/orderers", "--nodeID", "${nodeID}", "--configFilePath", "${basedir}/config.json"] 
+ENTRYPOINT [ "/orderer/orderers" ] 

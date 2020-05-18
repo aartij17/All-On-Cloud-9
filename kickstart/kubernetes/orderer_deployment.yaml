@@ -17,9 +17,9 @@ spec:
      - name: orderer-carrier
        imagePullPolicy: IfNotPresent
        image: orderer-carrier:v1
-       envFrom:
-        - configMapRef:
-            name: orderer-configmap 
+      #  envFrom:
+      #   - configMapRef:
+      #       name: orderer-configmap 
        ports:
        - containerPort: 3000
        
