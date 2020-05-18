@@ -17,7 +17,7 @@ type pbftState struct {
 	counter           map[reducedMessage]int
 	timeoutTimer      *time.Timer
 	//localLog          []common.Message
-	messageOut chan *common.Transaction
+	messageOut chan common.Transaction
 }
 
 func newPbftState(failureTolerance int, totalNodes int, suffix string) *pbftState {
@@ -33,7 +33,7 @@ func newPbftState(failureTolerance int, totalNodes int, suffix string) *pbftStat
 		counter:           make(map[reducedMessage]int),
 		timeoutTimer:      nil,
 		//localLog:          make([]common.Message, 0),
-		messageOut: make(chan *common.Transaction),
+		messageOut: make(chan common.Transaction),
 	}
 
 	return &newState
@@ -58,21 +58,28 @@ func (state *pbftState) handleMessage(
 	isSuggestedLeader func(int) bool,
 	getId func() int,
 ) {
-	switch message.MessageType {
+	_txn := *message.Txn
+	_message := message
+	_message.Txn = &_txn
+
+	if _message.Txn.FromId != "" {
+		panic("Weird")
+	}
+	switch _message.MessageType {
 	case NEW_VIEW:
 		state.viewChangeCounter = 0
 		state.stopTimer()
-		state.viewNumber = message.Timestamp
+		state.viewNumber = _message.Timestamp
 		state.candidateNumber = state.viewNumber + 1
 	case VIEW_CHANGE:
-		if isSuggestedLeader(message.Timestamp) {
+		if isSuggestedLeader(_message.Timestamp) {
 			state.viewChangeCounter++
 			//println("inside VIEW_CHANGE", getId(), state.viewChangeCounter, 2*state.failureTolerance+1)
 			if state.viewChangeCounter == 2*state.failureTolerance+1 {
 				//println("broadcasting NEW_VIEW")
 				go broadcast(common.Message{
 					MessageType: NEW_VIEW,
-					Timestamp:   message.Timestamp,
+					Timestamp:   _message.Timestamp,
 					FromNodeNum: getId(),
 					Txn:         &dummyTxn,
 				})
@@ -85,7 +92,7 @@ func (state *pbftState) handleMessage(
 				MessageType: PRE_PREPARE,
 				Timestamp:   state.currentTimestamp,
 				FromNodeNum: getId(),
-				Txn:         message.Txn,
+				Txn:         _message.Txn,
 			})
 		} else {
 			state.setTimer()
@@ -95,50 +102,56 @@ func (state *pbftState) handleMessage(
 		state.stopTimer()
 		go broadcast(common.Message{
 			MessageType: PREPARE,
-			Timestamp:   message.Timestamp,
+			Timestamp:   _message.Timestamp,
 			FromNodeNum: getId(),
-			Txn:         message.Txn,
+			Txn:         _message.Txn,
 		})
 	case PREPARE:
 		reduced := reducedMessage{
 			messageType: PREPARE,
-			Txn:         message.Txn,
+			Txn:         *_message.Txn,
 		}
 
 		state.counter[reduced]++
-		if state.counter[reduced] >= 2*state.failureTolerance+1 {
+		if state.counter[reduced] == 2*state.failureTolerance+1 {
 			go broadcast(common.Message{
 				MessageType: COMMIT,
-				Timestamp:   message.Timestamp,
+				Timestamp:   _message.Timestamp,
 				FromNodeNum: getId(),
-				Txn:         message.Txn,
+				Txn:         _message.Txn,
 			})
+		} else if state.counter[reduced] > 2*state.failureTolerance+1 {
+			//println("PREPARE")
 		}
 	case COMMIT:
 		reduced := reducedMessage{
 			messageType: COMMIT,
-			Txn:         message.Txn,
+			Txn:         *_message.Txn,
 		}
 
 		state.counter[reduced]++
-		if state.counter[reduced] >= 2*state.failureTolerance+1 {
+		if state.counter[reduced] == 2*state.failureTolerance+1 {
 			go broadcast(common.Message{
 				MessageType: COMMITED,
-				Timestamp:   message.Timestamp,
+				Timestamp:   _message.Timestamp,
 				FromNodeNum: getId(),
-				Txn:         message.Txn,
+				Txn:         _message.Txn,
 			})
+		} else if state.counter[reduced] > 2*state.failureTolerance+1 {
+			//println("COMMIT") //
 		}
 	case COMMITED:
 		reduced := reducedMessage{
 			messageType: COMMITED,
-			Txn:         message.Txn,
+			Txn:         *_message.Txn,
 		}
 
 		state.counter[reduced]++
-		if state.counter[reduced] >= state.failureTolerance+1 {
-			state.currentTimestamp = message.Timestamp
-			state.messageOut <- message.Txn
+		if state.counter[reduced] == state.failureTolerance+1 {
+			state.currentTimestamp = _message.Timestamp
+			state.messageOut <- *_message.Txn
+		} else if state.counter[reduced] > 2*state.failureTolerance+1 {
+			//println("COMMITTED")
 		}
 	}
 }

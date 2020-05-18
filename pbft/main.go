@@ -9,6 +9,9 @@ import (
 )
 
 func _inbox(suffix string) string {
+	if suffix == GLOBAL_APPLICATION {
+		return GLOBAL_APPLICATION
+	}
 	return NATS_PBFT_INBOX + "_" + suffix
 }
 

@@ -8,6 +8,8 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/nats-io/nats.go"
 	"reflect"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -17,9 +19,9 @@ type PbftNode struct {
 	id             int
 	appId          int
 	msgChannel     chan *nats.Msg
-	localConsensus chan *common.Transaction
-	MessageIn      chan *common.Transaction
-	MessageOut     chan *common.Transaction
+	localConsensus chan common.Transaction
+	MessageIn      chan common.Transaction
+	MessageOut     chan common.Transaction
 	localState     *pbftState
 	globalState    *pbftState
 }
@@ -43,9 +45,9 @@ func newPbftNode(ctx context.Context, nc *nats.Conn, id int, appId int, localSta
 		id:             id,
 		appId:          appId,
 		msgChannel:     make(chan *nats.Msg),
-		localConsensus: make(chan *common.Transaction),
-		MessageIn:      make(chan *common.Transaction),
-		MessageOut:     make(chan *common.Transaction),
+		localConsensus: make(chan common.Transaction),
+		MessageIn:      make(chan common.Transaction),
+		MessageOut:     make(chan common.Transaction),
 		localState:     localState,
 		globalState:    globalState,
 	}
@@ -93,6 +95,11 @@ func (node *PbftNode) generateLocalBroadcast() func(common.Message) {
 			Msg: message,
 			Txn: *message.Txn,
 		}
+		//log.WithFields(log.Fields{
+		//	"appId":       node.appId,
+		//	"msg.Type": message.MessageType,
+		//	"txn": message.Txn,
+		//}).Info("broadcast locally")
 		byteMessage, _ := json.Marshal(pckedMsg)
 		messenger.PublishNatsMessage(node.ctx, node.nc, _inbox(node.localState.suffix), byteMessage)
 	}
@@ -101,20 +108,45 @@ func (node *PbftNode) generateLocalBroadcast() func(common.Message) {
 func (node *PbftNode) generateGlobalBroadcast(localState *pbftState) func(common.Message) {
 	return func(message common.Message) {
 		if node.generateLocalLeader(localState)() {
-			message.Txn.Type = LOCAL_CONSENSUS
-			node.generateLocalBroadcast()(message)
-
-			txn := <-node.localConsensus
-			//log.WithField("txn", txn).Info("BROADCAST RECEIVED TXN")
-			if !reflect.DeepEqual(txn, message.Txn) {
-				node.localConsensus <- txn
-				return
+			_txn := *message.Txn
+			if _txn.FromId != "" {
+				log.WithFields(log.Fields{
+					"txn": message.Txn,
+					"_txn": _txn,
+					"*message.Txn": *message.Txn,
+					"msg": message,
+					"appId": node.appId,
+				}).Panic("!!!?")
 			}
-			message.Txn.Type = GLOBAL
+			_txn.Type = LOCAL_CONSENSUS + "_" + message.MessageType
+			//log.WithFields(log.Fields{
+			//	"txn":         _txn,
+			//	"appId":       node.appId,
+			//	"originalTxn": message.Txn,
+			//}).Info("sending to middle consensus")
+			node.MessageIn <- _txn
+
+			var __txn common.Transaction
+			for received := false; !received; {
+				txn := <-node.localConsensus
+				__txn = txn
+				//log.WithFields(log.Fields{
+				//	"txn":         __txn,
+				//	"appId":       node.appId,
+				//	"inbox": _inbox(node.localState.suffix),
+				//}).Info("received from middle consensus")
+				if !reflect.DeepEqual(__txn, _txn) {
+					node.localConsensus <- __txn
+				} else {
+					received = true
+				}
+			}
 			pckedMsg := packedMessage{
 				Msg: message,
-				Txn: *message.Txn,
+				Txn: __txn,
 			}
+			pckedMsg.Txn.Type = GLOBAL
+			pckedMsg.Txn.FromId = strconv.Itoa(node.appId)
 			byteMessage, _ := json.Marshal(pckedMsg)
 			messenger.PublishNatsMessage(node.ctx, node.nc, GLOBAL_APPLICATION, byteMessage)
 		}
@@ -163,31 +195,47 @@ func (node *PbftNode) subToNatsChannels(suffix string) {
 func (node *PbftNode) handleLocalOut(state *pbftState) {
 	for {
 		txn := <-state.messageOut
-		if txn.Type == LOCAL {
-			//log.WithField("txn", txn).Info("SUCCESS")
-			node.MessageOut <- txn
-		} else if txn.Type == LOCAL_CONSENSUS {
-			//log.WithField("txn", txn).Info("CONSENSUS OUT")
-			node.localConsensus <- txn
+		_txn := txn
+		if _txn.Type == LOCAL {
+			log.WithFields(log.Fields{
+				"txn": _txn,
+				"id": node.id,
+				"appId": node.appId,
+			}).Info("LOCAL CONSENSUS DONE")
+			node.MessageOut <- _txn
+		} else if strings.HasPrefix(_txn.Type, LOCAL_CONSENSUS) {
+			if node.generateLocalLeader(node.localState)() {
+				log.WithFields(log.Fields{
+					"txn": _txn,
+					"id": node.id,
+					"appId": node.appId,
+				}).Info("MIDDLE CONSENSUS DONE")
+				node.localConsensus <- _txn
+			}
 		}
 	}
 }
 
 func (node *PbftNode) handleGlobalOut(state *pbftState) {
 	txn := <-state.messageOut
-	node.MessageOut <- txn
+	_txn := txn
+	log.WithFields(log.Fields{
+		"txn": _txn,
+		"id": node.id,
+		"appId": node.appId,
+	}).Info("GLOBAL CONSENSUS DONE")
+	node.MessageOut <- _txn
 }
 
 func (node *PbftNode) startMessageListeners(msgChan chan *nats.Msg) {
 	var (
 		packedMsg packedMessage
-		msg       common.Message
 	)
 	for {
 		select {
 		case natsMsg := <-msgChan:
 			_ = json.Unmarshal(natsMsg.Data, &packedMsg)
-			msg = common.Message{
+			msg := common.Message{
 				MessageType: packedMsg.Msg.MessageType,
 				Timestamp:   packedMsg.Msg.Timestamp,
 				FromNodeId:  packedMsg.Msg.FromNodeId,
@@ -197,14 +245,16 @@ func (node *PbftNode) startMessageListeners(msgChan chan *nats.Msg) {
 				PKeySig:     packedMsg.Msg.PKeySig,
 			}
 
-			log.WithFields(log.Fields{
-				"msg":         packedMsg.Msg,
-				"txn":         packedMsg.Txn,
-				"id":          node.id,
-				"appId":       node.appId,
-				"application": APPLICATION,
-			}).Info("nats message received")
-			if msg.Txn.Type == LOCAL || msg.Txn.Type == LOCAL_CONSENSUS {
+			//log.WithFields(log.Fields{
+			//	"type":        packedMsg.Msg.MessageType,
+			//	"txn":         packedMsg.Txn,
+			//	"id":          node.id,
+			//	"appId":       node.appId,
+			//	"inbox": _inbox(node.localState.suffix),
+			//}).Info("nats message received")
+			msg.Txn.FromId = ""
+
+			if msg.Txn.Type == LOCAL || strings.HasPrefix(msg.Txn.Type, LOCAL_CONSENSUS) {
 				node.localState.handleMessage(
 					msg,
 					node.generateLocalBroadcast(),
@@ -212,7 +262,7 @@ func (node *PbftNode) startMessageListeners(msgChan chan *nats.Msg) {
 					node.generateSuggestedLocalLeader(node.localState),
 					node.generateLocalGetId(),
 				)
-			} else if msg.Txn.Type == GLOBAL {
+			} else if msg.Txn.Type == GLOBAL && (node.generateLocalLeader(node.localState)() || msg.MessageType == COMMITED) {
 				node.globalState.handleMessage(
 					msg,
 					node.generateGlobalBroadcast(node.localState),
@@ -223,17 +273,17 @@ func (node *PbftNode) startMessageListeners(msgChan chan *nats.Msg) {
 			}
 
 		case newMessage := <-node.MessageIn:
-			if newMessage.Type == LOCAL {
+			if newMessage.Type == LOCAL || strings.HasPrefix(newMessage.Type, LOCAL_CONSENSUS) {
 				go node.generateLocalBroadcast()(common.Message{
 					MessageType: NEW_MESSAGE,
 					FromNodeNum: node.id,
-					Txn:         newMessage,
+					Txn:         &newMessage,
 				})
 			} else {
 				go node.generateGlobalBroadcast(node.localState)(common.Message{
 					MessageType: NEW_MESSAGE,
 					FromNodeNum: node.id,
-					Txn:         newMessage,
+					Txn:         &newMessage,
 				})
 			}
 		}
