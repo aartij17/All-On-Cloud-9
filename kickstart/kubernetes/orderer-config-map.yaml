@@ -4,6 +4,9 @@ metadata:
   name: orderer-configmap 
 data:
   # Configuration values can be set as key-value properties
-  nodeId: "0"
-  configFilePath: ./config.json
+  NODEID_0: "0"
+  NODEID_1: "1"
+  NODEID_2: "2"
+  NODEID_3: "3"
+  CONFIG_FILE_PATH: ./config.json
   
