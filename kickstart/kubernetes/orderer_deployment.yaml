@@ -12,14 +12,14 @@ spec:
      labels:
        app: orderer
    spec:
-
      containers:
      - name: orderer-carrier
        imagePullPolicy: IfNotPresent
        image: orderer-carrier:v1
-      #  envFrom:
-      #   - configMapRef:
-      #       name: orderer-configmap 
+       envFrom:
+        - configMapRef:
+            name: orderer-configmap 
+       args: ["-nodeId=$(nodeId)", "-configFilePath=$(configFilePath)"]
        ports:
        - containerPort: 3000
        
