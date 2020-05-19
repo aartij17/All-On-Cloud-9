@@ -1,11 +1,9 @@
---- 
 apiVersion: v1
 kind: Service
 metadata: 
   labels: 
     app: cloud-nats
   name: "cloud-nats-svc"
-  namespace: central
 spec: 
   ports: 
     - 
@@ -15,6 +13,8 @@ spec:
     - 
       name: "nats-monitoring"
       port: 8222
+      nodePort: 30001
       targetPort: 8222
   selector: 
-    app: cloud-nat
+    app: cloud-nats
+  type: NodePort

@@ -1,11 +1,11 @@
 --- 
-apiVersion: apps/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata: 
   labels: 
     app: cloud-nats
     groupid: default
-    version: "${version}"
+    version: "v1"
   name: "cloud-nats"
 spec: 
   replicas: 1
@@ -19,7 +19,7 @@ spec:
     spec: 
       containers: 
         - 
-          image: "${registry_url}/nats:${version}"
+          image: "nats:v1"
           imagePullPolicy: IfNotPresent
           name: cloud-nats
           ports: 
