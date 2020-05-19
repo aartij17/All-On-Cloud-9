@@ -52,5 +52,5 @@ const (
 )
 
 var (
-	NATS_ORDERER_SUBJECTS = [...]string{NATS_ORD_ORDER, NATS_ORD_SYNC}
+	NATS_ORDERER_SUBJECTS = [...]string{NATS_ORD_SYNC}
 )
