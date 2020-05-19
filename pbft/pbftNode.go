@@ -5,11 +5,12 @@ import (
 	"All-On-Cloud-9/messenger"
 	"context"
 	"encoding/json"
-	log "github.com/Sirupsen/logrus"
-	"github.com/nats-io/nats.go"
 	"reflect"
 	"strings"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/nats-io/nats.go"
 )
 
 type PbftNode struct {
@@ -26,11 +27,11 @@ type PbftNode struct {
 }
 
 var dummyTxn = common.Transaction{
-	TxnType:       "LOCAL",
-	ToApp:      "",
-	ToId:       "",
-	FromId:     "",
-	Clock:      nil,
+	TxnType: "LOCAL",
+	ToApp:   "",
+	ToId:    "",
+	FromId:  "",
+	Clock:   nil,
 }
 
 func newPbftNode(ctx context.Context, nc *nats.Conn, id int, appId int, localState *pbftState, globalState *pbftState) *PbftNode {
@@ -184,16 +185,16 @@ func (node *PbftNode) handleLocalOut(state *pbftState) {
 		_txn := txn
 		if _txn.TxnType == LOCAL {
 			log.WithFields(log.Fields{
-				"txn": _txn,
-				"id": node.id,
+				"txn":   _txn,
+				"id":    node.id,
 				"appId": node.appId,
 			}).Info("LOCAL CONSENSUS DONE")
 			node.MessageOut <- _txn
 		} else if strings.HasPrefix(_txn.TxnType, LOCAL_CONSENSUS) {
 			if node.generateLocalLeader(node.localState)() {
 				log.WithFields(log.Fields{
-					"txn": _txn,
-					"id": node.id,
+					"txn":   _txn,
+					"id":    node.id,
 					"appId": node.appId,
 				}).Info("MIDDLE CONSENSUS DONE")
 				node.localConsensus <- _txn
@@ -206,8 +207,8 @@ func (node *PbftNode) handleGlobalOut(state *pbftState) {
 	txn := <-state.messageOut
 	_txn := txn
 	log.WithFields(log.Fields{
-		"txn": _txn,
-		"id": node.id,
+		"txn":   _txn,
+		"id":    node.id,
 		"appId": node.appId,
 	}).Info("GLOBAL CONSENSUS DONE")
 	node.MessageOut <- _txn

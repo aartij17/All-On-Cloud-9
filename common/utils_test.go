@@ -1,9 +1,10 @@
 package common
 
 import (
-	log "github.com/Sirupsen/logrus"
 	"strconv"
 	"testing"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 func checkMessage(message Message, t *testing.T) {

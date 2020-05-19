@@ -6,12 +6,12 @@ import (
 )
 
 type reducedTransaction struct {
-	TxnBody string        `json:"txn_body"`
-	FromApp string        `json:"from_app"`
-	ToApp   string        `json:"to_app"`
-	ToId    string        `json:"to_id,omitempty"`
-	FromId  string        `json:"from_id,omitempty"`
-	TxnType string        `json:"transaction_type"`
+	TxnBody string               `json:"txn_body"`
+	FromApp string               `json:"from_app"`
+	ToApp   string               `json:"to_app"`
+	ToId    string               `json:"to_id,omitempty"`
+	FromId  string               `json:"from_id,omitempty"`
+	TxnType string               `json:"transaction_type"`
 	Clock   *common.LamportClock `json:"lamport_clock"`
 }
 
