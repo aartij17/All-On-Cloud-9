@@ -17,20 +17,64 @@ func (server *Server) InitiateAddBlock(ctx context.Context, message *common.Mess
 		isGlobal = false
 		isLocal  = false
 	)
+
+	server.MapLock.Lock()
+	defer server.MapLock.Unlock()
+
 	log.WithFields(log.Fields{
-		"fromApp": message.FromApp,
-	})
+		"fromApp":  message.FromApp,
+		"toApp":    message.ToApp,
+		"txn type": message.Txn.TxnType,
+	}).Info("message details for the new block")
+	if _, OK := server.PIDMap[message.Clock.PID]; OK {
+		log.WithFields(log.Fields{
+			"pid": message.Clock.PID,
+		}).Warn("block already present in blockchain")
+		return
+	}
+	if message.Txn.TxnType == common.LOCAL_TXN {
+		if server.LastAddedLocalBlock.V.(*blockchain.Block).Clock.Clock > message.Clock.Clock {
+			log.WithFields(log.Fields{
+				"lastAddedTS": server.LastAddedLocalBlock.V.(*blockchain.Block).Clock.Clock,
+				"incomingTS":  message.Clock.Clock,
+			}).Warn("not going to add an older local block, skipping..")
+			return
+		}
+		if server.LastAddedLocalBlock.V.(*blockchain.Block).Clock.PID == message.Clock.PID {
+			log.WithFields(log.Fields{
+				"messageClockId": message.Clock.PID,
+			}).Warn("local block already added to the blockchain, nothing to do")
+			return
+		}
+	} else if message.Txn.TxnType == common.GLOBAL_TXN {
+		if server.LastAddedGlobalBlock != nil &&
+			server.LastAddedGlobalBlock.V.(*blockchain.Block).Clock.Clock > message.Clock.Clock {
+			log.WithFields(log.Fields{
+				"lastAddedTS": server.LastAddedGlobalBlock.V.(*blockchain.Block).Clock.Clock,
+				"incomingTS":  message.Clock.Clock,
+			}).Warn("not going to add an older global block, skipping..")
+			return
+		}
+		if server.LastAddedGlobalBlock != nil &&
+			server.LastAddedGlobalBlock.V.(*blockchain.Block).Clock.PID == message.Clock.PID {
+			log.WithFields(log.Fields{
+				"messageClockId": message.Clock.PID,
+			}).Warn("global block already added to the blockchain, nothing to do")
+			return
+		}
+	}
+
 	// if this is a local txn, the message should be intended for the current application
-	if message.Txn.TxnType == common.LOCAL_TXN && server.AppName != message.FromApp {
+	if message.Txn.TxnType == common.LOCAL_TXN && server.AppName != message.ToApp {
 		log.WithFields(log.Fields{
 			"current app": server.AppName,
 			"block app":   message.Txn.FromApp,
-		}).Info("block received, but not intended for this application")
+		}).Info("local block received, but not intended for this application")
 		return
 	}
 	if message.Txn.TxnType == common.LOCAL_TXN && server.AppName == message.ToApp {
 		blockchain.LocalSeqNumber += 1
-		blockId = fmt.Sprintf(common.LOCAL_BLOCK_NUM, server.ServerNumId,
+		blockId = fmt.Sprintf(common.LOCAL_BLOCK_NUM, server.AppName, server.ServerNumId,
 			blockchain.LocalSeqNumber)
 		isLocal = true
 	} else if message.Txn.TxnType == common.GLOBAL_TXN {
@@ -39,7 +83,7 @@ func (server *Server) InitiateAddBlock(ctx context.Context, message *common.Mess
 		blockchain.GlobalSeqNumber += 1
 		isGlobal = true
 
-		blockId = fmt.Sprintf(common.GLOBAL_BLOCK_NUM, server.ServerNumId, blockchain.LocalSeqNumber,
+		blockId = fmt.Sprintf(common.GLOBAL_BLOCK_NUM, server.AppName, server.ServerNumId, blockchain.LocalSeqNumber,
 			blockchain.GlobalSeqNumber)
 	}
 
@@ -48,7 +92,7 @@ func (server *Server) InitiateAddBlock(ctx context.Context, message *common.Mess
 		CryptoHash:    "",
 		Transaction:   message.Txn,
 		InitiatorNode: message.FromNodeId,
-		Clock:         nil,
+		Clock:         message.Clock,
 	}
 
 	if isGlobal {
@@ -62,7 +106,8 @@ func (server *Server) InitiateAddBlock(ctx context.Context, message *common.Mess
 		VertexId: blockId,
 		V:        dag.Vertex(newBlock),
 	}
-	if isGlobal {
+	blockchain.Blockchain.Add(dag.Vertex((newVertex)))
+	if isGlobal && server.LastAddedGlobalBlock != nil {
 		edgeGlobal := dag.BasicEdge(dag.Vertex(newVertex), dag.Vertex(server.LastAddedGlobalBlock))
 		blockchain.Blockchain.Connect(edgeGlobal)
 		log.WithFields(log.Fields{
@@ -70,14 +115,36 @@ func (server *Server) InitiateAddBlock(ctx context.Context, message *common.Mess
 			"toVertex":   server.LastAddedGlobalBlock.VertexId,
 		}).Info("added new edge for global block")
 	}
+	// if this is the first global block, add an edge b/w this block and the lambda block as well
+	if isGlobal && blockchain.GlobalSeqNumber == 1 {
+		lamdbaBlock := server.VertexMap[common.LAMBDA_BLOCK]
+		edgeGlobal := dag.BasicEdge(dag.Vertex(newVertex), dag.Vertex(lamdbaBlock))
+		blockchain.Blockchain.Connect(edgeGlobal)
+	}
+	// check if the new local block to be added has a previously added global block of the same app
+	if message.FromNodeNum == server.LastAddedGlobalNodeId {
+		edge := dag.BasicEdge(dag.Vertex(newVertex), dag.Vertex(server.LastAddedGlobalBlock))
+		blockchain.Blockchain.Connect(edge)
+	}
+	// irrespective of it being a local/global block, the new vertex HAS to point to
+	// the last added local block
 	edgeLocal := dag.BasicEdge(dag.Vertex(newVertex), dag.Vertex(server.LastAddedLocalBlock))
 	blockchain.Blockchain.Connect(edgeLocal)
 
 	server.VertexMap[blockId] = newVertex
+	server.PIDMap[message.Clock.PID] = true
 
+	if isLocal {
+		server.LastAddedLocalBlock = newVertex
+		server.LastAddedLocalNodeId = message.FromNodeNum
+	} else if isGlobal {
+		server.LastAddedGlobalBlock = newVertex
+		server.LastAddedGlobalNodeId = message.FromNodeNum
+	}
 	log.WithFields(log.Fields{
 		"fromVertex": newVertex.VertexId,
 		"toVertex":   server.LastAddedLocalBlock.VertexId,
+		"pid":        message.Clock.PID,
 	}).Info("added new edge for local block")
 
 	blockchain.PrintBlockchain()

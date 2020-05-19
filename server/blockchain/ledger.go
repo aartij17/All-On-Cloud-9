@@ -2,9 +2,13 @@ package blockchain
 
 import (
 	"All-On-Cloud-9/common"
+	"fmt"
+	"sync"
 
 	log "github.com/Sirupsen/logrus"
+	guuid "github.com/google/uuid"
 	"github.com/hashicorp/terraform/dag"
+	"github.com/hashicorp/terraform/tfdiags"
 )
 
 /**
@@ -39,11 +43,44 @@ type Block struct {
 	Clock         *common.LamportClock `json:"clock"`
 }
 
-func PrintBlockchain() {
-	log.Info(Blockchain.String())
+type GraphPrint struct {
+	visits        []string
+	outgoingEdges []string
+	incomingEdges []string
 }
 
-func InitBlockchain(nodeId int) *Vertex {
+func PrintBlockchain() {
+	var gpArr []GraphPrint
+	var lock sync.Mutex
+	Blockchain.Walk(func(v dag.Vertex) tfdiags.Diagnostics {
+		gp := GraphPrint{
+			visits:        make([]string, 0),
+			outgoingEdges: make([]string, 0),
+			incomingEdges: make([]string, 0),
+		}
+		lock.Lock()
+		defer lock.Unlock()
+		id := v.(*Vertex).V.(*Block).BlockId
+		outgoingEdges := Blockchain.EdgesFrom(v)
+		for e := range outgoingEdges {
+			gp.outgoingEdges = append(gp.outgoingEdges, outgoingEdges[e].Target().(*Vertex).V.(*Block).BlockId)
+		}
+		incomingEdges := Blockchain.EdgesTo(v)
+		for e := range incomingEdges {
+			gp.incomingEdges = append(gp.incomingEdges, incomingEdges[e].Source().(*Vertex).V.(*Block).BlockId)
+		}
+		gp.visits = append(gp.visits, id)
+		gpArr = append(gpArr, gp)
+		return nil
+	})
+	log.Info("NODE, OUTGOING EDGE, INCOMING EDGE")
+	for gp := range gpArr {
+		log.Info(gpArr[gp])
+	}
+}
+
+func InitBlockchain(nodeId string) *Vertex {
+	id := guuid.New()
 	// 1. create the Genesis block
 	genesisBlock := &Block{
 		BlockId:       common.LAMBDA_BLOCK,
@@ -53,8 +90,8 @@ func InitBlockchain(nodeId int) *Vertex {
 		// TODO: [Aarti]: Do we even need this?!
 		Clock: &common.LamportClock{
 			// TODO: [Aarti] Confirm if this is right
-			PID:   nodeId,
-			Clock: LocalSeqNumber,
+			PID:   fmt.Sprintf("%s-%s", nodeId, id.String()),
+			Clock: common.GlobalClock,
 		},
 		CryptoHash: "",
 	}

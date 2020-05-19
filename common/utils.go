@@ -1,6 +1,10 @@
 package common
 
 import (
+	"sync"
+
+	log "github.com/Sirupsen/logrus"
+
 	"All-On-Cloud-9/config"
 	"bufio"
 	"crypto"
@@ -15,6 +19,29 @@ import (
 	"os"
 	"strconv"
 )
+
+var (
+	GlobalClockLock sync.Mutex
+	GlobalClock     = 0
+)
+
+func UpdateGlobalClock(currTimestamp int, local bool) {
+	GlobalClockLock.Lock()
+	defer GlobalClockLock.Unlock()
+
+	if local {
+		GlobalClock += 1
+		return
+	}
+	if currTimestamp > GlobalClock {
+		GlobalClock = currTimestamp + 1
+	} else {
+		GlobalClock += 1
+	}
+	log.WithFields(log.Fields{
+		"clock": GlobalClock,
+	}).Debug("updated the global clock")
+}
 
 func checkError(err error) {
 	if err != nil {

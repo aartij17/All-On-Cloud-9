@@ -16,8 +16,7 @@ import (
 )
 
 var (
-	buyer                      *Buyer
-	sendBuyerRequestToAppsChan = make(chan *common.Transaction)
+	buyer *Buyer
 )
 
 const (
@@ -31,10 +30,11 @@ type Buyer struct {
 }
 
 type BuyerClientRequest struct {
+	TxnType          string `json:"transaction_type"`
 	ToApp            string `json:"to_application"`
 	Type             string `json:"message_type"`
 	UnitsTransferred int    `json:"units_transferred"`
-	MoneyTransferred int    `json:"money_transferred`
+	MoneyTransferred int    `json:"money_transferred"`
 	ShippingService  string `json:"shipping_service"`
 	ShippingCost     int    `json:"shipping_cost"`
 }
@@ -51,9 +51,6 @@ func (b *Buyer) subToInterAppNats(ctx context.Context, nc *nats.Conn, serverId s
 			"topic":       common.NATS_BUYER_INBOX,
 		}).Error("error subscribing to the nats topic")
 	}
-
-	go sendTransactionMessage(ctx, nc, sendBuyerRequestToAppsChan, config.APP_BUYER, serverId, serverNumId)
-
 }
 func handleBuyerRequest(w http.ResponseWriter, r *http.Request) {
 	var (
@@ -75,11 +72,7 @@ func handleBuyerRequest(w http.ResponseWriter, r *http.Request) {
 		TxnType: mTxn.Type,
 		Clock:   nil,
 	}
-	sendBuyerRequestToAppsChan <- txn
-}
-
-func (b *Buyer) processTxn(ctx context.Context, msg *common.Message) {
-
+	sendClientRequestToAppsChan <- txn
 }
 
 func StartBuyerApplication(ctx context.Context, nc *nats.Conn, serverId string, serverNumId int) {
@@ -87,6 +80,7 @@ func StartBuyerApplication(ctx context.Context, nc *nats.Conn, serverId string, 
 		ContractValid: make(chan bool),
 		MsgChannel:    make(chan *nats.Msg),
 	}
+	go advertiseTransactionMessage(ctx, nc, config.APP_BUYER, serverId, serverNumId)
 	// all the other app-specific business logic can come here.
 	go startClient(ctx, "/app/buyer",
 		strconv.Itoa(config.SystemConfig.AppInstance.AppBuyer.Servers[serverNumId].Port), handleBuyerRequest)

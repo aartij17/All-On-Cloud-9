@@ -82,6 +82,9 @@ func CreateOrderer(ctx context.Context, nodeId int) error {
 
 // startNatsConsumers subscribes to all the NATS orderer consensus subjects
 func (o *Orderer) startNatsConsumers(ctx context.Context) {
+	if o.isLeader {
+		_ = messenger.SubscribeToInbox(ctx, o.NatsConn, common.NATS_ORD_ORDER, NatsOrdMessage, false)
+	}
 	for i := range common.NATS_ORDERER_SUBJECTS {
 		_ = messenger.SubscribeToInbox(ctx, o.NatsConn, common.NATS_ORDERER_SUBJECTS[i], NatsOrdMessage, false)
 	}
@@ -111,6 +114,7 @@ func (o *Orderer) initiateGlobalConsensus(ctx context.Context, natsMsg []byte) {
 		case <-GlobalConsensusDone:
 			_ = messenger.SubscribeToInbox(ctx, o.NatsConn, common.NATS_CONSENSUS_DONE_MSG, GlobalConsensusDone, true)
 			messenger.PublishNatsMessage(ctx, o.NatsConn, common.NATS_ORD_SYNC, natsMsg)
+			return
 		}
 	}
 }

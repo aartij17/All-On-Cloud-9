@@ -2,10 +2,11 @@ package pbft
 
 import (
 	"context"
-	log "github.com/Sirupsen/logrus"
-	"github.com/nats-io/nats.go"
 	"os"
 	"strings"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/nats-io/nats.go"
 )
 
 func _inbox(suffix string) string {

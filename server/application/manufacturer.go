@@ -15,8 +15,7 @@ import (
 )
 
 var (
-	manufacturer                *Manufacturer
-	sendClientRequestToAppsChan = make(chan *common.Transaction)
+	manufacturer *Manufacturer
 )
 
 type Manufacturer struct {
@@ -29,6 +28,7 @@ func (m *Manufacturer) subToInterAppNats(ctx context.Context, nc *nats.Conn, ser
 	var (
 		err error
 	)
+	// listener: startInterAppNatsListener
 	err = messenger.SubscribeToInbox(ctx, nc, common.NATS_MANUFACTURER_INBOX, m.MsgChannel, false)
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -37,14 +37,10 @@ func (m *Manufacturer) subToInterAppNats(ctx context.Context, nc *nats.Conn, ser
 			"topic":       common.NATS_MANUFACTURER_INBOX,
 		}).Error("error subscribing to the nats topic")
 	}
-	go sendTransactionMessage(ctx, nc, sendClientRequestToAppsChan, config.APP_MANUFACTURER, serverId, serverNumId)
-}
-
-func (m *Manufacturer) processTxn(ctx context.Context, msg *common.Message) {
-
 }
 
 type ManufacturerClientRequest struct {
+	TxnType             string `json:"transaction_type"`
 	ToApp               string `json:"to_application"`
 	NumUnitsToSell      int    `json:"num_units_to_sell"`
 	AmountToBeCollected int    `json:"amount_to_be_collected"`
@@ -57,20 +53,23 @@ func handleManufacturerRequest(w http.ResponseWriter, r *http.Request) {
 		mTxn *ManufacturerClientRequest
 		txn  *common.Transaction
 	)
+	go func() {
+
+	}()
 	_ = json.NewDecoder(r.Body).Decode(&mTxn)
 	jTxn, _ := json.Marshal(mTxn)
 
 	log.WithFields(log.Fields{
 		"request": mTxn,
 	}).Info("handling manufacturer request")
-
+	// TODO: [Aarti]: take local/global transaction as part of the POST request
 	txn = &common.Transaction{
 		TxnBody: jTxn,
 		FromApp: config.APP_MANUFACTURER,
 		ToApp:   mTxn.ToApp,
 		ToId:    "",
 		FromId:  "",
-		TxnType: "",
+		TxnType: mTxn.TxnType,
 		Clock:   nil,
 	}
 
@@ -88,9 +87,12 @@ func StartManufacturerApplication(ctx context.Context, nc *nats.Conn, serverId s
 		"app": config.APP_MANUFACTURER,
 	}).Info("Starting the application")
 
+	go advertiseTransactionMessage(ctx, nc, config.APP_MANUFACTURER, serverId, serverNumId)
+
 	// has to be a go-routine cause the http handler is a blocking call
 	go startClient(ctx, "/app/manufacturer",
 		strconv.Itoa(config.SystemConfig.AppInstance.AppManufacturer.Servers[serverNumId].Port), handleManufacturerRequest)
+
 	// all the other app-specific business logic can come here.
 	manufacturer.subToInterAppNats(ctx, nc, serverId, serverNumId)
 	// following logic has to be taken care of here -

@@ -95,7 +95,7 @@ func initNodeIds() {
 }
 
 func LoadConfig(ctx context.Context, filepath string) {
-	initNodeIds()
+	//initNodeIds()
 	jsonFile, err := os.Open(filepath)
 	if err != nil {
 		log.WithFields(log.Fields{

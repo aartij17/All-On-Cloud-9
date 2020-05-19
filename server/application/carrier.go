@@ -16,8 +16,7 @@ import (
 )
 
 var (
-	carrier                      *Carrier
-	sendCarrierRequestToAppsChan = make(chan *common.Transaction)
+	carrier *Carrier
 )
 
 type Carrier struct {
@@ -26,8 +25,9 @@ type Carrier struct {
 }
 
 type CarrierClientRequest struct {
-	ToApp string `json:"to_application"`
-	Fee   int    `json:"fee"`
+	TxnType string `json:"transaction_type"`
+	ToApp   string `json:"to_application"`
+	Fee     int    `json:"fee"`
 }
 
 func handleCarrierRequest(w http.ResponseWriter, r *http.Request) {
@@ -46,10 +46,10 @@ func handleCarrierRequest(w http.ResponseWriter, r *http.Request) {
 		ToApp:   mTxn.ToApp,
 		ToId:    "",
 		FromId:  "",
-		TxnType: "",
+		TxnType: mTxn.TxnType,
 		Clock:   nil,
 	}
-	sendCarrierRequestToAppsChan <- txn
+	sendClientRequestToAppsChan <- txn
 }
 
 func (c *Carrier) subToInterAppNats(ctx context.Context, nc *nats.Conn, serverId string, serverNumId int) {
@@ -64,9 +64,6 @@ func (c *Carrier) subToInterAppNats(ctx context.Context, nc *nats.Conn, serverId
 			"topic":       common.NATS_CARRIER_INBOX,
 		}).Error("error subscribing to the nats topic")
 	}
-
-	go sendTransactionMessage(ctx, nc, sendCarrierRequestToAppsChan, config.APP_CARRIER, serverId, serverNumId)
-
 }
 
 func (c *Carrier) processTxn(ctx context.Context, msg *common.Message) {
@@ -79,6 +76,7 @@ func StartCarrierApplication(ctx context.Context, nc *nats.Conn, serverId string
 		ContractValid: make(chan bool),
 		MsgChannel:    make(chan *nats.Msg),
 	}
+	go advertiseTransactionMessage(ctx, nc, config.APP_CARRIER, serverId, serverNumId)
 	go startClient(ctx, "/app/carrier",
 		strconv.Itoa(config.SystemConfig.AppInstance.AppCarrier.Servers[serverNumId].Port), handleCarrierRequest)
 	// all the other app-specific business logic can come here.

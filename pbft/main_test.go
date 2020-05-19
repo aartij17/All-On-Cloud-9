@@ -136,7 +136,7 @@ func TestGlobalOneMultipleNodeApp(t *testing.T) {
 		}(0, i)
 	}
 
-	for i := 0; i < AppCount + NodePerApp - 1; i++ {
+	for i := 0; i < AppCount+NodePerApp-1; i++ {
 		select {
 		case <-timeout:
 			t.Error("Global pbft timed out")
@@ -180,7 +180,7 @@ func TestGlobalMultipleNodeApp(t *testing.T) {
 		}
 	}
 
-	for i := 0; i < AppCount * NodePerApp; i++ {
+	for i := 0; i < AppCount*NodePerApp; i++ {
 		select {
 		case <-timeout:
 			t.Error("Global pbft timed out")

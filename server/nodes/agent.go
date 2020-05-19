@@ -10,6 +10,7 @@ import (
 	"context"
 	"encoding/json"
 	"os"
+	"sync"
 
 	log "github.com/Sirupsen/logrus"
 
@@ -26,13 +27,15 @@ type Server struct {
 	AppName                string                        `json:"appname"`
 	ServerNumId            int                           `json:"numeric_id"`
 	IsPrimaryAgent         bool                          `json:"is_primary_agent"`
+	MapLock                sync.Mutex                    `json:"lock"`
 	VertexMap              map[string]*blockchain.Vertex `json:"vertex_map"`
-	CurrentLocalTxnSeq     int                           `json:"current_local_txn_seq"`
-	CurrentGlobalTxnSeq    int                           `json:"current_global_txn_seq"`
+	PIDMap                 map[string]bool               `json:"pid_map"`
 	NatsConn               *nats.Conn                    `json:"nats_connection"`
 	LocalConsensusComplete chan bool
 	LastAddedLocalBlock    *blockchain.Vertex
 	LastAddedGlobalBlock   *blockchain.Vertex
+	LastAddedLocalNodeId   int
+	LastAddedGlobalNodeId  int
 }
 
 func (server *Server) startLocalConsensus() {
@@ -112,6 +115,8 @@ func (server *Server) startNatsSubscriber(ctx context.Context) {
 				case common.NATS_ADD_TO_BC:
 					var ordererMsg *nodes.Message
 					_ = json.Unmarshal(natsMsg.Data, &ordererMsg)
+					//log.Info(ordererMsg.CommonMessage.Clock)
+					common.UpdateGlobalClock(ordererMsg.CommonMessage.Clock.Clock, false)
 					server.InitiateAddBlock(ctx, ordererMsg.CommonMessage)
 				}
 			}
@@ -151,7 +156,7 @@ func StartServer(ctx context.Context, nodeId string, appName string, id int) {
 		primaryAgent = true
 	}
 	// initialize the blockchain
-	genesisBlock := blockchain.InitBlockchain(id)
+	genesisBlock := blockchain.InitBlockchain(nodeId)
 
 	AppServer = &Server{
 		Id:                     nodeId,
@@ -159,9 +164,12 @@ func StartServer(ctx context.Context, nodeId string, appName string, id int) {
 		ServerNumId:            id,
 		IsPrimaryAgent:         primaryAgent,
 		VertexMap:              make(map[string]*blockchain.Vertex),
+		PIDMap:                 make(map[string]bool),
 		NatsConn:               nc,
 		LastAddedLocalBlock:    genesisBlock,
-		LastAddedGlobalBlock:   genesisBlock,
+		LastAddedGlobalBlock:   nil,
+		LastAddedLocalNodeId:   -1,
+		LastAddedGlobalNodeId:  -1,
 		LocalConsensusComplete: make(chan bool),
 	}
 
