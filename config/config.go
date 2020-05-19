@@ -65,6 +65,20 @@ type Config struct {
 	Nats        *NatsServers  `json:"nats"`
 }
 
+func GetAppId(appName string) int {
+	switch appName {
+	case APP_BUYER:
+		return 0
+	case APP_CARRIER:
+		return 1
+	case APP_MANUFACTURER:
+		return 2
+	case APP_SUPPLIER:
+		return 3
+	}
+	panic("no such app: " + appName)
+}
+
 func initNodeIds() {
 	for i := 0; i < 5; i++ {
 		MANUFACTURER_NODES = append(MANUFACTURER_NODES, fmt.Sprintf(NODE_NAME, APP_MANUFACTURER, i))
