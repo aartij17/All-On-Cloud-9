@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+ name: orderer-deployment-leader
+spec:
+ replicas: 1
+ selector:
+  matchLabels:
+    app: orderer-leader
+ template:
+   metadata:
+     labels:
+       app: orderer-leader
+   spec:
+     containers:
+     - name: orderer
+       imagePullPolicy: IfNotPresent
+       image: orderer:v1
+       envFrom:
+        - configMapRef:
+            name: orderer-configmap 
+       args: ["-nodeId=$(NODEID_0)", "-configFilePath=$(CONFIG_FILE_PATH)"]
+       ports:
+       - containerPort: 3000
+       

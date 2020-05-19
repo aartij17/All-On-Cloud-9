@@ -1,0 +1,36 @@
+--- 
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata: 
+  labels: 
+    app: cloud-nats
+    groupid: default
+    version: "${version}"
+  name: "cloud-nats"
+spec: 
+  replicas: 1
+  selector: 
+    matchLabels: 
+      app: cloud-nats
+  template: 
+    metadata: 
+      labels: 
+        app: cloud-nats
+    spec: 
+      containers: 
+        - 
+          image: "${registry_url}/nats:${version}"
+          imagePullPolicy: IfNotPresent
+          name: cloud-nats
+          ports: 
+            - 
+              containerPort: 4222
+            - 
+              containerPort: 8222
+          resources: 
+            limits: 
+              cpu: "8"
+              memory: 4000Mi
+            requests: 
+              cpu: "1"
+              memory: 1000Mi
