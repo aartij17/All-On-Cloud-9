@@ -64,14 +64,34 @@ type Config struct {
 	Nats        *NatsServers  `json:"nats"`
 }
 
-//func initNodeIds() {
-//	for i := 0; i < 5; i++ {
-//		MANUFACTURER_NODES = append(MANUFACTURER_NODES, fmt.Sprintf(NODE_NAME, APP_MANUFACTURER, i))
-//		SUPPLIER_NODES = append(SUPPLIER_NODES, fmt.Sprintf(NODE_NAME, APP_SUPPLIER, i))
-//		BUYER_NODES = append(BUYER_NODES, fmt.Sprintf(NODE_NAME, APP_BUYER, i))
-//		CARRIER_NODES = append(CARRIER_NODES, fmt.Sprintf(NODE_NAME, APP_CARRIER, i))
-//	}
-//}
+func GetAppId(appName string) int {
+	switch appName {
+	case APP_BUYER:
+		return 0
+	case APP_CARRIER:
+		return 1
+	case APP_MANUFACTURER:
+		return 2
+	case APP_SUPPLIER:
+		return 3
+	}
+	panic("no such app: " + appName)
+}
+
+func initNodeIds() {
+	for i := 0; i < 5; i++ {
+		MANUFACTURER_NODES = append(MANUFACTURER_NODES, fmt.Sprintf(NODE_NAME, APP_MANUFACTURER, i))
+		SUPPLIER_NODES = append(SUPPLIER_NODES, fmt.Sprintf(NODE_NAME, APP_SUPPLIER, i))
+		BUYER_NODES = append(BUYER_NODES, fmt.Sprintf(NODE_NAME, APP_BUYER, i))
+		CARRIER_NODES = append(CARRIER_NODES, fmt.Sprintf(NODE_NAME, APP_CARRIER, i))
+	}
+	log.WithFields(log.Fields{
+		"manufacturer": MANUFACTURER_NODES,
+		"supplier":     SUPPLIER_NODES,
+		"buyer":        BUYER_NODES,
+		"carrier":      CARRIER_NODES,
+	}).Info("initialized all app nodes with their app IDs")
+}
 
 func LoadConfig(ctx context.Context, filepath string) {
 	//initNodeIds()
