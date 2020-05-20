@@ -112,6 +112,21 @@ func GetAppNodeCnt(appName string) int {
 	panic("no such app: " + appName)
 }
 
+func GetAppNodeCntInt(appId int) int {
+	switch appId {
+	case 0:
+		return len(SystemConfig.AppInstance.AppBuyer.Servers)
+	case 1:
+		return len(SystemConfig.AppInstance.AppCarrier.Servers)
+	case 2:
+		return len(SystemConfig.AppInstance.AppManufacturer.Servers)
+	case 3:
+		return len(SystemConfig.AppInstance.AppSupplier.Servers)
+	}
+
+	panic("no such app: " + strconv.Itoa(appId))
+}
+
 func initNodeIds() {
 	for i := 0; i < 5; i++ {
 		MANUFACTURER_NODES = append(MANUFACTURER_NODES, fmt.Sprintf(NODE_NAME, APP_MANUFACTURER, i))
