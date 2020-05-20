@@ -80,6 +80,10 @@ func getAppNum(appName string) int {
 	panic("no such app: " + appName)
 }
 
+func GetAppCnt() int {
+	return 4
+}
+
 func GetAppId(appName string) int {
 	if appName == "" {
 		panic("fill FromApp")
