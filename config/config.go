@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strconv"
 
 	log "github.com/Sirupsen/logrus"
 )
@@ -65,7 +66,7 @@ type Config struct {
 	Nats        *NatsServers  `json:"nats"`
 }
 
-func GetAppId(appName string) int {
+func getAppNum(appName string) int {
 	switch appName {
 	case APP_BUYER:
 		return 0
@@ -77,6 +78,18 @@ func GetAppId(appName string) int {
 		return 3
 	}
 	panic("no such app: " + appName)
+}
+
+func GetAppId(appName string) int {
+	if appName == "" {
+		panic("fill FromApp")
+	}
+	appId, err := strconv.Atoi(appName)
+	if err != nil {
+		appId = getAppNum(appName)
+	}
+
+	return appId
 }
 
 func initNodeIds() {
