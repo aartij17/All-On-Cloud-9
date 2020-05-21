@@ -107,18 +107,6 @@ func importPublicKey(appId, id int) *rsa.PublicKey {
 	return &importPrivateKey(appId, id).PublicKey
 }
 
-func getAppId(message Message) int {
-	if message.FromApp == "" {
-		panic("fill FromApp")
-	}
-	appId, err := strconv.Atoi(message.FromApp)
-	if err != nil {
-		appId = config.GetAppId(message.FromApp)
-	}
-
-	return appId
-}
-
 func getNodeId(message Message) int {
 	if message.FromNodeId == "" {
 		panic("fill FromNodeId")
@@ -138,7 +126,7 @@ func Encrypt(message Message) Message {
 	if message.Digest == "" {
 		panic("fill the digest first")
 	}
-	appId := getAppId(message)
+	appId := config.GetAppId(message.FromApp)
 	id := getNodeId(message)
 
 	byteDigest, err := base64.StdEncoding.DecodeString(message.Digest)
@@ -150,7 +138,7 @@ func Encrypt(message Message) Message {
 }
 
 func Verify(message Message) bool {
-	appId := getAppId(message)
+	appId := config.GetAppId(message.FromApp)
 	id := getNodeId(message)
 
 	byteDigest, err := base64.StdEncoding.DecodeString(message.Digest)
