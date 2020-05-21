@@ -22,6 +22,7 @@ var (
 	QueueRelease = make(chan bool)
 	mux          sync.Mutex
 	timer        *time.Timer
+	timeout_quit = make(chan bool)
 )
 
 type Proposer struct {
@@ -70,19 +71,23 @@ func (proposer *Proposer) processMessageFromLeader(data common.MessageEvent, nc 
 }
 
 func (proposer *Proposer) timeout() {
-	<-timer.C
-	log.Info("[BPAXOS] taking timeout lock for proposer")
-	mux.Lock()
-	defer mux.Unlock()
-	if (len(requestQ) > 0) && (requestQ[0].VertexId.Id == proposer.Message.VertexId.Id) &&
-		(requestQ[0].VertexId.Index == proposer.Message.VertexId.Index) {
-		// Set Message Vertex to -1 so it will ignore any subsequent message related to this vertex
-		proposer.Message.VertexId.Id = -1
-		proposer.Message.VertexId.Index = -1
-		QueueRelease <- true
-		log.Error("Proposer timeout")
+	select {
+	case <-timer.C:
+		log.Info("[BPAXOS] taking timeout lock for proposer")
+		mux.Lock()
+		defer mux.Unlock()
+		if (len(requestQ) > 0) && (requestQ[0].VertexId.Id == proposer.Message.VertexId.Id) &&
+			(requestQ[0].VertexId.Index == proposer.Message.VertexId.Index) {
+			// Set Message Vertex to -1 so it will ignore any subsequent message related to this vertex
+			proposer.Message.VertexId.Id = -1
+			proposer.Message.VertexId.Index = -1
+			QueueRelease <- true
+			log.Error("Proposer timeout")
+		}
+		log.Info("[BPAXOS] release timeout lock for proposer")
+	case <-timeout_quit:
+		log.Info("[BPAXOS] Timeout not needed")
 	}
-	log.Info("[BPAXOS] release timeout lock for proposer")
 }
 
 func (proposer *Proposer) ProcessMessageFromConsensus(m *nats.Msg, nc *nats.Conn, ctx context.Context) {
@@ -105,6 +110,7 @@ func (proposer *Proposer) ProcessMessageFromConsensus(m *nats.Msg, nc *nats.Conn
 
 	if proposer.VoteCount > common.F {
 		timer.Stop()
+		timeout_quit <- true
 		replicaMessage, err := json.Marshal(&proposer.Message)
 		if err != nil {
 			log.WithFields(log.Fields{
