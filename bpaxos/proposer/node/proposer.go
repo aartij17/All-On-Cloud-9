@@ -10,13 +10,13 @@ import (
 	"os/signal"
 	"sync"
 	"time"
+	"strconv"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/nats-io/nats.go"
 )
 
 var (
-	id_count     = 0
 	requestQ     = make([]common.MessageEvent, 0)
 	QueueTrigger = make(chan bool, common.F) // Max of F requests
 	QueueRelease = make(chan bool)
@@ -34,8 +34,15 @@ type Proposer struct {
 func newProposer() Proposer {
 	proposer := Proposer{}
 	proposer.VoteCount = 0
-	proposer.ProposerId = id_count
-	id_count += 1
+	i, err := strconv.Atoi(os.Getenv("PROP_ID"))
+	if err != nil {
+
+		log.WithFields(log.Fields{
+			"error": err.Error(),
+		}).Error("Failed to get Environment Variable")
+	} else {
+		proposer.ProposerId = i
+	}
 	return proposer
 }
 
