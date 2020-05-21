@@ -17,13 +17,17 @@ func (server *Server) listenToContractChannel(c chan bool, resp chan bool) {
 		select {
 		case r := <-c:
 			resp <- r
+			return
 		}
 	}
 }
 
 func (server *Server) InvokeSmartContract(block *blockchain.Block) bool {
 	respChan := make(chan bool)
-	switch block.Transaction.ToApp {
+	log.WithFields(log.Fields{
+		"app": block.Transaction.ToApp,
+	}).Info("invoking smart contract")
+	switch block.Transaction.FromApp {
 	case config.APP_MANUFACTURER:
 		go server.listenToContractChannel(application.ManufacturerObj.ContractValid, respChan)
 		application.ManufacturerObj.RunManufacturerContract(block)
@@ -135,6 +139,8 @@ func (server *Server) InitiateAddBlock(ctx context.Context, message *common.Mess
 	if !result {
 		log.Error("smart contract violated, skipping the block addition")
 		return
+	} else {
+		log.Info("moving on......, contract check done!")
 	}
 
 	if isGlobal {

@@ -52,10 +52,11 @@ func (manufacturer *Manufacturer) RunManufacturerContract(block *blockchain.Bloc
 	}
 
 	if mTxn.NumUnitsToSell*ManufacturerCostPerUnit == mTxn.AmountToBeCollected {
+		log.Info("MANUFACTURER Smart contract VALID")
 		manufacturer.ContractValid <- true
 		return
 	}
-
+	log.Info("MANUFACTURER Smart contract INVALID")
 	// based on the results, send a true/false value to the channel
 	manufacturer.ContractValid <- false
 }

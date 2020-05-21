@@ -6,8 +6,11 @@ import (
 	"All-On-Cloud-9/messenger"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
+
+	guuid "github.com/google/uuid"
 
 	log "github.com/Sirupsen/logrus"
 
@@ -53,26 +56,29 @@ func handleManufacturerRequest(w http.ResponseWriter, r *http.Request) {
 		mTxn *ManufacturerClientRequest
 		txn  *common.Transaction
 	)
-	go func() {
-
-	}()
+	common.UpdateGlobalClock(0, false)
+	id := guuid.New()
+	clock := &common.LamportClock{
+		PID:   fmt.Sprintf("%s_%d-%s", config.APP_MANUFACTURER, 0, id.String()),
+		Clock: common.GlobalClock,
+	}
 	_ = json.NewDecoder(r.Body).Decode(&mTxn)
 	jTxn, _ := json.Marshal(mTxn)
 
 	log.WithFields(log.Fields{
 		"request": mTxn,
 	}).Info("handling manufacturer request")
-	// TODO: [Aarti]: take local/global transaction as part of the POST request
 	txn = &common.Transaction{
 		TxnBody: jTxn,
 		FromApp: config.APP_MANUFACTURER,
-		ToApp:   mTxn.ToApp,
-		ToId:    "",
-		FromId:  "",
 		TxnType: mTxn.TxnType,
-		Clock:   nil,
+		Clock:   clock,
 	}
-
+	if mTxn.TxnType == common.GLOBAL_TXN {
+		txn.ToApp = mTxn.ToApp
+	} else {
+		txn.ToApp = config.APP_MANUFACTURER
+	}
 	sendClientRequestToAppsChan <- txn
 }
 

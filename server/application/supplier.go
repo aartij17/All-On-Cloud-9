@@ -11,6 +11,8 @@ import (
 	"strconv"
 	"time"
 
+	guuid "github.com/google/uuid"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/nats-io/nats.go"
 )
@@ -54,6 +56,13 @@ func handleSupplierRequest(w http.ResponseWriter, r *http.Request) {
 		jTxn []byte
 		err  error
 	)
+	common.UpdateGlobalClock(0, false)
+	id := guuid.New()
+	clock := &common.LamportClock{
+		PID:   fmt.Sprintf("%s_%d-%s", config.APP_MANUFACTURER, 0, id.String()),
+		Clock: common.GlobalClock,
+	}
+
 	fmt.Println("HandleSupplierRequest")
 	_ = json.NewDecoder(r.Body).Decode(&sTxn)
 	jTxn, err = json.Marshal(sTxn)
@@ -73,7 +82,7 @@ func handleSupplierRequest(w http.ResponseWriter, r *http.Request) {
 		ToId:    "",
 		FromId:  "",
 		TxnType: sTxn.TxnType,
-		Clock:   nil,
+		Clock:   clock,
 	}
 	log.Info("about to enter -- sendSupplierRequestToAppsChan <- txn")
 	sendClientRequestToAppsChan <- txn
