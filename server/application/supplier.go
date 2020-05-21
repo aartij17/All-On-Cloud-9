@@ -16,8 +16,7 @@ import (
 )
 
 var (
-	supplier                      *Supplier
-	sendSupplierRequestToAppsChan = make(chan *common.Transaction)
+	SupplierObj *Supplier
 )
 
 type Supplier struct {
@@ -82,7 +81,7 @@ func handleSupplierRequest(w http.ResponseWriter, r *http.Request) {
 
 func StartSupplierApplication(ctx context.Context, nc *nats.Conn, serverId string,
 	serverNumId int) {
-	supplier = &Supplier{
+	SupplierObj = &Supplier{
 		ContractValid: make(chan bool),
 		MsgChannel:    make(chan *nats.Msg),
 	}
@@ -91,6 +90,6 @@ func StartSupplierApplication(ctx context.Context, nc *nats.Conn, serverId strin
 	go startClient(ctx, "/app/supplier",
 		strconv.Itoa(config.SystemConfig.AppInstance.AppSupplier.Servers[serverNumId].Port), handleSupplierRequest)
 	// all the other app-specific business logic can come here.
-	supplier.subToInterAppNats(ctx, nc, serverId, serverNumId)
-	startInterAppNatsListener(ctx, supplier.MsgChannel)
+	SupplierObj.subToInterAppNats(ctx, nc, serverId, serverNumId)
+	startInterAppNatsListener(ctx, SupplierObj.MsgChannel)
 }

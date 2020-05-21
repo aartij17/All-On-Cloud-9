@@ -9,7 +9,7 @@ import (
 
 // This file has all the contracts that are invoked when the consensus is reached and just BEFORE
 // the transactions are executed (in our case, the transactions are additions of the blocks to the blockchain
-func (buyer *Buyer) RunBuyerContract(block blockchain.Block) {
+func (buyer *Buyer) RunBuyerContract(block *blockchain.Block) {
 	// business logic here
 	// based on the results, send a true/false value to the channel
 	var err error
@@ -36,10 +36,10 @@ func (buyer *Buyer) RunBuyerContract(block blockchain.Block) {
 	buyer.ContractValid <- false
 }
 
-func (manufacturer *Manufacturer) RunManufacturerContract(block blockchain.Block) {
+func (manufacturer *Manufacturer) RunManufacturerContract(block *blockchain.Block) {
 	// business logic here
 	// The manufacturer block will advertise how many units it has and
-	// how much money everyting costs to another application, most likely the seller
+	// how much money everything costs to another application, most likely the seller
 	var err error
 	mTxn := ManufacturerClientRequest{}
 	err = json.Unmarshal(block.Transaction.TxnBody, &mTxn)
@@ -60,7 +60,7 @@ func (manufacturer *Manufacturer) RunManufacturerContract(block blockchain.Block
 	manufacturer.ContractValid <- false
 }
 
-func (supplier *Supplier) RunSupplierContract(block blockchain.Block) {
+func (supplier *Supplier) RunSupplierContract(block *blockchain.Block) {
 	// business logic here
 	// The supplier needs to purchase from the
 	var err error
@@ -90,7 +90,7 @@ func (supplier *Supplier) RunSupplierContract(block blockchain.Block) {
 	supplier.ContractValid <- false
 }
 
-func (carrier *Carrier) RunCarrierContract(block blockchain.Block) {
+func (carrier *Carrier) RunCarrierContract(block *blockchain.Block) {
 	// business logic: Carrier asks another process for a fee for its services
 	// based on the results, send a true/false value to the channel
 	var err error

@@ -2,6 +2,8 @@ package nodes
 
 import (
 	"All-On-Cloud-9/common"
+	"All-On-Cloud-9/config"
+	"All-On-Cloud-9/server/application"
 	"All-On-Cloud-9/server/blockchain"
 	"context"
 	"fmt"
@@ -9,6 +11,40 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/hashicorp/terraform/dag"
 )
+
+func (server *Server) listenToContractChannel(c chan bool, resp chan bool) {
+	for {
+		select {
+		case r := <-c:
+			resp <- r
+		}
+	}
+}
+
+func (server *Server) InvokeSmartContract(block *blockchain.Block) bool {
+	respChan := make(chan bool)
+	switch block.Transaction.ToApp {
+	case config.APP_MANUFACTURER:
+		go server.listenToContractChannel(application.ManufacturerObj.ContractValid, respChan)
+		application.ManufacturerObj.RunManufacturerContract(block)
+	case config.APP_SUPPLIER:
+		go server.listenToContractChannel(application.SupplierObj.ContractValid, respChan)
+		application.SupplierObj.RunSupplierContract(block)
+	case config.APP_BUYER:
+		go server.listenToContractChannel(application.BuyerObj.ContractValid, respChan)
+		application.BuyerObj.RunBuyerContract(block)
+	case config.APP_CARRIER:
+		go server.listenToContractChannel(application.CarrierObj.ContractValid, respChan)
+		application.CarrierObj.RunCarrierContract(block)
+	}
+
+	for {
+		select {
+		case r := <-respChan:
+			return r
+		}
+	}
+}
 
 func (server *Server) InitiateAddBlock(ctx context.Context, message *common.Message) {
 	var (
@@ -93,6 +129,12 @@ func (server *Server) InitiateAddBlock(ctx context.Context, message *common.Mess
 		Transaction:   message.Txn,
 		InitiatorNode: message.FromNodeId,
 		Clock:         message.Clock,
+	}
+
+	result := server.InvokeSmartContract(newBlock)
+	if !result {
+		log.Error("smart contract violated, skipping the block addition")
+		return
 	}
 
 	if isGlobal {

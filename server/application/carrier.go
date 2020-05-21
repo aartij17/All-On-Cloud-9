@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	carrier *Carrier
+	CarrierObj *Carrier
 )
 
 type Carrier struct {
@@ -72,7 +72,7 @@ func (c *Carrier) processTxn(ctx context.Context, msg *common.Message) {
 
 func StartCarrierApplication(ctx context.Context, nc *nats.Conn, serverId string,
 	serverNumId int) {
-	carrier = &Carrier{
+	CarrierObj = &Carrier{
 		ContractValid: make(chan bool),
 		MsgChannel:    make(chan *nats.Msg),
 	}
@@ -80,6 +80,6 @@ func StartCarrierApplication(ctx context.Context, nc *nats.Conn, serverId string
 	go startClient(ctx, "/app/carrier",
 		strconv.Itoa(config.SystemConfig.AppInstance.AppCarrier.Servers[serverNumId].Port), handleCarrierRequest)
 	// all the other app-specific business logic can come here.
-	carrier.subToInterAppNats(ctx, nc, serverId, serverNumId)
-	startInterAppNatsListener(ctx, carrier.MsgChannel)
+	CarrierObj.subToInterAppNats(ctx, nc, serverId, serverNumId)
+	startInterAppNatsListener(ctx, CarrierObj.MsgChannel)
 }
