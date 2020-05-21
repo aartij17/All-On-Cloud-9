@@ -5,7 +5,6 @@ ARG configdir
 RUN mkdir /orderer/
 
 COPY $basedir/bin/orderers /orderer/
-COPY $configdir/config.json /orderer/
 
 WORKDIR /orderer
 

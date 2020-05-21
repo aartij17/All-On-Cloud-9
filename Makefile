@@ -113,4 +113,4 @@ prepare-docker-files:
 
 local: clean build
 
-deploy: clean build prepare-kubernetes-files prepare-docker-files copy-instance
+deploy: clean build prepare-kubernetes-files prepare-docker-files # copy-instace
