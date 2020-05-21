@@ -9,7 +9,7 @@ import (
 
 // This file has all the contracts that are invoked when the consensus is reached and just BEFORE
 // the transactions are executed (in our case, the transactions are additions of the blocks to the blockchain
-func (buyer *Buyer) RunBuyerContract(block *blockchain.Block) {
+func RunBuyerContract(block *blockchain.Block, contractValid chan bool) {
 	// business logic here
 	// based on the results, send a true/false value to the channel
 	var err error
@@ -19,7 +19,7 @@ func (buyer *Buyer) RunBuyerContract(block *blockchain.Block) {
 		log.WithFields(log.Fields{
 			"error": err.Error(),
 		}).Error("error runBuyerContract")
-		buyer.ContractValid <- false
+		contractValid <- false
 		return
 	}
 
@@ -27,16 +27,15 @@ func (buyer *Buyer) RunBuyerContract(block *blockchain.Block) {
 		// Verify that the shipping cost is correct for the given shipping service
 		if _, ok := Rates[bTxn.ShippingService]; ok {
 			if Rates[bTxn.ShippingService] == bTxn.ShippingCost {
-				buyer.ContractValid <- true
+				contractValid <- true
 				return
 			}
 		}
 	}
-
-	buyer.ContractValid <- false
+	contractValid <- false
 }
 
-func (manufacturer *Manufacturer) RunManufacturerContract(block *blockchain.Block) {
+func RunManufacturerContract(block *blockchain.Block, contractValid chan bool) {
 	// business logic here
 	// The manufacturer block will advertise how many units it has and
 	// how much money everything costs to another application, most likely the seller
@@ -47,21 +46,21 @@ func (manufacturer *Manufacturer) RunManufacturerContract(block *blockchain.Bloc
 		log.WithFields(log.Fields{
 			"error": err.Error(),
 		}).Error("error runManufacturerContract")
-		manufacturer.ContractValid <- false
+		contractValid <- false
 		return
 	}
 
 	if mTxn.NumUnitsToSell*ManufacturerCostPerUnit == mTxn.AmountToBeCollected {
 		log.Info("MANUFACTURER Smart contract VALID")
-		manufacturer.ContractValid <- true
+		contractValid <- true
 		return
 	}
 	log.Info("MANUFACTURER Smart contract INVALID")
 	// based on the results, send a true/false value to the channel
-	manufacturer.ContractValid <- false
+	contractValid <- false
 }
 
-func (supplier *Supplier) RunSupplierContract(block *blockchain.Block) {
+func RunSupplierContract(block *blockchain.Block, contractValid chan bool) {
 	// business logic here
 	// The supplier needs to purchase from the
 	var err error
@@ -72,7 +71,7 @@ func (supplier *Supplier) RunSupplierContract(block *blockchain.Block) {
 		log.WithFields(log.Fields{
 			"error": err.Error(),
 		}).Error("error runSupplierContract")
-		supplier.ContractValid <- false
+		contractValid <- false
 		return
 	}
 	// Verify the amount needed is correct
@@ -81,17 +80,17 @@ func (supplier *Supplier) RunSupplierContract(block *blockchain.Block) {
 		// Verify that the shipping cost is correct for the given shipping service
 		if _, ok := Rates[sTxn.ShippingService]; ok {
 			if Rates[sTxn.ShippingService] == sTxn.ShippingCost {
-				supplier.ContractValid <- true
+				contractValid <- true
 				return
 			}
 		}
 	}
 
 	// based on the results, send a true/false value to the channel
-	supplier.ContractValid <- false
+	contractValid <- false
 }
 
-func (carrier *Carrier) RunCarrierContract(block *blockchain.Block) {
+func RunCarrierContract(block *blockchain.Block, contractValid chan bool) {
 	// business logic: Carrier asks another process for a fee for its services
 	// based on the results, send a true/false value to the channel
 	var err error
@@ -101,15 +100,14 @@ func (carrier *Carrier) RunCarrierContract(block *blockchain.Block) {
 		log.WithFields(log.Fields{
 			"error": err.Error(),
 		}).Error("error runCarrierContract")
-		carrier.ContractValid <- false
+		contractValid <- false
 		return
 	}
 
 	// Check that the fee requested is nonzero
 	if cTxn.Fee > 0 {
-		carrier.ContractValid <- true
+		contractValid <- true
 		return
 	}
-
-	carrier.ContractValid <- false
+	contractValid <- false
 }
