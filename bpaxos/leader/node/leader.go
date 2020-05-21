@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"time"
+	"sync"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/nats-io/nats.go"
@@ -16,65 +18,31 @@ import (
 var (
 	id_count    = 0
 	proposer_id = 0 // This ID will determine which proposer to send to
+	timer        *time.Timer
+	mux          sync.Mutex
 )
 
 type Leader struct {
 	Index    int
 	messages []*common.MessageEvent
+	m        map[*common.Vertex]*common.MessageEvent{}
 }
 
 func NewLeader(index int) Leader {
 	l := Leader{}
 	l.Index = index
 	l.FlushMessages()
+	l.m = map[*common.Vertex]*common.MessageEvent{}
 	return l
 }
-
-// func Union(a, b []*Vertex, m map[*Vertex]bool) []*Vertex {
-// func (leader *Leader) Union() common.MessageEvent {
-
-// 	newMessage := common.MessageEvent{}
-
-// 	if len(leader.messages) > 0 {
-
-// 		m := map[*common.Vertex]bool{}
-
-// 		deps := leader.messages[0].Deps
-
-// 		for _, item := range deps {
-// 			m[item] = true
-// 		}
-
-// 		for _, mes := range leader.messages[1:] {
-// 			for _, item := range mes.Deps {
-// 				if _, ok := m[item]; !ok {
-// 					deps = append(deps, item)
-// 					m[item] = true
-// 				}
-// 			}
-// 		}
-
-// 		newMessage.VertexId = leader.messages[0].VertexId
-// 		newMessage.Message = leader.messages[0].Message
-// 		newMessage.Deps = deps
-// 	}
-
-// 	return newMessage
-// }
 
 func (leader *Leader) handleReceiveCommand(message []byte) common.MessageEvent {
 	v := common.Vertex{leader.Index, id_count}
 	id_count += 1
 	newMessageEvent := common.MessageEvent{&v, message, []*common.Vertex{}}
+	leader.m[&v] = &newMessageEvent
 	return newMessageEvent
 }
-
-// func (leader *Leader) HandleReceiveDeps() common.MessageEvent {
-
-// 	newMessageEvent := leader.Union()
-// 	return newMessageEvent
-
-// }
 
 func (leader *Leader) AddToMessages(message *common.MessageEvent) {
 	leader.messages = append(leader.messages, message)
@@ -87,29 +55,6 @@ func (leader *Leader) FlushMessages() {
 func (leader *Leader) GetMessagesLen() int {
 	return len(leader.messages)
 }
-
-// func ProcessMessageFromDeps(m *nats.Msg, nc *nats.Conn, ctx context.Context, l Leader) {
-// 	fmt.Println("Received deps to leader")
-// 	data := common.MessageEvent{}
-// 	json.Unmarshal(m.Data, &data)
-// 	l.AddToMessages(&data)
-// 	if l.GetMessagesLen() > common.F {
-// 		newMessageEvent := l.HandleReceiveDeps()
-
-// 		sentMessage, err := json.Marshal(&newMessageEvent)
-// 		if err == nil {
-// 			fmt.Println("leader can publish a message to proposer")
-// 			messenger.PublishNatsMessage(ctx, nc, common.LEADER_TO_PROPOSER, sentMessage)
-// 			// messenger.PublishNatsMessage(ctx, nc, common.NATS_CONSENSUS_DONE, sentMessage)
-
-// 		} else {
-// 			fmt.Println("json marshal failed")
-// 			fmt.Println(err.Error())
-// 		}
-// 		// should we flush when it fails?
-// 		l.FlushMessages()
-// 	}
-// }
 
 func processMessageFromClient(m *nats.Msg, nc *nats.Conn, ctx context.Context, leader *Leader) {
 	log.WithFields(log.Fields{
@@ -127,9 +72,33 @@ func processMessageFromClient(m *nats.Msg, nc *nats.Conn, ctx context.Context, l
 	}
 	subj := fmt.Sprintf("%s%d", common.LEADER_TO_PROPOSER, proposer_id)
 	messenger.PublishNatsMessage(ctx, nc, subj, sentMessage)
+	timer = time.NewTimer(time.Duration(common.PROPOSER_TIMEOUT_MILLISECONDS) * time.Millisecond)
+	go leader.timeout(newMessage.VertexId, nc, ctx)
 
-	// messenger.PublishNatsMessage(ctx, nc, common.NATS_CONSENSUS_DONE, sentMessage)
 	proposer_id = (proposer_id + 1) % common.NUM_PROPOSERS
+}
+
+func (leader *Leader) timeout(v *common.Vertex, nc *nats.Conn, ctx context.Context) {
+	<-timer.C
+	log.Info("[BPAXOS] proposer timed out")
+	mux.Lock()
+	defer mux.Unlock()
+
+	subj := fmt.Sprintf("%s%d", common.LEADER_TO_PROPOSER, proposer_id)
+	sentMessage := leader.m[v]
+	messenger.PublishNatsMessage(ctx, nc, subj, sentMessage)
+	proposer_id = (proposer_id + 1) % common.NUM_PROPOSERS
+	timer = time.NewTimer(time.Duration(common.PROPOSER_TIMEOUT_MILLISECONDS) * time.Millisecond)
+	go leader.timeout(v, nc, ctx)
+
+	log.Info("[BPAXOS] release timeout lock for leader")
+}
+
+func (leader *Leader) HandleConsensusDone(message *common.MessageEvent) {
+	mux.Lock()
+	defer mux.Unlock()
+	timer.stop()
+	delete(m, message.VertexId)
 }
 
 func StartLeader(ctx context.Context, nc *nats.Conn, leaderindex int) {
@@ -152,6 +121,29 @@ func StartLeader(ctx context.Context, nc *nats.Conn, leaderindex int) {
 			select {
 			case natsMsg = <-natsMessage:
 				processMessageFromClient(natsMsg, nc, ctx, leader)
+			}
+		}
+	}(nc, &l)
+
+	go func(nc *nats.Conn, leader *Leader) {
+		natsMessage := make(chan *nats.Msg)
+		err := messenger.SubscribeToInbox(ctx, nc, common.PROPOSER_TO_REPLICA, natsMessage, false)
+
+		if err != nil {
+			log.WithFields(log.Fields{
+				"error": err.Error(),
+			}).Error("error subscribe NATS_CONSENSUS_INITIATE_MSG")
+		}
+
+		var (
+			natsMsg *nats.Msg
+		)
+		for {
+			select {
+			case natsMsg = <-natsMessage:
+				data := common.MessageEvent{}
+				json.Unmarshal(m.Data, &data)
+				leader.HandleConsensusDone(&data)
 			}
 		}
 	}(nc, &l)
