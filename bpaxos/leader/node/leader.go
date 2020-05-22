@@ -10,6 +10,7 @@ import (
 	"os/signal"
 	"sync"
 	"time"
+	"strconv"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/nats-io/nats.go"
@@ -28,6 +29,18 @@ type Leader struct {
 	m        map[int]*common.MessageEvent
 	t_map    map[int]*time.Timer
 	q_map    map[int](chan bool)
+	numberProps int
+}
+
+func (leader *Leader) SetNumProps() {
+	i, err := strconv.Atoi(os.Getenv("NUM_PROP"))
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err.Error(),
+		}).Error("Failed to get Environment Variable")
+	} else {
+		leader.numberProps = i
+	}
 }
 
 func NewLeader(index int) Leader {
@@ -37,6 +50,7 @@ func NewLeader(index int) Leader {
 	l.m = make(map[int]*common.MessageEvent)
 	l.t_map = make(map[int]*time.Timer) // timer map
 	l.q_map = make(map[int](chan bool)) // quit map
+	l.SetNumProps()
 	return l
 }
 
@@ -80,7 +94,7 @@ func processMessageFromClient(m *nats.Msg, nc *nats.Conn, ctx context.Context, l
 	leader.PrepareNewMessage(&newMessage)
 	go leader.timeout(newMessage.VertexId, nc, ctx)
 
-	proposer_id = (proposer_id + 1) % common.NUM_PROPOSERS
+	proposer_id = (proposer_id + 1) % leader.numberProps
 }
 
 func (leader *Leader) checkMessageId(id int) bool {
@@ -112,7 +126,7 @@ func (leader *Leader) timeout(v *common.Vertex, nc *nats.Conn, ctx context.Conte
 				return
 			}
 			messenger.PublishNatsMessage(ctx, nc, subj, sentMessage)
-			proposer_id = (proposer_id + 1) % common.NUM_PROPOSERS
+			proposer_id = (proposer_id + 1) % leader.numberProps
 			leader.t_map[v.Id].Reset(time.Duration(common.PROPOSER_TIMEOUT_MILLISECONDS) * time.Millisecond)
 			log.Info("[BPAXOS] release timeout lock for leader")
 			mux.Unlock()
