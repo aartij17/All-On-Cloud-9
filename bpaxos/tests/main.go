@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"github.com/nats-io/nats.go"
+	"fmt"
 )
 
 func main() {
@@ -43,6 +44,7 @@ func main() {
 		bpaxos.SetupBPaxos(ctx, nc, false, true, false, false)
 	case 1:
 		os.Setenv("PROP_ID", nodeId)
+		fmt.Println("PROP_ID: " + nodeId)
 		bpaxos.SetupBPaxos(ctx, nc, false, false, true, false)
 	case 2:
 		bpaxos.SetupBPaxos(ctx, nc, true, false, false, false)
