@@ -16,9 +16,9 @@ import (
 )
 
 var (
-	mux            sync.Mutex
-	timeoutTrigger = make(chan bool)
-	timer          *time.Timer
+	mux          sync.Mutex
+	timer        *time.Timer
+	timeout_quit = make(chan bool)
 )
 
 type ConsensusServiceNode struct {
@@ -32,15 +32,19 @@ func NewConsensusServiceNode() ConsensusServiceNode {
 }
 
 func Timeout(consensusNode *ConsensusServiceNode) {
-	<-timer.C
-	log.Error("gained lock before timeout")
-	mux.Lock()
-	if consensusNode.VertexId != nil {
-		consensusNode.VertexId = nil
-		log.Error("Consensus timeout")
+	select {
+	case <-timer.C:
+		log.Error("gained lock before timeout")
+		mux.Lock()
+		if consensusNode.VertexId != nil {
+			consensusNode.VertexId = nil
+			log.Error("Consensus timeout")
+		}
+		mux.Unlock()
+		log.Error("released lock after timeout")
+	case <-timeout_quit:
+		log.Info("[BPAXOS] consensus Timeout not needed")
 	}
-	mux.Unlock()
-	log.Error("released lock after timeout")
 }
 
 func (consensusServiceNode *ConsensusServiceNode) HandleReceive(message *common.MessageEvent) common.MessageEvent {
@@ -89,6 +93,7 @@ func (consensusServiceNode *ConsensusServiceNode) ProcessConsensusMessage(m *nat
 		if (consensusServiceNode.VertexId != nil) && (consensusServiceNode.VertexId.Index == data.VertexId.Index) &&
 			(consensusServiceNode.VertexId.Id == data.VertexId.Id) && (data.Release == 1) {
 			timer.Stop()
+			timeout_quit <- true
 			consensusServiceNode.VertexId = nil
 		}
 	}
