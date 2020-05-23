@@ -62,7 +62,7 @@ func ProcessReplicaMessage(m *nats.Msg, nc *nats.Conn, ctx context.Context, rep 
 	fmt.Println("Received proposer to replica")
 	data := common.MessageEvent{}
 	json.Unmarshal(m.Data, &data)
-	newMessage := rep.HandleReceive(&data)
+	// newMessage := rep.HandleReceive(&data)
 	// sentMessage, err := json.Marshal(&newMessage)
 	// // Respond back to the client
 	// if err == nil {
