@@ -19,7 +19,8 @@ var (
 	ManufacturerCostPerUnit = 5 // default value
 	SupplierCostPerUnit     = 5 // Default value
 
-	AppAgentChan = make(chan *common.Message)
+	AppAgentChan                = make(chan *common.Message)
+	sendClientRequestToAppsChan = make(chan *common.Transaction)
 )
 
 func startInterAppNatsListener(ctx context.Context, msgChan chan *nats.Msg) {
@@ -30,6 +31,9 @@ func startInterAppNatsListener(ctx context.Context, msgChan chan *nats.Msg) {
 		select {
 		case natsMsg := <-msgChan:
 			_ = json.Unmarshal(natsMsg.Data, &msg)
+			fmt.Println(msg.Clock)
+			fmt.Println(msg)
+			common.UpdateGlobalClock(msg.Clock.Clock, false)
 			AppAgentChan <- msg
 		}
 	}
@@ -41,16 +45,20 @@ func startClient(ctx context.Context, addr string, port string, handler func(htt
 	return err
 }
 
-func sendTransactionMessage(ctx context.Context, nc *nats.Conn, channel chan *common.Transaction, fromApp string, serverId string, serverNumId int) {
+func advertiseTransactionMessage(ctx context.Context, nc *nats.Conn,
+	fromApp string, serverId string, serverNumId int) {
+	log.Info("adverstising....")
+	var (
+		txn *common.Transaction
+	)
 	// This requires all transaction struct to have a ToApp field
 	for {
 		select {
 		// send the client request to the target application
-		case txn := <-channel:
+		case txn = <-sendClientRequestToAppsChan:
 			txn.FromId = serverId
 			txn.FromApp = fromApp
 			txn.ToId = fmt.Sprintf(config.NODE_NAME, txn.ToApp, 0)
-
 			// TODO: Fill these fields correctly
 			msg := common.Message{
 				ToApp:       txn.ToApp,
@@ -62,6 +70,7 @@ func sendTransactionMessage(ctx context.Context, nc *nats.Conn, channel chan *co
 				Txn:         txn,
 				Digest:      "",
 				PKeySig:     "",
+				Clock:       txn.Clock,
 			}
 
 			jMsg, _ := json.Marshal(msg)

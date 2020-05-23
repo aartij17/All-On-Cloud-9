@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strconv"
 
 	log "github.com/Sirupsen/logrus"
 )
@@ -65,6 +66,67 @@ type Config struct {
 	Nats        *NatsServers  `json:"nats"`
 }
 
+func getAppNum(appName string) int {
+	switch appName {
+	case APP_BUYER:
+		return 0
+	case APP_CARRIER:
+		return 1
+	case APP_MANUFACTURER:
+		return 2
+	case APP_SUPPLIER:
+		return 3
+	}
+	panic("no such app: " + appName)
+}
+
+func GetAppCnt() int {
+	return 4
+}
+
+func GetAppId(appName string) int {
+	if appName == "" {
+		panic("fill FromApp")
+	}
+	appId, err := strconv.Atoi(appName)
+	if err != nil {
+		appId = getAppNum(appName)
+	}
+
+	return appId
+}
+
+func GetAppNodeCnt(appName string) int {
+	appId := GetAppId(appName)
+	switch appId {
+	case 0:
+		return len(SystemConfig.AppInstance.AppBuyer.Servers)
+	case 1:
+		return len(SystemConfig.AppInstance.AppCarrier.Servers)
+	case 2:
+		return len(SystemConfig.AppInstance.AppManufacturer.Servers)
+	case 3:
+		return len(SystemConfig.AppInstance.AppSupplier.Servers)
+	}
+
+	panic("no such app: " + appName)
+}
+
+func GetAppNodeCntInt(appId int) int {
+	switch appId {
+	case 0:
+		return len(SystemConfig.AppInstance.AppBuyer.Servers)
+	case 1:
+		return len(SystemConfig.AppInstance.AppCarrier.Servers)
+	case 2:
+		return len(SystemConfig.AppInstance.AppManufacturer.Servers)
+	case 3:
+		return len(SystemConfig.AppInstance.AppSupplier.Servers)
+	}
+
+	panic("no such app: " + strconv.Itoa(appId))
+}
+
 func initNodeIds() {
 	for i := 0; i < 5; i++ {
 		MANUFACTURER_NODES = append(MANUFACTURER_NODES, fmt.Sprintf(NODE_NAME, APP_MANUFACTURER, i))
@@ -81,7 +143,7 @@ func initNodeIds() {
 }
 
 func LoadConfig(ctx context.Context, filepath string) {
-	initNodeIds()
+	//initNodeIds()
 	jsonFile, err := os.Open(filepath)
 	if err != nil {
 		log.WithFields(log.Fields{

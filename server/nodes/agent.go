@@ -10,6 +10,7 @@ import (
 	"context"
 	"encoding/json"
 	"os"
+	"sync"
 
 	log "github.com/Sirupsen/logrus"
 
@@ -26,13 +27,15 @@ type Server struct {
 	AppName                string                        `json:"appname"`
 	ServerNumId            int                           `json:"numeric_id"`
 	IsPrimaryAgent         bool                          `json:"is_primary_agent"`
+	MapLock                sync.Mutex                    `json:"lock"`
 	VertexMap              map[string]*blockchain.Vertex `json:"vertex_map"`
-	CurrentLocalTxnSeq     int                           `json:"current_local_txn_seq"`
-	CurrentGlobalTxnSeq    int                           `json:"current_global_txn_seq"`
+	PIDMap                 map[string]bool               `json:"pid_map"`
 	NatsConn               *nats.Conn                    `json:"nats_connection"`
 	LocalConsensusComplete chan bool
 	LastAddedLocalBlock    *blockchain.Vertex
 	LastAddedGlobalBlock   *blockchain.Vertex
+	LastAddedLocalNodeId   int
+	LastAddedGlobalNodeId  int
 }
 
 func (server *Server) startLocalConsensus() {
@@ -42,6 +45,9 @@ func (server *Server) startLocalConsensus() {
 }
 
 func (server *Server) initiateLocalGlobalConsensus(ctx context.Context, fromNodeId string, msg []byte) {
+	var commonMessage *common.Message
+	_ = json.Unmarshal(msg, &commonMessage)
+
 	// check if the request was received on a primary agent
 	if server.ServerNumId != 0 {
 		log.WithFields(log.Fields{
@@ -55,14 +61,18 @@ func (server *Server) initiateLocalGlobalConsensus(ctx context.Context, fromNode
 	// local consensus to finish
 	go server.startLocalConsensus()
 	<-server.LocalConsensusComplete
-	server.startGlobalConsensusProcess(ctx, msg)
+
+	if commonMessage.Txn.TxnType == common.LOCAL_TXN {
+		common.UpdateGlobalClock(commonMessage.Clock.Clock, false)
+		server.InitiateAddBlock(ctx, commonMessage)
+		return
+	}
+	server.startGlobalConsensusProcess(ctx, commonMessage)
 }
 
 // postConsensusProcessTxn is called once the local consensus has been reached by the nodes.
-func (server *Server) startGlobalConsensusProcess(ctx context.Context, msg []byte) {
+func (server *Server) startGlobalConsensusProcess(ctx context.Context, commonMessage *common.Message) {
 	log.Info("LET'S START THE GLOBAL CONSENSUS, HERE WE GOOOOO")
-	var commonMessage *common.Message
-	_ = json.Unmarshal(msg, &commonMessage)
 	// send ORDER message to the primary of the orderer node
 	message := nodes.Message{
 		MessageType:   common.O_ORDER,
@@ -108,10 +118,12 @@ func (server *Server) startNatsSubscriber(ctx context.Context) {
 			case natsMsg = <-AppServerNatsChan:
 				switch natsMsg.Subject {
 				case common.NATS_CONSENSUS_DONE_MSG:
-					log.Debug("NATS_CONSENSUS_DONE_MSG_RCVD, nothing to do")
+					log.Info("NATS_CONSENSUS_DONE_MSG_RCVD, nothing to do")
 				case common.NATS_ADD_TO_BC:
 					var ordererMsg *nodes.Message
 					_ = json.Unmarshal(natsMsg.Data, &ordererMsg)
+					//log.Info(ordererMsg.CommonMessage.Clock)
+					common.UpdateGlobalClock(ordererMsg.CommonMessage.Clock.Clock, false)
 					server.InitiateAddBlock(ctx, ordererMsg.CommonMessage)
 				}
 			}
@@ -151,7 +163,7 @@ func StartServer(ctx context.Context, nodeId string, appName string, id int) {
 		primaryAgent = true
 	}
 	// initialize the blockchain
-	genesisBlock := blockchain.InitBlockchain(id)
+	genesisBlock := blockchain.InitBlockchain(nodeId)
 
 	AppServer = &Server{
 		Id:                     nodeId,
@@ -159,9 +171,12 @@ func StartServer(ctx context.Context, nodeId string, appName string, id int) {
 		ServerNumId:            id,
 		IsPrimaryAgent:         primaryAgent,
 		VertexMap:              make(map[string]*blockchain.Vertex),
+		PIDMap:                 make(map[string]bool),
 		NatsConn:               nc,
 		LastAddedLocalBlock:    genesisBlock,
-		LastAddedGlobalBlock:   genesisBlock,
+		LastAddedGlobalBlock:   nil,
+		LastAddedLocalNodeId:   -1,
+		LastAddedGlobalNodeId:  -1,
 		LocalConsensusComplete: make(chan bool),
 	}
 
