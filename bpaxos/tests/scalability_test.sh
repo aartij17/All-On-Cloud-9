@@ -2,11 +2,15 @@
 
 # Base case:
 # 1 leader, 50 proposers, 50 consensus nodes, 50 replicas
-/usr/local/go/bin/go run main.go -nodetype 0  -numberProps 10 & # Leader
+/usr/local/go/bin/go run main.go -nodetype 0  -numberProps 70 & # Leader
 
-for i in `seq 0 9`;
+for j in `seq 0 69`;
 do
-   /usr/local/go/bin/go run main.go -nodetype 1 -nodeId $i & # Proposer
+    /usr/local/go/bin/go run main.go -nodetype 1 -nodeId $i & # Proposer
+done
+
+for i in `seq 0 49`;
+do
    /usr/local/go/bin/go run main.go -nodetype 2 & # Consensus
    /usr/local/go/bin/go run main.go -nodetype 3  & # Replica
 done
