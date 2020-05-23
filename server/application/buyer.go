@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	buyer *Buyer
+	BuyerObj *Buyer
 )
 
 const (
@@ -76,7 +76,7 @@ func handleBuyerRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 func StartBuyerApplication(ctx context.Context, nc *nats.Conn, serverId string, serverNumId int) {
-	buyer = &Buyer{
+	BuyerObj = &Buyer{
 		ContractValid: make(chan bool),
 		MsgChannel:    make(chan *nats.Msg),
 	}
@@ -84,6 +84,6 @@ func StartBuyerApplication(ctx context.Context, nc *nats.Conn, serverId string, 
 	// all the other app-specific business logic can come here.
 	go startClient(ctx, "/app/buyer",
 		strconv.Itoa(config.SystemConfig.AppInstance.AppBuyer.Servers[serverNumId].Port), handleBuyerRequest)
-	buyer.subToInterAppNats(ctx, nc, serverId, serverNumId)
-	startInterAppNatsListener(ctx, buyer.MsgChannel)
+	BuyerObj.subToInterAppNats(ctx, nc, serverId, serverNumId)
+	startInterAppNatsListener(ctx, BuyerObj.MsgChannel)
 }

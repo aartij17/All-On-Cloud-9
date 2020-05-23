@@ -9,8 +9,6 @@ import (
 	"fmt"
 	"net/http"
 
-	guuid "github.com/google/uuid"
-
 	log "github.com/Sirupsen/logrus"
 	"github.com/nats-io/nats.go"
 )
@@ -33,6 +31,8 @@ func startInterAppNatsListener(ctx context.Context, msgChan chan *nats.Msg) {
 		select {
 		case natsMsg := <-msgChan:
 			_ = json.Unmarshal(natsMsg.Data, &msg)
+			fmt.Println(msg.Clock)
+			fmt.Println(msg)
 			common.UpdateGlobalClock(msg.Clock.Clock, false)
 			AppAgentChan <- msg
 		}
@@ -47,22 +47,18 @@ func startClient(ctx context.Context, addr string, port string, handler func(htt
 
 func advertiseTransactionMessage(ctx context.Context, nc *nats.Conn,
 	fromApp string, serverId string, serverNumId int) {
+	log.Info("adverstising....")
+	var (
+		txn *common.Transaction
+	)
 	// This requires all transaction struct to have a ToApp field
 	for {
 		select {
 		// send the client request to the target application
-		case txn := <-sendClientRequestToAppsChan:
-			log.Info("GOTCHA")
+		case txn = <-sendClientRequestToAppsChan:
 			txn.FromId = serverId
 			txn.FromApp = fromApp
 			txn.ToId = fmt.Sprintf(config.NODE_NAME, txn.ToApp, 0)
-
-			common.UpdateGlobalClock(0, false)
-			id := guuid.New()
-			clock := &common.LamportClock{
-				PID:   fmt.Sprintf("%s-%s", serverId, id.String()),
-				Clock: common.GlobalClock,
-			}
 			// TODO: Fill these fields correctly
 			msg := common.Message{
 				ToApp:       txn.ToApp,
@@ -74,7 +70,7 @@ func advertiseTransactionMessage(ctx context.Context, nc *nats.Conn,
 				Txn:         txn,
 				Digest:      "",
 				PKeySig:     "",
-				Clock:       clock,
+				Clock:       txn.Clock,
 			}
 
 			jMsg, _ := json.Marshal(msg)

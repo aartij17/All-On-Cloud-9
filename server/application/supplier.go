@@ -11,13 +11,14 @@ import (
 	"strconv"
 	"time"
 
+	guuid "github.com/google/uuid"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/nats-io/nats.go"
 )
 
 var (
-	supplier                      *Supplier
-	sendSupplierRequestToAppsChan = make(chan *common.Transaction)
+	SupplierObj *Supplier
 )
 
 type Supplier struct {
@@ -55,6 +56,13 @@ func handleSupplierRequest(w http.ResponseWriter, r *http.Request) {
 		jTxn []byte
 		err  error
 	)
+	common.UpdateGlobalClock(0, false)
+	id := guuid.New()
+	clock := &common.LamportClock{
+		PID:   fmt.Sprintf("%s_%d-%s", config.APP_MANUFACTURER, 0, id.String()),
+		Clock: common.GlobalClock,
+	}
+
 	fmt.Println("HandleSupplierRequest")
 	_ = json.NewDecoder(r.Body).Decode(&sTxn)
 	jTxn, err = json.Marshal(sTxn)
@@ -74,7 +82,7 @@ func handleSupplierRequest(w http.ResponseWriter, r *http.Request) {
 		ToId:    "",
 		FromId:  "",
 		TxnType: sTxn.TxnType,
-		Clock:   nil,
+		Clock:   clock,
 	}
 	log.Info("about to enter -- sendSupplierRequestToAppsChan <- txn")
 	sendClientRequestToAppsChan <- txn
@@ -82,7 +90,7 @@ func handleSupplierRequest(w http.ResponseWriter, r *http.Request) {
 
 func StartSupplierApplication(ctx context.Context, nc *nats.Conn, serverId string,
 	serverNumId int) {
-	supplier = &Supplier{
+	SupplierObj = &Supplier{
 		ContractValid: make(chan bool),
 		MsgChannel:    make(chan *nats.Msg),
 	}
@@ -91,6 +99,6 @@ func StartSupplierApplication(ctx context.Context, nc *nats.Conn, serverId strin
 	go startClient(ctx, "/app/supplier",
 		strconv.Itoa(config.SystemConfig.AppInstance.AppSupplier.Servers[serverNumId].Port), handleSupplierRequest)
 	// all the other app-specific business logic can come here.
-	supplier.subToInterAppNats(ctx, nc, serverId, serverNumId)
-	startInterAppNatsListener(ctx, supplier.MsgChannel)
+	SupplierObj.subToInterAppNats(ctx, nc, serverId, serverNumId)
+	startInterAppNatsListener(ctx, SupplierObj.MsgChannel)
 }

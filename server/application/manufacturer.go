@@ -6,8 +6,11 @@ import (
 	"All-On-Cloud-9/messenger"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
+
+	guuid "github.com/google/uuid"
 
 	log "github.com/Sirupsen/logrus"
 
@@ -15,7 +18,7 @@ import (
 )
 
 var (
-	manufacturer *Manufacturer
+	ManufacturerObj *Manufacturer
 )
 
 type Manufacturer struct {
@@ -53,32 +56,35 @@ func handleManufacturerRequest(w http.ResponseWriter, r *http.Request) {
 		mTxn *ManufacturerClientRequest
 		txn  *common.Transaction
 	)
-	go func() {
-
-	}()
+	common.UpdateGlobalClock(0, false)
+	id := guuid.New()
+	clock := &common.LamportClock{
+		PID:   fmt.Sprintf("%s_%d-%s", config.APP_MANUFACTURER, 0, id.String()),
+		Clock: common.GlobalClock,
+	}
 	_ = json.NewDecoder(r.Body).Decode(&mTxn)
 	jTxn, _ := json.Marshal(mTxn)
 
 	log.WithFields(log.Fields{
 		"request": mTxn,
 	}).Info("handling manufacturer request")
-	// TODO: [Aarti]: take local/global transaction as part of the POST request
 	txn = &common.Transaction{
 		TxnBody: jTxn,
 		FromApp: config.APP_MANUFACTURER,
-		ToApp:   mTxn.ToApp,
-		ToId:    "",
-		FromId:  "",
 		TxnType: mTxn.TxnType,
-		Clock:   nil,
+		Clock:   clock,
 	}
-
+	if mTxn.TxnType == common.GLOBAL_TXN {
+		txn.ToApp = mTxn.ToApp
+	} else {
+		txn.ToApp = config.APP_MANUFACTURER
+	}
 	sendClientRequestToAppsChan <- txn
 }
 
 func StartManufacturerApplication(ctx context.Context, nc *nats.Conn, serverId string,
 	serverNumId int, isPrimary bool) {
-	manufacturer = &Manufacturer{
+	ManufacturerObj = &Manufacturer{
 		ContractValid: make(chan bool),
 		MsgChannel:    make(chan *nats.Msg),
 		IsPrimary:     isPrimary,
@@ -94,7 +100,7 @@ func StartManufacturerApplication(ctx context.Context, nc *nats.Conn, serverId s
 		strconv.Itoa(config.SystemConfig.AppInstance.AppManufacturer.Servers[serverNumId].Port), handleManufacturerRequest)
 
 	// all the other app-specific business logic can come here.
-	manufacturer.subToInterAppNats(ctx, nc, serverId, serverNumId)
+	ManufacturerObj.subToInterAppNats(ctx, nc, serverId, serverNumId)
 	// following logic has to be taken care of here -
 	// 1. Listen to the NATS channel
 	// 2. once a message is received, send it to the main AppServer object which establishes consensus
@@ -103,5 +109,5 @@ func StartManufacturerApplication(ctx context.Context, nc *nats.Conn, serverId s
 	//    smart contract.
 	// 5. Listen to the smart contract channel as well, and if the result is false, tell the main AppServer that
 	//    addition of the block to the blockchain cannot be performed.
-	go startInterAppNatsListener(ctx, manufacturer.MsgChannel)
+	go startInterAppNatsListener(ctx, ManufacturerObj.MsgChannel)
 }
