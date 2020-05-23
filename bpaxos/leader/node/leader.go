@@ -205,6 +205,16 @@ func StartLeader(ctx context.Context, nc *nats.Conn, leaderindex int) {
 				// Ensure that this data was originally proposed by this leader
 				if data.VertexId.Index == leader.Index && leader.checkMessageId(data.VertexId.Id) {
 					leader.HandleConsensusDone(&data)
+					sentMessage, err := json.Marshal(&data)
+					// Respond back to the client
+					if err == nil {
+						fmt.Println("leader can publish a message to deps")
+						messenger.PublishNatsMessage(ctx, nc, common.NATS_CONSENSUS_DONE_MSG, sentMessage)
+
+					} else {
+						fmt.Println("json marshal failed")
+						fmt.Println(err.Error())
+					}
 				}
 				mux.Unlock()
 			}

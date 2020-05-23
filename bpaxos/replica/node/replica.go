@@ -63,16 +63,16 @@ func ProcessReplicaMessage(m *nats.Msg, nc *nats.Conn, ctx context.Context, rep 
 	data := common.MessageEvent{}
 	json.Unmarshal(m.Data, &data)
 	newMessage := rep.HandleReceive(&data)
-	sentMessage, err := json.Marshal(&newMessage)
-	// Respond back to the client
-	if err == nil {
-		fmt.Println("leader can publish a message to deps")
-		messenger.PublishNatsMessage(ctx, nc, common.NATS_CONSENSUS_DONE_MSG, sentMessage)
+	// sentMessage, err := json.Marshal(&newMessage)
+	// // Respond back to the client
+	// if err == nil {
+	// 	fmt.Println("leader can publish a message to deps")
+	// 	messenger.PublishNatsMessage(ctx, nc, common.NATS_CONSENSUS_DONE_MSG, sentMessage)
 
-	} else {
-		fmt.Println("json marshal failed")
-		fmt.Println(err.Error())
-	}
+	// } else {
+	// 	fmt.Println("json marshal failed")
+	// 	fmt.Println(err.Error())
+	// }
 }
 
 func StartReplica(ctx context.Context, nc *nats.Conn) {
