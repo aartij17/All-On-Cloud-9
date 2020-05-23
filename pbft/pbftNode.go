@@ -14,16 +14,17 @@ import (
 )
 
 type PbftNode struct {
-	ctx            context.Context
-	nc             *nats.Conn
-	id             int
-	appId          int
-	msgChannel     chan *nats.Msg
-	localConsensus chan common.Transaction
-	MessageIn      chan common.Transaction
-	MessageOut     chan common.Transaction
-	localState     *pbftState
-	globalState    *pbftState
+	ctx                    context.Context
+	nc                     *nats.Conn
+	id                     int
+	appId                  int
+	msgChannel             chan *nats.Msg
+	LocalConsensusRequired chan common.Transaction
+	LocalConsensusDone     chan common.Transaction
+	MessageIn              chan common.Transaction
+	MessageOut             chan common.Transaction
+	localState             *pbftState
+	globalState            *pbftState
 }
 
 var dummyTxn = common.Transaction{
@@ -36,16 +37,17 @@ var dummyTxn = common.Transaction{
 
 func newPbftNode(ctx context.Context, nc *nats.Conn, id int, appId int, localState *pbftState, globalState *pbftState) *PbftNode {
 	return &PbftNode{
-		ctx:            ctx,
-		nc:             nc,
-		id:             id,
-		appId:          appId,
-		msgChannel:     make(chan *nats.Msg),
-		localConsensus: make(chan common.Transaction),
-		MessageIn:      make(chan common.Transaction),
-		MessageOut:     make(chan common.Transaction),
-		localState:     localState,
-		globalState:    globalState,
+		ctx:                    ctx,
+		nc:                     nc,
+		id:                     id,
+		appId:                  appId,
+		msgChannel:             make(chan *nats.Msg),
+		LocalConsensusRequired: make(chan common.Transaction),
+		LocalConsensusDone:     make(chan common.Transaction),
+		MessageIn:              make(chan common.Transaction),
+		MessageOut:             make(chan common.Transaction),
+		localState:             localState,
+		globalState:            globalState,
 	}
 }
 
@@ -111,11 +113,12 @@ func (node *PbftNode) generateGlobalBroadcast(localState *pbftState) func(common
 			//	"appId":       node.appId,
 			//	"originalTxn": message.Txn,
 			//}).Info("sending to middle consensus")
-			node.MessageIn <- _txn
+			node.LocalConsensusRequired <- _txn
+
 
 			var __txn common.Transaction
 			for received := false; !received; {
-				txn := <-node.localConsensus
+				txn := <-node.LocalConsensusDone
 				__txn = txn
 				//log.WithFields(log.Fields{
 				//	"txn":         __txn,
@@ -123,7 +126,7 @@ func (node *PbftNode) generateGlobalBroadcast(localState *pbftState) func(common
 				//	"inbox": _inbox(node.localState.suffix),
 				//}).Info("received from middle consensus")
 				if !reflect.DeepEqual(__txn, _txn) {
-					node.localConsensus <- __txn
+					node.LocalConsensusDone <- __txn
 				} else {
 					received = true
 				}
@@ -197,7 +200,7 @@ func (node *PbftNode) handleLocalOut(state *pbftState) {
 					"id":    node.id,
 					"appId": node.appId,
 				}).Info("MIDDLE CONSENSUS DONE")
-				node.localConsensus <- _txn
+				node.LocalConsensusDone <- _txn
 			}
 		}
 	}
