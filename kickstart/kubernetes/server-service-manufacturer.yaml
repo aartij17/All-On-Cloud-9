@@ -5,8 +5,14 @@ metadata:
  labels:
    app: server-manufacturer
 spec:
+#  type: ExternalName
+#  externalName: caper-manufacturer
+#  ports:
+#  - port: 9001
+#    name: http
+#    nodePort: 30085
+
  type: NodePort
- externalName: caper-manufacturer
  ports:
  - port: 9001
    name: http

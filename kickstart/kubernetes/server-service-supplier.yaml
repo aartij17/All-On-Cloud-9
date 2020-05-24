@@ -5,6 +5,13 @@ metadata:
  labels:
    app: server-supplier
 spec:
+#  type: ExternalName
+#  externalName: caper-supplier
+#  ports:
+#  - port: 11001
+#    name: http
+#    nodePort: 30086
+
  type: NodePort
  ports:
  - port: 11001
