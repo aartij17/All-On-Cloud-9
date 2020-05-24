@@ -1,16 +1,16 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
- name: server-deployment-supplier
+ name: server-deployment-buyer
 spec:
  replicas: 1
  selector:
   matchLabels:
-    app: server-supplier
+    app: server-buyer
  template:
    metadata:
      labels:
-       app: server-supplier
+       app: server-buyer
    spec:
      volumes:
      - name: config-vol
@@ -24,7 +24,7 @@ spec:
        volumeMounts:
         - name: config-vol
           mountPath: /etc/config
-       args: ["-nodeId=1", "-appName=SUPPLIER", "-configFilePath=/etc/config/config.json"]
+       args: ["-nodeId=3", "-appName=BUYER", "-configFilePath=/etc/config/config.json"]
        ports:
-       - containerPort: 11001
+       - containerPort: 13001
     

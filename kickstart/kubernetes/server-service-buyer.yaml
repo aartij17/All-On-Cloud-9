@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+ name: server-service-buyer
+ labels:
+   app: server-buyer
+spec:
+
+ type: NodePort
+ ports:
+ - port: 13001
+   name: http
+   nodePort: 30087
+ selector:
+   app: server-buyer

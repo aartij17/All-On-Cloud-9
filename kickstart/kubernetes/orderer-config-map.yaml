@@ -42,15 +42,15 @@ data:
         "CARRIER": {
           "servers": [
             {
-              "host": "0.0.0.0",
+              "host": "server-service-carrier",
               "port": 12001
             },
             {
-              "host": "0.0.0.0",
+              "host": "server-service-carrier",
               "port": 12002
             },
             {
-              "host": "0.0.0.0",
+              "host": "server-service-carrier",
               "port": 12003
             }
           ]
@@ -58,15 +58,15 @@ data:
         "BUYER": {
           "servers": [
             {
-              "host": "0.0.0.0",
+              "host": "server-service-buyer",
               "port": 13001
             },
             {
-              "host": "0.0.0.0",
+              "host": "server-service-buyer",
               "port": 13002
             },
             {
-              "host": "0.0.0.0",
+              "host": "server-service-buyer",
               "port": 13003
             }
           ]
