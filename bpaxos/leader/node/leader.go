@@ -3,6 +3,7 @@ package leadernode
 import (
 	"All-On-Cloud-9/common"
 	"All-On-Cloud-9/messenger"
+	"All-On-Cloud-9/bpaxos/debug"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -171,6 +172,7 @@ func StartLeader(ctx context.Context, nc *nats.Conn, leaderindex int) {
 				"error": err.Error(),
 			}).Error("error subscribe NATS_CONSENSUS_INITIATE_MSG")
 		}
+		debug.WriteToFile("L")
 
 		var (
 			natsMsg *nats.Msg
@@ -192,6 +194,7 @@ func StartLeader(ctx context.Context, nc *nats.Conn, leaderindex int) {
 				"error": err.Error(),
 			}).Error("error subscribe NATS_CONSENSUS_INITIATE_MSG")
 		}
+		debug.WriteToFile("L")
 
 		var (
 			natsMsg *nats.Msg

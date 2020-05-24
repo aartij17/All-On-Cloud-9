@@ -3,6 +3,7 @@ package replica
 import (
 	"All-On-Cloud-9/common"
 	"All-On-Cloud-9/messenger"
+	"All-On-Cloud-9/bpaxos/debug"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -86,6 +87,7 @@ func StartReplica(ctx context.Context, nc *nats.Conn) {
 				"error": err.Error(),
 			}).Error("error subscribe PROPOSER_TO_REPLICA")
 		}
+		debug.WriteToFile("R")
 		var (
 			natsMsg *nats.Msg
 		)

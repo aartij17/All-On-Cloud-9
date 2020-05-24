@@ -3,6 +3,7 @@ package proposer
 import (
 	"All-On-Cloud-9/common"
 	"All-On-Cloud-9/messenger"
+	"All-On-Cloud-9/bpaxos/debug"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -156,6 +157,7 @@ func StartProposer(ctx context.Context, nc *nats.Conn) {
 				"error": err.Error(),
 			}).Error("error subscribe LEADER_TO_PROPOSER")
 		}
+		debug.WriteToFile("P")
 
 		var (
 			m *nats.Msg
@@ -196,6 +198,7 @@ func StartProposer(ctx context.Context, nc *nats.Conn) {
 				"error": err.Error(),
 			}).Error("error subscribe CONSENSUS_TO_PROPOSER")
 		}
+		debug.WriteToFile("P")
 
 		var (
 			natsMsg *nats.Msg

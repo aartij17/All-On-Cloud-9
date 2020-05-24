@@ -1,5 +1,6 @@
 #!/bin/bash
 
+rm statuslog.txt
 # Base case:
 # 1 leader, 50 proposers, 50 consensus nodes, 50 replicas
 /usr/local/go/bin/go run main.go -nodetype 0  -numberProps 50 & # Leader

@@ -3,6 +3,7 @@ package consensus
 import (
 	"All-On-Cloud-9/common"
 	"All-On-Cloud-9/messenger"
+	"All-On-Cloud-9/bpaxos/debug"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -113,6 +114,7 @@ func StartConsensus(ctx context.Context, nc *nats.Conn) {
 				"error": err.Error(),
 			}).Error("error subscribe PROPOSER_TO_CONSENSUS")
 		}
+		debug.WriteToFile("C")
 
 		var (
 			natsMsg *nats.Msg
