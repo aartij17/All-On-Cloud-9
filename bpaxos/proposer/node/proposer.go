@@ -82,7 +82,7 @@ func (proposer *Proposer) timeout() {
 	case <-timer.C:
 		log.Info("[BPAXOS] taking timeout lock for proposer")
 		mux.Lock()
-		defer mux.Unlock()
+		
 		if (len(requestQ) > 0) && (requestQ[0].VertexId.Id == proposer.Message.VertexId.Id) &&
 			(requestQ[0].VertexId.Index == proposer.Message.VertexId.Index) {
 			// Set Message Vertex to -1 so it will ignore any subsequent message related to this vertex
@@ -92,6 +92,7 @@ func (proposer *Proposer) timeout() {
 			log.Error("Proposer timeout")
 		}
 		log.Info("[BPAXOS] release timeout lock for proposer")
+                mux.Unlock()
 	case <-timeout_quit:
 		log.Info("[BPAXOS] Timeout not needed")
 	}

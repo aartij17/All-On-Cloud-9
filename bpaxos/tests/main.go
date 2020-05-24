@@ -21,6 +21,8 @@ func main() {
 	flag.IntVar(&nodeType, "nodetype", 0, "node type(0 - leader, 1 - proposer, 2 - consensus, 3 - replica)")
 	flag.StringVar(&numberProps, "numberProps", "1", "number of proposers")
 	flag.StringVar(&nodeId, "nodeId", "0", "node ID(0 - leader, 1 - proposer, 2, 3, 4 - consensus)")
+	fmt.Println(os.Args)
+
 	flag.Parse()
 
 	ctx, _ := context.WithCancel(context.Background())
