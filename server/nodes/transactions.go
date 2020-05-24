@@ -24,22 +24,23 @@ func (server *Server) listenToContractChannel(c chan bool, resp chan bool) {
 
 func (server *Server) InvokeSmartContract(block *blockchain.Block) bool {
 	respChan := make(chan bool)
+	contractValid := make(chan bool)
 	log.WithFields(log.Fields{
-		"app": block.Transaction.ToApp,
+		"app": block.Transaction.FromApp,
 	}).Info("invoking smart contract")
 	switch block.Transaction.FromApp {
 	case config.APP_MANUFACTURER:
-		go server.listenToContractChannel(application.ManufacturerObj.ContractValid, respChan)
-		application.ManufacturerObj.RunManufacturerContract(block)
+		go server.listenToContractChannel(contractValid, respChan)
+		application.RunManufacturerContract(block, contractValid)
 	case config.APP_SUPPLIER:
-		go server.listenToContractChannel(application.SupplierObj.ContractValid, respChan)
-		application.SupplierObj.RunSupplierContract(block)
+		go server.listenToContractChannel(contractValid, respChan)
+		application.RunSupplierContract(block, contractValid)
 	case config.APP_BUYER:
-		go server.listenToContractChannel(application.BuyerObj.ContractValid, respChan)
-		application.BuyerObj.RunBuyerContract(block)
+		go server.listenToContractChannel(contractValid, respChan)
+		application.RunBuyerContract(block, contractValid)
 	case config.APP_CARRIER:
-		go server.listenToContractChannel(application.CarrierObj.ContractValid, respChan)
-		application.CarrierObj.RunCarrierContract(block)
+		go server.listenToContractChannel(contractValid, respChan)
+		application.RunCarrierContract(block, contractValid)
 	}
 
 	for {
@@ -133,6 +134,7 @@ func (server *Server) InitiateAddBlock(ctx context.Context, message *common.Mess
 		Transaction:   message.Txn,
 		InitiatorNode: message.FromNodeId,
 		Clock:         message.Clock,
+		ViewType:      message.Txn.TxnType,
 	}
 
 	result := server.InvokeSmartContract(newBlock)
