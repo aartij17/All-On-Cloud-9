@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+ name: server-service-supplier
+ labels:
+   app: server-supplier
+spec:
+ type: NodePort
+ ports:
+ - port: 11001
+   name: http
+   nodePort: 30086
+
+ selector:
+   app: server-supplier

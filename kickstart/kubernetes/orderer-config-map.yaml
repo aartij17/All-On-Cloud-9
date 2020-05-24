@@ -10,15 +10,15 @@ data:
         "MANUFACTURER": {
           "servers": [
             {
-              "host": "0.0.0.0",
+              "host": "server-service-manufacturer",
               "port": 9001
             },
             {
-              "host": "0.0.0.0",
+              "host": "server-service-manufacturer",
               "port": 9002
             },
             {
-              "host": "0.0.0.0",
+              "host": "server-service-manufacturer",
               "port": 9003
             }
           ]
@@ -26,15 +26,15 @@ data:
         "SUPPLIER": {
           "servers": [
             {
-              "host": "0.0.0.0",
+              "host": "server-service-supplier",
               "port": 11001
             },
             {
-              "host": "0.0.0.0",
+              "host": "server-service-supplier",
               "port": 11002
             },
             {
-              "host": "0.0.0.0",
+              "host": "server-service-supplier",
               "port": 11003
             }
           ]
@@ -91,56 +91,7 @@ data:
       },
       "nats": {
         "servers": [
-          "nats://0.0.0.0:4222"
+          "nats://cloud-nats-svc:4222"
         ]
       }
     }
-
-  # # Configuration values can be set as key-value properties
-  # _comment: Configuration for CAPER blockchain implementation
-  # application_instance:
-  #   MANUFACTURER:
-  #     servers:
-  #     - host: "0.0.0.0"
-  #       port: 9001
-  #     - host: "0.0.0.0"
-  #       port: 9002
-  #     - host: "0.0.0.0"
-  #       port: 9003
-  #   SUPPLIER:
-  #     servers:
-  #     - host: "0.0.0.0"
-  #       port: 11001
-  #     - host: "0.0.0.0"
-  #       port: 11002
-  #     - host: "0.0.0.0"
-  #       port: 11003
-  #   CARRIER:
-  #     servers:
-  #     - host: "0.0.0.0"
-  #       port: 12001
-  #     - host: "0.0.0.0"
-  #       port: 12002
-  #     - host: "0.0.0.0"
-  #       port: 12003
-  #   BUYER:
-  #     servers:
-  #     - host: "0.0.0.0"
-  #       port: 13001
-  #     - host: "0.0.0.0"
-  #       port: 13002
-  #     - host: "0.0.0.0"
-  #       port: 13003
-  # orderers:
-  #   servers:
-  #   - _comment: by default, the first node in this list is the primary node
-  #     host: "0.0.0.0"
-  #     port: 14001
-  #   - host: "0.0.0.0"
-  #     port: 14002
-  #   - host: "0.0.0.0"
-  #     port: 14003
-  # nats:
-  #   servers:
-  #   - nats://0.0.0.0:4222
-    

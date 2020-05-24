@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+ name: server-deployment-manufacturer
+spec:
+ replicas: 1
+ selector:
+  matchLabels:
+    app: server-manufacturer
+ template:
+   metadata:
+     labels:
+       app: server-manufacturer
+   spec:
+     volumes:
+     - name: config-vol
+       configMap:
+        name: orderer-configmap 
+
+     containers:
+     - name: server
+       imagePullPolicy: IfNotPresent
+       image: server:v1
+       volumeMounts:
+        - name: config-vol
+          mountPath: /etc/config
+       args: ["-nodeId=0", "-appName=MANUFACTURER", "-configFilePath=/etc/config/config.json"]
+       ports:
+       - containerPort: 9001
+    

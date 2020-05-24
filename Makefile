@@ -6,7 +6,6 @@ KUBE_OUT=$(TARGET_DIR)/kubernetes
 SERVICE_OUT=$(KUBE_OUT)/services
 DOCKER_OUT=$(TARGET_DIR)
 TAR_OUT=$(TARGET_DIR)/tar_dir
-CONFIG_FILE=$(BASE_DIR)/config/config.json
 
 KUBE_DIR=$(BASE_DIR)/kickstart/kubernetes
 DOCKER_DIR=$(BASE_DIR)/kickstart/docker
@@ -86,11 +85,9 @@ build:
 
 
 copy-instance:
-	scp -i cloud.pem -r $(BIN_OUT)/* ubuntu@${INSTANCE}:/home/ubuntu/cloud/bin
-	scp -i cloud.pem -r $(KUBE_OUT)/* ubuntu@${INSTANCE}:/home/ubuntu/cloud/kubernetes
-	scp -i cloud.pem -r $(DOCKER_OUT)/* ubuntu@${INSTANCE}:/home/ubuntu/cloud
-	scp -i cloud.pem $(CONFIG_FILE) ubuntu@${INSTANCE}:/home/ubuntu/cloud
-
+	scp -i cluster_name.pem -r $(BIN_OUT)/* ubuntu@${INSTANCE}:/home/ubuntu/cloud/bin
+	scp -i cluster_name.pem -r $(KUBE_OUT)/* ubuntu@${INSTANCE}:/home/ubuntu/cloud/kubernetes
+	scp -i cluster_name.pem -r $(DOCKER_OUT)/* ubuntu@${INSTANCE}:/home/ubuntu/cloud
 
 prepare-service-files:
 	mkdir -p $(SERVICE_OUT)
