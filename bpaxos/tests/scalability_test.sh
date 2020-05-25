@@ -1,11 +1,11 @@
 #!/bin/bash
 
-rm statuslog.txt
+rm -f statuslog.txt
 # Base case:
 # 1 leader, 50 proposers, 50 consensus nodes, 50 replicas
-/usr/local/go/bin/go run main.go -nodetype 0  -numberProps 50 & # Leader
+/usr/local/go/bin/go run main.go -nodetype 0  -numberProps 70 & # Leader
 
-for j in `seq 0 49`;
+for j in `seq 0 69`;
 do
     /usr/local/go/bin/go run main.go -nodetype 1 -nodeId $j & # Proposer
 done

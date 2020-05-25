@@ -1,6 +1,7 @@
 .idea/
 *.pem
 target/
+statuslog.txt
 
 # Created by https://www.gitignore.io/api/linux,macos
 # Edit at https://www.gitignore.io/?templates=linux,macos
