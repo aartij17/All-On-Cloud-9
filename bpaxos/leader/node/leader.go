@@ -125,7 +125,8 @@ func (leader *Leader) timeout(v *common.Vertex, nc *nats.Conn, ctx context.Conte
 						"error": err.Error(),
 					}).Error("[BPAXOS] json marshal error while reproposing values from leader to proposers")
 					
-				} else {
+				}
+				else {
 					messenger.PublishNatsMessage(ctx, nc, subj, sentMessage)
 					proposer_id = (proposer_id + 1) % leader.numberProps
 					leader.t_map[v.Id].Reset(time.Duration(common.PROPOSER_TIMEOUT_MILLISECONDS) * time.Millisecond)
