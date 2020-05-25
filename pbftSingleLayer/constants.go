@@ -1,4 +1,4 @@
-package pbft
+package pbftSingleLayer
 
 const (
 	GLOBAL_APPLICATION = "GLOBAL_PBFT"

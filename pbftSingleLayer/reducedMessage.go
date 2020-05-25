@@ -1,4 +1,4 @@
-package pbft
+package pbftSingleLayer
 
 type reducedMessage struct {
 	messageType string
