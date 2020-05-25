@@ -24,7 +24,7 @@ spec:
        volumeMounts:
         - name: config-vol
           mountPath: /etc/config
-       args: ["-nodeId=1", "-appName=SUPPLIER", "-configFilePath=/etc/config/config.json"]
+       args: ["-nodeId=0", "-appName=SUPPLIER", "-configFilePath=/etc/config/config.json"]
        ports:
        - containerPort: 11001
     

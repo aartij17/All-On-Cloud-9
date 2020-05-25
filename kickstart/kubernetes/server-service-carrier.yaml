@@ -10,6 +10,6 @@ spec:
  ports:
  - port: 12001
    name: http
-   nodePort: 30086
+   nodePort: 30088
  selector:
    app: server-carrier
