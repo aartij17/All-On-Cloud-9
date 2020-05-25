@@ -18,8 +18,8 @@ import (
 )
 
 var (
-	requestQ     = make([]common.MessageEvent, 0)
-	QueueTrigger = make(chan bool, common.F) // Max of F requests
+	// requestQ     = make([]common.MessageEvent, 0)
+	QueueTrigger = make(chan common.MessageEvent, common.F) // Max of F requests
 	QueueRelease = make(chan bool)
 	mux          sync.Mutex
 	timer        *time.Timer
@@ -75,17 +75,18 @@ func (proposer *Proposer) processMessageFromLeader(data common.MessageEvent, nc 
 	}
 	messenger.PublishNatsMessage(ctx, nc, common.PROPOSER_TO_CONSENSUS, sentMessage)
 	timer = time.NewTimer(time.Duration(common.CONSENSUS_TIMEOUT_MILLISECONDS) * time.Millisecond)
-	go proposer.timeout()
+	go proposer.timeout(&data)
 }
 
-func (proposer *Proposer) timeout() {
+func (proposer *Proposer) timeout(data *common.MessageEvent) {
 	select {
 	case <-timer.C:
 		log.Info("[BPAXOS] taking timeout lock for proposer")
 		mux.Lock()
 		
-		if (len(requestQ) > 0) && (requestQ[0].VertexId.Id == proposer.Message.VertexId.Id) &&
-			(requestQ[0].VertexId.Index == proposer.Message.VertexId.Index) {
+		//(len(requestQ) > 0)
+		if (data.VertexId.Id == proposer.Message.VertexId.Id) &&
+			(data.VertexId.Index == proposer.Message.VertexId.Index) {
 			// Set Message Vertex to -1 so it will ignore any subsequent message related to this vertex
 			proposer.Message.VertexId.Id = -1
 			proposer.Message.VertexId.Index = -1
@@ -155,6 +156,7 @@ func StartProposer(ctx context.Context, nc *nats.Conn) {
 		if err != nil {
 			log.WithFields(log.Fields{
 				"error": err.Error(),
+				"subj" : subj,
 			}).Error("error subscribe LEADER_TO_PROPOSER")
 		}
 		debug.WriteToFile("P")
@@ -173,18 +175,19 @@ func StartProposer(ctx context.Context, nc *nats.Conn) {
 					}).Error("error unmarshal message from leader")
 					return
 				}
-				requestQ = append(requestQ, data)
-				QueueTrigger <- true
+				// requestQ = append(requestQ, data)
+				QueueTrigger <- data
 			}
 		}
 	}(nc, &p)
 
 	go func(nc *nats.Conn, proposer *Proposer) {
+		var data common.MessageEvent
 		for {
-			<-QueueTrigger
-			proposer.processMessageFromLeader(requestQ[0], nc, ctx)
+			data = <-QueueTrigger
+			proposer.processMessageFromLeader(data, nc, ctx)
 			<-QueueRelease
-			requestQ = requestQ[1:]
+			// requestQ = requestQ[1:]
 		}
 	}(nc, &p)
 
