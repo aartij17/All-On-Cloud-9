@@ -46,6 +46,7 @@ func (leader *Leader) SetNumProps() {
 func NewLeader(index int) Leader {
 	l := Leader{}
 	l.Index = index
+	l.FlushMessages()
 	l.m = make(map[int]*common.MessageEvent)
 	l.t_map = make(map[int]*time.Timer) // timer map
 	l.q_map = make(map[int](chan bool)) // quit map
