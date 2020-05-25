@@ -92,7 +92,6 @@ func processMessageFromClient(m *nats.Msg, nc *nats.Conn, ctx context.Context, l
 	}
 	subj := fmt.Sprintf("%s%d", common.LEADER_TO_PROPOSER, proposer_id)
 	messenger.PublishNatsMessage(ctx, nc, subj, sentMessage)
-	// timer = time.NewTimer(time.Duration(common.PROPOSER_TIMEOUT_MILLISECONDS) * time.Millisecond)
 	leader.PrepareNewMessage(&newMessage)
 	go leader.timeout(newMessage.VertexId, nc, ctx)
 
@@ -155,8 +154,9 @@ func (leader *Leader) HandleConsensusDone(message *common.MessageEvent) {
 }
 
 func (leader *Leader) PrepareNewMessage(message *common.MessageEvent) {
+	timer := time.NewTimer(time.Duration(common.PROPOSER_TIMEOUT_MILLISECONDS) * time.Millisecond)
 	// When the leader sends a new message, it needs to add the corresponding entries into its maps
-	leader.t_map[message.VertexId.Id] = time.NewTimer(time.Duration(common.PROPOSER_TIMEOUT_MILLISECONDS) * time.Millisecond)
+	leader.t_map[message.VertexId.Id] = timer
 	leader.q_map[message.VertexId.Id] = make(chan bool)
 	leader.m[message.VertexId.Id] = message
 }
