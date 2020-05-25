@@ -3,6 +3,7 @@ package proposer
 import (
 	"All-On-Cloud-9/common"
 	"All-On-Cloud-9/messenger"
+	"All-On-Cloud-9/bpaxos/debug"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -10,18 +11,19 @@ import (
 	"os/signal"
 	"sync"
 	"time"
+	// "strconv"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/nats-io/nats.go"
 )
 
 var (
-	id_count     = 0
 	requestQ     = make([]common.MessageEvent, 0)
 	QueueTrigger = make(chan bool, common.F) // Max of F requests
 	QueueRelease = make(chan bool)
 	mux          sync.Mutex
 	timer        *time.Timer
+	timeout_quit = make(chan bool)
 )
 
 type Proposer struct {
@@ -33,8 +35,17 @@ type Proposer struct {
 func newProposer() Proposer {
 	proposer := Proposer{}
 	proposer.VoteCount = 0
-	proposer.ProposerId = id_count
-	id_count += 1
+
+	proposer.ProposerId = 0  // Hardcode one id
+	// i, err := strconv.Atoi(os.Getenv("PROP_ID"))
+	// if err != nil {
+
+	// 	log.WithFields(log.Fields{
+	// 		"error": err.Error(),
+	// 	}).Error("Failed to get Environment Variable")
+	// } else {
+	// 	proposer.ProposerId = i
+	// }
 	return proposer
 }
 
@@ -70,19 +81,24 @@ func (proposer *Proposer) processMessageFromLeader(data common.MessageEvent, nc 
 }
 
 func (proposer *Proposer) timeout() {
-	<-timer.C
-	log.Info("[BPAXOS] taking timeout lock for proposer")
-	mux.Lock()
-	defer mux.Unlock()
-	if (len(requestQ) > 0) && (requestQ[0].VertexId.Id == proposer.Message.VertexId.Id) &&
-		(requestQ[0].VertexId.Index == proposer.Message.VertexId.Index) {
-		// Set Message Vertex to -1 so it will ignore any subsequent message related to this vertex
-		proposer.Message.VertexId.Id = -1
-		proposer.Message.VertexId.Index = -1
-		QueueRelease <- true
-		log.Error("Proposer timeout")
+	select {
+	case <-timer.C:
+		log.Info("[BPAXOS] taking timeout lock for proposer")
+		mux.Lock()
+		
+		if (len(requestQ) > 0) && (requestQ[0].VertexId.Id == proposer.Message.VertexId.Id) &&
+			(requestQ[0].VertexId.Index == proposer.Message.VertexId.Index) {
+			// Set Message Vertex to -1 so it will ignore any subsequent message related to this vertex
+			proposer.Message.VertexId.Id = -1
+			proposer.Message.VertexId.Index = -1
+			QueueRelease <- true
+			log.Error("Proposer timeout")
+		}
+		log.Info("[BPAXOS] release timeout lock for proposer")
+        mux.Unlock()
+	case <-timeout_quit:
+		log.Info("[BPAXOS] Timeout not needed")
 	}
-	log.Info("[BPAXOS] release timeout lock for proposer")
 }
 
 func (proposer *Proposer) ProcessMessageFromConsensus(m *nats.Msg, nc *nats.Conn, ctx context.Context) {
@@ -105,6 +121,7 @@ func (proposer *Proposer) ProcessMessageFromConsensus(m *nats.Msg, nc *nats.Conn
 
 	if proposer.VoteCount > common.F {
 		timer.Stop()
+		timeout_quit <- true
 		replicaMessage, err := json.Marshal(&proposer.Message)
 		if err != nil {
 			log.WithFields(log.Fields{
@@ -142,6 +159,7 @@ func StartProposer(ctx context.Context, nc *nats.Conn) {
 				"error": err.Error(),
 			}).Error("error subscribe LEADER_TO_PROPOSER")
 		}
+		debug.WriteToFile("P")
 
 		var (
 			m *nats.Msg
@@ -182,6 +200,7 @@ func StartProposer(ctx context.Context, nc *nats.Conn) {
 				"error": err.Error(),
 			}).Error("error subscribe CONSENSUS_TO_PROPOSER")
 		}
+		debug.WriteToFile("P")
 
 		var (
 			natsMsg *nats.Msg
