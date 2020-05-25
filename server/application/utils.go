@@ -4,8 +4,6 @@ import (
 	"All-On-Cloud-9/common"
 	"All-On-Cloud-9/config"
 	"All-On-Cloud-9/messenger"
-	"All-On-Cloud-9/pbft"
-	"All-On-Cloud-9/pbftSingleLayer"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -21,12 +19,8 @@ var (
 	ManufacturerCostPerUnit = 5 // default value
 	SupplierCostPerUnit     = 5 // Default value
 
-	AppAgentChan                                          = make(chan *common.Message)
-	sendClientRequestToAppsChan                           = make(chan *common.Transaction)
-	nodeAppName                                           = ""
-	nodeServerId                                          = -1
-	pbftNode                    *pbft.PbftNode            = nil
-	pbftSLNode                  *pbftSingleLayer.PbftNode = nil
+	AppAgentChan                = make(chan *common.Message)
+	sendClientRequestToAppsChan = make(chan *common.Transaction)
 )
 
 // startInterAppNatsListener is basically the server side of the applications
@@ -42,18 +36,7 @@ func startInterAppNatsListener(ctx context.Context, msgChan chan *nats.Msg) {
 			fmt.Println(msg.Clock)
 			fmt.Println(msg)
 			common.UpdateGlobalClock(msg.Clock.Clock, false)
-			if msg.Clock.Clock%config.GetAppNodeCnt(nodeAppName) == nodeServerId {
-				if msg.Txn.TxnType == common.GLOBAL_TXN {
-					switch config.GetGlobalConsensusMethod() {
-					case 1:
-						AppAgentChan <- msg
-					case 2:
-						pbftNode.MessageIn <- *msg.Txn
-					case 3:
-						pbftSLNode.MessageIn <- *msg.Txn
-					}
-				}
-			}
+			AppAgentChan <- msg
 		}
 	}
 }
@@ -73,18 +56,6 @@ func advertiseTransactionMessage(ctx context.Context, nc *nats.Conn,
 	var (
 		txn *common.Transaction
 	)
-
-	totalNodesGlobal := config.GetAppCnt()
-	totalNodes := config.GetAppNodeCnt(fromApp)
-	nodeAppName = fromApp
-	nodeServerId = serverNumId
-	pbftNode = pbft.NewPbftNode(ctx, nc, fromApp, totalNodes/3, totalNodes, totalNodesGlobal/3, totalNodesGlobal, serverNumId, config.GetAppId(fromApp))
-	pbftSLNode = pbftSingleLayer.NewPbftNode(ctx, nc, fromApp, serverNumId, config.GetAppId(fromApp))
-	if config.IsByzantineTolerant(nodeAppName) {
-		pbft.PipeInLocalConsensus(pbftNode)
-	} else {
-		// should forward the msg to BPaxos and retrieve the pipe-in the response
-	}
 	// This requires all transaction struct to have a ToApp field
 	for {
 		select {

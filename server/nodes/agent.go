@@ -5,6 +5,8 @@ import (
 	"All-On-Cloud-9/config"
 	"All-On-Cloud-9/consensus/orderers/nodes"
 	"All-On-Cloud-9/messenger"
+	"All-On-Cloud-9/pbft"
+	"All-On-Cloud-9/pbftSingleLayer"
 	"All-On-Cloud-9/server/application"
 	"All-On-Cloud-9/server/blockchain"
 	"context"
@@ -31,6 +33,8 @@ type Server struct {
 	VertexMap              map[string]*blockchain.Vertex `json:"vertex_map"`
 	PIDMap                 map[string]bool               `json:"pid_map"`
 	NatsConn               *nats.Conn                    `json:"nats_connection"`
+	pbftNode               *pbft.PbftNode
+	pbftSLNode             *pbftSingleLayer.PbftNode
 	LocalConsensusComplete chan bool
 	LastAddedLocalBlock    *blockchain.Vertex
 	LastAddedGlobalBlock   *blockchain.Vertex
@@ -38,9 +42,10 @@ type Server struct {
 	LastAddedGlobalNodeId  int
 }
 
-func (server *Server) startLocalConsensus() {
+func (server *Server) startLocalConsensus(commonMessage *common.Message) {
 	log.Info("starting local consensus")
 	// TODO: [Aarti]: This is a placeholder for now.
+	server.pbftNode.MessageIn <- *commonMessage.Txn
 	server.LocalConsensusComplete <- true
 }
 
@@ -49,25 +54,37 @@ func (server *Server) initiateLocalGlobalConsensus(ctx context.Context, fromNode
 	_ = json.Unmarshal(msg, &commonMessage)
 
 	// check if the request was received on a primary agent
-	if server.ServerNumId != 0 {
-		log.WithFields(log.Fields{
-			"receiverNodeId": fromNodeId,
-		}).Error("request received on a non-primary agent, no action taken")
-		return
-	}
+	//if server.ServerNumId != 0 {
+	//	log.WithFields(log.Fields{
+	//		"receiverNodeId": fromNodeId,
+	//	}).Error("request received on a non-primary agent, no action taken")
+	//	return
+	//}
 	// TODO: [Aarti]: Check if the message is valid -- check the signature
 	// TODO: THIS WILL BLOCK! Initiate local consensus - Make sure that true is published to LocalConsensusCompleteChannel
 	// [Aarti]: This needs to be a go routine since we want to ensure that we appropriately wait for the
 	// local consensus to finish
-	go server.startLocalConsensus()
-	<-server.LocalConsensusComplete
+	if commonMessage.Clock.Clock%config.GetAppNodeCnt(server.AppName) == server.ServerNumId {
+		go server.startLocalConsensus(commonMessage) //WHY?
+		<-server.LocalConsensusComplete              //WHY?
 
-	if commonMessage.Txn.TxnType == common.LOCAL_TXN {
-		common.UpdateGlobalClock(commonMessage.Clock.Clock, false)
-		server.InitiateAddBlock(ctx, commonMessage)
-		return
+		if commonMessage.Txn.TxnType == common.GLOBAL_TXN {
+			switch config.GetGlobalConsensusMethod() {
+			case 1: //Orderer based
+				server.startGlobalConsensusProcess(ctx, commonMessage)
+			case 2: //Hierarchical PBFT
+				server.pbftNode.MessageIn <- *commonMessage.Txn
+				//server.pbftNode.MessageOut
+			case 3: //Single-layer PBFT
+				server.pbftSLNode.MessageIn <- *commonMessage.Txn
+			}
+		} else if commonMessage.Txn.TxnType == common.LOCAL_TXN {
+			common.UpdateGlobalClock(commonMessage.Clock.Clock, false)
+			server.InitiateAddBlock(ctx, commonMessage)
+			return
+		}
 	}
-	server.startGlobalConsensusProcess(ctx, commonMessage)
+
 }
 
 // postConsensusProcessTxn is called once the local consensus has been reached by the nodes.
@@ -166,6 +183,8 @@ func StartServer(ctx context.Context, nodeId string, appName string, id int) {
 	}
 	// initialize the blockchain
 	genesisBlock := blockchain.InitBlockchain(nodeId)
+	totalNodesGlobal := config.GetAppCnt()
+	totalNodes := config.GetAppNodeCnt(appName)
 
 	AppServer = &Server{
 		Id:                     nodeId,
@@ -175,12 +194,15 @@ func StartServer(ctx context.Context, nodeId string, appName string, id int) {
 		VertexMap:              make(map[string]*blockchain.Vertex),
 		PIDMap:                 make(map[string]bool),
 		NatsConn:               nc,
+		pbftNode:               pbft.NewPbftNode(ctx, nc, appName, totalNodes/3, totalNodes, totalNodesGlobal/3, totalNodesGlobal, id, config.GetAppId(appName)),
+		pbftSLNode:             pbftSingleLayer.NewPbftNode(ctx, nc, appName, id, config.GetAppId(appName)),
 		LastAddedLocalBlock:    genesisBlock,
 		LastAddedGlobalBlock:   nil,
 		LastAddedLocalNodeId:   -1,
 		LastAddedGlobalNodeId:  -1,
 		LocalConsensusComplete: make(chan bool),
 	}
+	pbft.PipeInHierarchicalLocalConsensus(AppServer.pbftNode) // use pbft for local consensus as well
 
 	// add the genesis block to the map
 	AppServer.VertexMap[common.LAMBDA_BLOCK] = genesisBlock

@@ -88,7 +88,7 @@ func getAppNum(appName string) int {
 	panic("no such app: " + appName)
 }
 
-func GetAppCnt() int {
+func GetAppCnt() int { //How many applications we have in total
 	return 4
 }
 
@@ -106,18 +106,7 @@ func GetAppId(appName string) int {
 
 func GetAppNodeCnt(appName string) int {
 	appId := GetAppId(appName)
-	switch appId {
-	case 0:
-		return len(SystemConfig.AppInstance.AppBuyer.Servers)
-	case 1:
-		return len(SystemConfig.AppInstance.AppCarrier.Servers)
-	case 2:
-		return len(SystemConfig.AppInstance.AppManufacturer.Servers)
-	case 3:
-		return len(SystemConfig.AppInstance.AppSupplier.Servers)
-	}
-
-	panic("no such app: " + appName)
+	return GetAppNodeCntInt(appId)
 }
 
 func GetAppNodeCntInt(appId int) int {

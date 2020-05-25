@@ -1,6 +1,6 @@
 package pbft
 
-func PipeInLocalConsensus(pbftNode *PbftNode) {
+func PipeInHierarchicalLocalConsensus(pbftNode *PbftNode) {
 	for {
 		txn := <-pbftNode.LocalConsensusRequired
 		pbftNode.MessageIn <- txn
