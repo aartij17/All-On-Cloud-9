@@ -66,6 +66,14 @@ type Config struct {
 	Nats        *NatsServers  `json:"nats"`
 }
 
+func GetGlobalConsensusMethod() int {
+	return 2 //returns 1, 2, or 3 for each of the established methods
+}
+
+func IsByzantineTolerant(appName string) bool { //For now, we better put it in the config file
+	return GetAppId(appName) < 2
+}
+
 func getAppNum(appName string) int {
 	switch appName {
 	case APP_BUYER:
