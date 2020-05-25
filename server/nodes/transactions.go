@@ -7,7 +7,8 @@ import (
 	"All-On-Cloud-9/server/blockchain"
 	"context"
 	"fmt"
-
+	"os"
+	"net/http"
 	log "github.com/Sirupsen/logrus"
 	"github.com/hashicorp/terraform/dag"
 )
@@ -198,5 +199,16 @@ func (server *Server) InitiateAddBlock(ctx context.Context, message *common.Mess
 	}).Info("added new edge for local block")
 
 	blockchain.PrintBlockchain()
+	
+	// Check if the environment variable DEBUG is set
+	// If so, then ping address stored in DEBUG
+	addr, ok := os.LookupEnv("DEBUG")
+	if ok {
+		_, err := http.Get(addr)
+		if err != nil {
+			log.Error("Failed to ping debug server")
+		}
+	}
+
 	return
 }
