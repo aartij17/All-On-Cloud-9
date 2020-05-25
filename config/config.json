@@ -87,5 +87,7 @@
     "servers": [
       "nats://0.0.0.0:4222"
     ]
-  }
+  },
+  "global_consensus_algorithm": "slpbft",
+  "consensus": "bpaxos"
 }

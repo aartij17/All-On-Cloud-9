@@ -1,9 +1,9 @@
 package config
 
 import (
+	"All-On-Cloud-9/common"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"strconv"
@@ -18,21 +18,9 @@ const (
 	APP_CARRIER      = "CARRIER"
 
 	NODE_NAME = "%s_%d"
-
-	// ORDERER nodes which are NOT part of the agents serving the applications
-	ORDERER1 = 1
-	ORDERER2 = 2
-	ORDERER3 = 3
 )
 
 var (
-	MANUFACTURER_NODES []string
-	SUPPLIER_NODES     []string
-	BUYER_NODES        []string
-	CARRIER_NODES      []string
-
-	APP_ORDERERS = [...]int{ORDERER1, ORDERER2, ORDERER3}
-
 	SystemConfig *Config
 )
 
@@ -61,13 +49,23 @@ type NatsServers struct {
 }
 
 type Config struct {
-	AppInstance *Applications `json:"application_instance"`
-	Orderers    *Orderers     `json:"orderers"`
-	Nats        *NatsServers  `json:"nats"`
+	AppInstance         *Applications `json:"application_instance"`
+	Orderers            *Orderers     `json:"orderers"`
+	Nats                *NatsServers  `json:"nats"`
+	GlobalConsensusAlgo string        `json:"global_consensus_algorithm"`
+	Consensus           string        `json:"consensus"`
 }
 
 func GetGlobalConsensusMethod() int {
-	return 2 //returns 1, 2, or 3 for each of the established methods
+	switch SystemConfig.GlobalConsensusAlgo {
+	case common.GLOBAL_CONSENSUS_ALGO_ORDERER:
+		return 1
+	case common.GLOBAL_CONSENSUS_ALGO_SLPBFT:
+		return 2
+	case common.GLOBAL_CONSENSUS_ALGO_HEIRARCHICAL:
+		return 3
+	}
+	return 1
 }
 
 func IsByzantineTolerant(appName string) bool { //For now, we better put it in the config file
@@ -133,21 +131,6 @@ func GetAppNodeCntInt(appId int) int {
 	}
 
 	panic("no such app: " + strconv.Itoa(appId))
-}
-
-func initNodeIds() {
-	for i := 0; i < 5; i++ {
-		MANUFACTURER_NODES = append(MANUFACTURER_NODES, fmt.Sprintf(NODE_NAME, APP_MANUFACTURER, i))
-		SUPPLIER_NODES = append(SUPPLIER_NODES, fmt.Sprintf(NODE_NAME, APP_SUPPLIER, i))
-		BUYER_NODES = append(BUYER_NODES, fmt.Sprintf(NODE_NAME, APP_BUYER, i))
-		CARRIER_NODES = append(CARRIER_NODES, fmt.Sprintf(NODE_NAME, APP_CARRIER, i))
-	}
-	log.WithFields(log.Fields{
-		"manufacturer": MANUFACTURER_NODES,
-		"supplier":     SUPPLIER_NODES,
-		"buyer":        BUYER_NODES,
-		"carrier":      CARRIER_NODES,
-	}).Info("initialized all app nodes with their app IDs")
 }
 
 func LoadConfig(ctx context.Context, filepath string) {
