@@ -117,22 +117,19 @@ func (leader *Leader) timeout(v *common.Vertex, nc *nats.Conn, ctx context.Conte
 		case <-leader.t_map[v.Id].C:
 			log.Info("[BPAXOS] leader waiting on proposer timed out")
 			mux.Lock()
-			if leader.checkMessageId(v.Id) {
-				subj := fmt.Sprintf("%s%d", common.LEADER_TO_PROPOSER, proposer_id)
-				sentMessage, err := json.Marshal(leader.m[v.Id])
-				if err != nil {
-					log.WithFields(log.Fields{
-						"error": err.Error(),
-					}).Error("[BPAXOS] json marshal error while reproposing values from leader to proposers")
-					
-				}
-				else {
-					messenger.PublishNatsMessage(ctx, nc, subj, sentMessage)
-					proposer_id = (proposer_id + 1) % leader.numberProps
-					leader.t_map[v.Id].Reset(time.Duration(common.PROPOSER_TIMEOUT_MILLISECONDS) * time.Millisecond)
-					log.Info("[BPAXOS] release timeout lock for leader")
-				}
+
+			subj := fmt.Sprintf("%s%d", common.LEADER_TO_PROPOSER, proposer_id)
+			sentMessage, err := json.Marshal(leader.m[v.Id])
+			if err != nil {
+				log.WithFields(log.Fields{
+					"error": err.Error(),
+				}).Error("[BPAXOS] json marshal error while reproposing values from leader to proposers")
+				return
 			}
+			messenger.PublishNatsMessage(ctx, nc, subj, sentMessage)
+			proposer_id = (proposer_id + 1) % leader.numberProps
+			leader.t_map[v.Id].Reset(time.Duration(common.PROPOSER_TIMEOUT_MILLISECONDS) * time.Millisecond)
+			log.Info("[BPAXOS] release timeout lock for leader")
 			mux.Unlock()
 		case <-leader.q_map[v.Id]:
 			exit = true
