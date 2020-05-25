@@ -113,8 +113,8 @@ func (leader *Leader) checkMessageId(id int) bool {
 func (leader *Leader) timeout(v *common.Vertex, nc *nats.Conn, ctx context.Context) {
 	exit := false
 	for {
-		select {
 		log.WithFields(log.Fields{"message id": v.Id,}).Info("Started timeout routine in leader")
+		select {
 		case <-leader.t_map[v.Id].C:
 			log.Info("[BPAXOS] leader waiting on proposer timed out")
 			mux.Lock()
