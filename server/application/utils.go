@@ -21,12 +21,12 @@ var (
 	ManufacturerCostPerUnit = 5 // default value
 	SupplierCostPerUnit     = 5 // Default value
 
-	AppAgentChan                = make(chan *common.Message)
-	sendClientRequestToAppsChan = make(chan *common.Transaction)
-	nodeAppName = ""
-	nodeServerId = -1
-	pbftNode *pbft.PbftNode = nil
-	pbftSLNode *pbftSingleLayer.PbftNode = nil
+	AppAgentChan                                          = make(chan *common.Message)
+	sendClientRequestToAppsChan                           = make(chan *common.Transaction)
+	nodeAppName                                           = ""
+	nodeServerId                                          = -1
+	pbftNode                    *pbft.PbftNode            = nil
+	pbftSLNode                  *pbftSingleLayer.PbftNode = nil
 )
 
 // startInterAppNatsListener is basically the server side of the applications
@@ -42,7 +42,7 @@ func startInterAppNatsListener(ctx context.Context, msgChan chan *nats.Msg) {
 			fmt.Println(msg.Clock)
 			fmt.Println(msg)
 			common.UpdateGlobalClock(msg.Clock.Clock, false)
-			if msg.Clock.Clock % config.GetAppNodeCnt(nodeAppName) == nodeServerId {
+			if msg.Clock.Clock%config.GetAppNodeCnt(nodeAppName) == nodeServerId {
 				if msg.Txn.TxnType == common.GLOBAL_TXN {
 					switch config.GetGlobalConsensusMethod() {
 					case 1:

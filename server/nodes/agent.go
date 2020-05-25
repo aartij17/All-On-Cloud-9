@@ -108,7 +108,7 @@ func (server *Server) startNatsSubscriber(ctx context.Context) {
 		for {
 			select {
 			// this is where the messages from the application server end up and ultimately forwarded to
-				// the consensus modules
+			// the consensus modules
 			case msg = <-application.AppAgentChan:
 				log.WithFields(log.Fields{
 					"fromApp": msg.FromApp,

@@ -52,7 +52,7 @@ func (state *pbftState) hasQuorum(message reducedMessage) bool {
 	for i := 0; i < 4; i++ {
 		message.appId = i
 		left := config.GetAppNodeCntInt(i) - state.counter[message]
-		if float64(left) >= float64(state.counter[message]) / float64(2) {
+		if float64(left) >= float64(state.counter[message])/float64(2) {
 			return false
 		}
 	}
@@ -116,7 +116,7 @@ func (state *pbftState) handleMessage(
 		reduced := reducedMessage{
 			messageType: PREPARE,
 			Txn:         newReducedTransaction(*_message.Txn),
-			appId: config.GetAppId(message.FromApp),
+			appId:       config.GetAppId(message.FromApp),
 		}
 
 		state.counter[reduced]++
@@ -132,7 +132,7 @@ func (state *pbftState) handleMessage(
 		reduced := reducedMessage{
 			messageType: COMMIT,
 			Txn:         newReducedTransaction(*_message.Txn),
-			appId: config.GetAppId(message.FromApp),
+			appId:       config.GetAppId(message.FromApp),
 		}
 
 		state.counter[reduced]++
@@ -148,7 +148,7 @@ func (state *pbftState) handleMessage(
 		reduced := reducedMessage{
 			messageType: COMMITED,
 			Txn:         newReducedTransaction(*_message.Txn),
-			appId: config.GetAppId(message.FromApp),
+			appId:       config.GetAppId(message.FromApp),
 		}
 
 		state.counter[reduced]++

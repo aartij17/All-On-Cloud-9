@@ -2,7 +2,7 @@ package pbft
 
 func PipeInLocalConsensus(pbftNode *PbftNode) {
 	for {
-		txn := <- pbftNode.LocalConsensusRequired
+		txn := <-pbftNode.LocalConsensusRequired
 		pbftNode.MessageIn <- txn
 	}
 }

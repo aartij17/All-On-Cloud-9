@@ -13,14 +13,14 @@ import (
 )
 
 type PbftNode struct {
-	ctx                    context.Context
-	nc                     *nats.Conn
-	id                     int
-	appId                  int
-	msgChannel             chan *nats.Msg
-	MessageIn              chan common.Transaction
-	MessageOut             chan common.Transaction
-	globalState            *pbftState
+	ctx         context.Context
+	nc          *nats.Conn
+	id          int
+	appId       int
+	msgChannel  chan *nats.Msg
+	MessageIn   chan common.Transaction
+	MessageOut  chan common.Transaction
+	globalState *pbftState
 }
 
 var dummyTxn = common.Transaction{
@@ -33,14 +33,14 @@ var dummyTxn = common.Transaction{
 
 func newPbftNode(ctx context.Context, nc *nats.Conn, id int, appId int, globalState *pbftState) *PbftNode {
 	return &PbftNode{
-		ctx:                    ctx,
-		nc:                     nc,
-		id:                     id,
-		appId:                  appId,
-		msgChannel:             make(chan *nats.Msg),
-		MessageIn:              make(chan common.Transaction),
-		MessageOut:             make(chan common.Transaction),
-		globalState:            globalState,
+		ctx:         ctx,
+		nc:          nc,
+		id:          id,
+		appId:       appId,
+		msgChannel:  make(chan *nats.Msg),
+		MessageIn:   make(chan common.Transaction),
+		MessageOut:  make(chan common.Transaction),
+		globalState: globalState,
 	}
 }
 
@@ -149,10 +149,10 @@ func (node *PbftNode) startMessageListeners(msgChan chan *nats.Msg) {
 			}
 
 			log.WithFields(log.Fields{
-				"type":        packedMsg.Msg.MessageType,
-				"txn":         packedMsg.Txn,
-				"id":          node.id,
-				"appId":       node.appId,
+				"type":  packedMsg.Msg.MessageType,
+				"txn":   packedMsg.Txn,
+				"id":    node.id,
+				"appId": node.appId,
 				"inbox": GLOBAL_APPLICATION,
 			}).Info("nats message received")
 
