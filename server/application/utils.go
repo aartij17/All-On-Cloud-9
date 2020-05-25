@@ -29,6 +29,8 @@ var (
 	pbftSLNode *pbftSingleLayer.PbftNode = nil
 )
 
+// startInterAppNatsListener is basically the server side of the applications
+// handling all the incoming requests from the other applications acting like clients
 func startInterAppNatsListener(ctx context.Context, msgChan chan *nats.Msg) {
 	var (
 		msg *common.Message
@@ -62,6 +64,9 @@ func startClient(ctx context.Context, addr string, port string, handler func(htt
 	return err
 }
 
+// advertiseTransactionMessage starts a listener on messages incoming from other applications.
+// so for example, supplier could act as a client and send a message to manufacturer.
+// in this case, supplier will adverstise a message to NATS_MANUFACTURER_INBOX
 func advertiseTransactionMessage(ctx context.Context, nc *nats.Conn,
 	fromApp string, serverId string, serverNumId int) {
 	log.Info("adverstising....")

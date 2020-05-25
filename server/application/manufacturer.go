@@ -27,6 +27,8 @@ type Manufacturer struct {
 	IsPrimary     bool
 }
 
+// subToInterAppNats subscribes to their own nats inbox to receive messages from other applications which
+// may act as clients wanting to carry out a transaction
 func (m *Manufacturer) subToInterAppNats(ctx context.Context, nc *nats.Conn, serverId string, serverNumId int) {
 	var (
 		err error
