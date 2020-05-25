@@ -93,7 +93,7 @@ func (proposer *Proposer) timeout() {
 			log.Error("Proposer timeout")
 		}
 		log.Info("[BPAXOS] release timeout lock for proposer")
-                mux.Unlock()
+        mux.Unlock()
 	case <-timeout_quit:
 		log.Info("[BPAXOS] Timeout not needed")
 	}
