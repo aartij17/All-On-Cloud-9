@@ -11,7 +11,7 @@ import (
 	"os/signal"
 	"sync"
 	"time"
-	"strconv"
+	// "strconv"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/nats-io/nats.go"
@@ -34,14 +34,16 @@ type Leader struct {
 }
 
 func (leader *Leader) SetNumProps() {
-	i, err := strconv.Atoi(os.Getenv("NUM_PROP"))
-	if err != nil {
-		log.WithFields(log.Fields{
-			"error": err.Error(),
-		}).Error("Failed to get Environment Variable")
-	} else {
-		leader.numberProps = i
-	}
+	// i, err := strconv.Atoi(os.Getenv("NUM_PROP"))
+	// if err != nil {
+	// 	log.WithFields(log.Fields{
+	// 		"error": err.Error(),
+	// 	}).Error("Failed to get Environment Variable")
+	// } else {
+	// 	leader.numberProps = i
+	// }
+
+	leader.numberProps = common.NUM_PROPOSERS
 }
 
 func NewLeader(index int) Leader {

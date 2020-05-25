@@ -11,7 +11,7 @@ import (
 	"os/signal"
 	"sync"
 	"time"
-	"strconv"
+	// "strconv"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/nats-io/nats.go"
@@ -35,15 +35,17 @@ type Proposer struct {
 func newProposer() Proposer {
 	proposer := Proposer{}
 	proposer.VoteCount = 0
-	i, err := strconv.Atoi(os.Getenv("PROP_ID"))
-	if err != nil {
 
-		log.WithFields(log.Fields{
-			"error": err.Error(),
-		}).Error("Failed to get Environment Variable")
-	} else {
-		proposer.ProposerId = i
-	}
+	proposer.ProposerId = 0  // Hardcode one id
+	// i, err := strconv.Atoi(os.Getenv("PROP_ID"))
+	// if err != nil {
+
+	// 	log.WithFields(log.Fields{
+	// 		"error": err.Error(),
+	// 	}).Error("Failed to get Environment Variable")
+	// } else {
+	// 	proposer.ProposerId = i
+	// }
 	return proposer
 }
 
@@ -93,7 +95,7 @@ func (proposer *Proposer) timeout() {
 			log.Error("Proposer timeout")
 		}
 		log.Info("[BPAXOS] release timeout lock for proposer")
-                mux.Unlock()
+        mux.Unlock()
 	case <-timeout_quit:
 		log.Info("[BPAXOS] Timeout not needed")
 	}

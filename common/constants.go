@@ -37,7 +37,7 @@ const (
 	CLIENT_TO_LEADER      = "CLIENT_TO_LEADER"
 
 	// Number of tolerable failures
-	F = 24
+	F = 1
 
 	// Number of BPaxos Proposer nodes
 	NUM_PROPOSERS                  = 1
