@@ -43,7 +43,7 @@ func TestCarrierContractSuccess(t *testing.T) {
 		Clock:         nil,
 	}
 
-	go carrier.RunCarrierContract(block)
+	go application.RunCarrierContract(&block, carrier.ContractValid)
 	isValid := <-carrier.ContractValid
 	if isValid == false {
 		t.Errorf("run carrier contract failed")
@@ -83,7 +83,7 @@ func TestCarrierContractFail(t *testing.T) {
 		Clock:         nil,
 	}
 
-	go carrier.RunCarrierContract(block)
+	go application.RunCarrierContract(&block, carrier.ContractValid)
 	isValid := <-carrier.ContractValid
 	if isValid == true {
 		t.Errorf("run carrier contract should have failed")
@@ -128,7 +128,7 @@ func TestSupplierContractSuccess(t *testing.T) {
 		Clock:         nil,
 	}
 
-	go supplier.RunSupplierContract(block)
+	go application.RunSupplierContract(&block, supplier.ContractValid)
 	isValid := <-supplier.ContractValid
 	if isValid == false {
 		t.Errorf("run supplier contract failed")
@@ -174,7 +174,7 @@ func TestSupplierContractFail(t *testing.T) {
 		Clock:         nil,
 	}
 
-	go supplier.RunSupplierContract(block)
+	go application.RunSupplierContract(&block, supplier.ContractValid)
 	isValid := <-supplier.ContractValid
 	if isValid == true {
 		t.Errorf("run supplier contract total amount should have failed")
@@ -210,7 +210,7 @@ func TestSupplierContractFail(t *testing.T) {
 		Clock:         nil,
 	}
 
-	go supplier.RunSupplierContract(block)
+	go application.RunSupplierContract(&block, supplier.ContractValid)
 	isValid = <-supplier.ContractValid
 	if isValid == true {
 		t.Errorf("run supplier contract shipping cost should have failed")
@@ -257,7 +257,7 @@ func TestBuyerContractSuccess(t *testing.T) {
 		Clock:         nil,
 	}
 
-	go buyer.RunBuyerContract(block)
+	go application.RunBuyerContract(&block, buyer.ContractValid)
 	isValid := <-buyer.ContractValid
 	if isValid == false {
 		t.Errorf("run buyer contract failed")
@@ -305,7 +305,7 @@ func TestBuyerContractFail(t *testing.T) {
 		Clock:         nil,
 	}
 
-	go buyer.RunBuyerContract(block)
+	go application.RunBuyerContract(&block, buyer.ContractValid)
 	isValid := <-buyer.ContractValid
 	if isValid == true {
 		t.Errorf("run buyer contract total amount should have failed")
@@ -342,7 +342,7 @@ func TestBuyerContractFail(t *testing.T) {
 		Clock:         nil,
 	}
 
-	go buyer.RunBuyerContract(block)
+	go application.RunBuyerContract(&block, buyer.ContractValid)
 	isValid = <-buyer.ContractValid
 	if isValid == true {
 		t.Errorf("run buyer contract shipping cost should have failed")
@@ -385,7 +385,7 @@ func TestManufacturerContractSuccess(t *testing.T) {
 		Clock:         nil,
 	}
 
-	go manufacturer.RunManufacturerContract(block)
+	go application.RunManufacturerContract(&block, manufacturer.ContractValid)
 	isValid := <-manufacturer.ContractValid
 	if isValid == false {
 		t.Errorf("run manufacturer contract failed")
@@ -429,7 +429,7 @@ func TestManufacturerContractFail(t *testing.T) {
 		Clock:         nil,
 	}
 
-	go manufacturer.RunManufacturerContract(block)
+	go application.RunManufacturerContract(&block, manufacturer.ContractValid)
 	isValid := <-manufacturer.ContractValid
 	if isValid == true {
 		t.Errorf("run manufacturer contract should have failed")

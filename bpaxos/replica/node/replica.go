@@ -3,6 +3,7 @@ package replica
 import (
 	"All-On-Cloud-9/common"
 	"All-On-Cloud-9/messenger"
+	"All-On-Cloud-9/bpaxos/debug"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -62,17 +63,17 @@ func ProcessReplicaMessage(m *nats.Msg, nc *nats.Conn, ctx context.Context, rep 
 	fmt.Println("Received proposer to replica")
 	data := common.MessageEvent{}
 	json.Unmarshal(m.Data, &data)
-	newMessage := rep.HandleReceive(&data)
-	sentMessage, err := json.Marshal(&newMessage)
-	// Respond back to the client
-	if err == nil {
-		fmt.Println("leader can publish a message to deps")
-		messenger.PublishNatsMessage(ctx, nc, common.NATS_CONSENSUS_DONE_MSG, sentMessage)
+	// newMessage := rep.HandleReceive(&data)
+	// sentMessage, err := json.Marshal(&newMessage)
+	// // Respond back to the client
+	// if err == nil {
+	// 	fmt.Println("leader can publish a message to deps")
+	// 	messenger.PublishNatsMessage(ctx, nc, common.NATS_CONSENSUS_DONE_MSG, sentMessage)
 
-	} else {
-		fmt.Println("json marshal failed")
-		fmt.Println(err.Error())
-	}
+	// } else {
+	// 	fmt.Println("json marshal failed")
+	// 	fmt.Println(err.Error())
+	// }
 }
 
 func StartReplica(ctx context.Context, nc *nats.Conn) {
@@ -86,6 +87,7 @@ func StartReplica(ctx context.Context, nc *nats.Conn) {
 				"error": err.Error(),
 			}).Error("error subscribe PROPOSER_TO_REPLICA")
 		}
+		debug.WriteToFile("R")
 		var (
 			natsMsg *nats.Msg
 		)
