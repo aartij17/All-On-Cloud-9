@@ -47,6 +47,7 @@ func (leader *Leader) SetNumProps() {
 func NewLeader(index int) Leader {
 	l := Leader{}
 	l.Index = index
+	log.SetOutput(os.Stdout)
 	l.FlushMessages()
 	l.m = make(map[int]*common.MessageEvent)
 	l.t_map = make(map[int]*time.Timer) // timer map
@@ -113,7 +114,7 @@ func (leader *Leader) timeout(v *common.Vertex, nc *nats.Conn, ctx context.Conte
 	exit := false
 	for {
 		select {
-
+		log.WithFields(log.Fields{"message id": v.Id,}).Info("Started timeout routine in leader")
 		case <-leader.t_map[v.Id].C:
 			log.Info("[BPAXOS] leader waiting on proposer timed out")
 			mux.Lock()
