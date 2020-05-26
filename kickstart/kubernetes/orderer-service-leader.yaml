@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+ name: orderer-leader-service
+ labels:
+   app: orderer-leader
+spec:
+ type: NodePort
+ ports:
+ - port: 3000
+   name: http
+   nodePort: 30082
+ selector:
+   app: orderer-leader

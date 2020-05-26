@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Service
+metadata:
+ name: server-service-manufacturer
+ labels:
+   app: server-manufacturer
+spec:
+#  type: ExternalName
+#  externalName: caper-manufacturer
+#  ports:
+#  - port: 9001
+#    name: http
+#    nodePort: 30085
+
+ type: NodePort
+ ports:
+ - port: 9001
+   name: http
+   nodePort: 30085
+ selector:
+   app: server-manufacturer

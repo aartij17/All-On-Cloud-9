@@ -1,0 +1,13 @@
+FROM alpine:3.3
+ARG basedir
+ARG configdir
+
+RUN mkdir /orderer/
+
+COPY $basedir/bin/orderers /orderer/
+
+WORKDIR /orderer
+
+EXPOSE 8080
+
+ENTRYPOINT [ "/orderer/orderers" ] 
