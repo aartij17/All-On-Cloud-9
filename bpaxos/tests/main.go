@@ -2,21 +2,22 @@ package main
 
 import (
 	"All-On-Cloud-9/bpaxos"
-	"flag"
 	"context"
-	log "github.com/Sirupsen/logrus"
+	"flag"
+	"fmt"
 	"os"
 	"os/signal"
+
+	log "github.com/Sirupsen/logrus"
 	"github.com/nats-io/nats.go"
-	"fmt"
 )
 
 func main() {
 	var (
-		nodeType         int
-		nodeId         string
-		err            error
-		numberProps    string
+		nodeType    int
+		nodeId      string
+		err         error
+		numberProps string
 	)
 	flag.IntVar(&nodeType, "nodetype", 0, "node type(0 - leader, 1 - proposer, 2 - consensus, 3 - replica)")
 	flag.StringVar(&numberProps, "numberProps", "1", "number of proposers")

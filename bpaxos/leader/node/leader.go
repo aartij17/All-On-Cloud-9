@@ -1,9 +1,9 @@
 package leadernode
 
 import (
+	"All-On-Cloud-9/bpaxos/debug"
 	"All-On-Cloud-9/common"
 	"All-On-Cloud-9/messenger"
-	"All-On-Cloud-9/bpaxos/debug"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -11,6 +11,7 @@ import (
 	"os/signal"
 	"sync"
 	"time"
+
 	// "strconv"
 
 	log "github.com/Sirupsen/logrus"
@@ -25,11 +26,11 @@ var (
 )
 
 type Leader struct {
-	Index    int
-	messages []*common.MessageEvent
-	m        map[int]*common.MessageEvent
-	t_map    map[int]*time.Timer
-	q_map    map[int](chan bool)
+	Index       int
+	messages    []*common.MessageEvent
+	m           map[int]*common.MessageEvent
+	t_map       map[int]*time.Timer
+	q_map       map[int](chan bool)
 	numberProps int
 }
 
@@ -114,7 +115,7 @@ func (leader *Leader) checkMessageId(id int) bool {
 func (leader *Leader) timeout(v *common.Vertex, nc *nats.Conn, ctx context.Context) {
 	exit := false
 	for {
-		log.WithFields(log.Fields{"message id": v.Id,}).Info("Started timeout routine in leader")
+		log.WithFields(log.Fields{"message id": v.Id}).Info("Started timeout routine in leader")
 		select {
 		case <-leader.t_map[v.Id].C:
 			log.Info("[BPAXOS] leader waiting on proposer timed out")
