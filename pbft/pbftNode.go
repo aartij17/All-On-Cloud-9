@@ -115,7 +115,6 @@ func (node *PbftNode) generateGlobalBroadcast(localState *pbftState) func(common
 			//}).Info("sending to middle consensus")
 			node.LocalConsensusRequired <- _txn
 
-
 			var __txn common.Transaction
 			for received := false; !received; {
 				txn := <-node.LocalConsensusDone
