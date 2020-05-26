@@ -48,7 +48,7 @@ func (server *Server) startLocalConsensus(commonMessage *common.Message) {
 	server.pbftNode.MessageIn <- *commonMessage.Txn
 	go func() {
 		for {
-			txn := <- server.pbftNode.MessageOut
+			txn := <-server.pbftNode.MessageOut
 			if !reflect.DeepEqual(txn, *commonMessage.Txn) {
 				server.pbftNode.MessageOut <- txn
 			} else {
@@ -76,7 +76,7 @@ func (server *Server) initiateLocalGlobalConsensus(ctx context.Context, fromNode
 	// local consensus to finish
 	if commonMessage.Clock.Clock%config.GetAppNodeCnt(server.AppName) == server.ServerNumId {
 		if commonMessage.Txn.TxnType == common.GLOBAL_TXN {
-			switch config.GetGlobalConsensusMethod() {
+			switch common.GetGlobalConsensusMethod() {
 			case 1: //Orderer based
 				server.startGlobalOrdererConsensusProcess(ctx, commonMessage)
 			case 2: //Hierarchical PBFT
@@ -121,6 +121,7 @@ func (server *Server) startNatsSubscriber(ctx context.Context) {
 		var (
 			natsMsg *nats.Msg
 			msg     *common.Message
+			//txn common.Transaction
 		)
 		for {
 			select {
@@ -144,14 +145,13 @@ func (server *Server) startNatsSubscriber(ctx context.Context) {
 					common.UpdateGlobalClock(ordererMsg.CommonMessage.Clock.Clock, false)
 					server.InitiateAddBlock(ctx, ordererMsg.CommonMessage)
 				}
-			case msg = <-server.pbftNode.MessageOut:
+			case _ = <-server.pbftNode.MessageOut:
 				// TODO: [Aarti] Assuming that messageout returns a common.Message
 				common.UpdateGlobalClock(msg.Clock.Clock, false)
-				server.InitiateAddBlock(ctx, msg)
-			case msg = <-server.pbftSLNode.MessageOut:
+				//server.InitiateAddBlock(ctx, txn)
+			case _ = <-server.pbftSLNode.MessageOut:
 				common.UpdateGlobalClock(msg.Clock.Clock, false)
-				server.InitiateAddBlock(ctx, msg)
-
+				//server.InitiateAddBlock(ctx, txn)
 			}
 		}
 	}()

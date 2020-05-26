@@ -25,6 +25,19 @@ var (
 	GlobalClock     = 0
 )
 
+//For the sake of circular dependencies
+func GetGlobalConsensusMethod() int {
+	switch config.SystemConfig.GlobalConsensusAlgo {
+	case GLOBAL_CONSENSUS_ALGO_ORDERER:
+		return 1
+	case GLOBAL_CONSENSUS_ALGO_HEIRARCHICAL:
+		return 2
+	case GLOBAL_CONSENSUS_ALGO_SLPBFT:
+		return 3
+	}
+	return 1
+}
+
 func UpdateGlobalClock(currTimestamp int, local bool) {
 	GlobalClockLock.Lock()
 	defer GlobalClockLock.Unlock()

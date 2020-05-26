@@ -1,7 +1,6 @@
 package config
 
 import (
-	"All-On-Cloud-9/common"
 	"context"
 	"encoding/json"
 	"io/ioutil"
@@ -54,18 +53,6 @@ type Config struct {
 	Nats                *NatsServers  `json:"nats"`
 	GlobalConsensusAlgo string        `json:"global_consensus_algorithm"`
 	Consensus           string        `json:"consensus"`
-}
-
-func GetGlobalConsensusMethod() int {
-	switch SystemConfig.GlobalConsensusAlgo {
-	case common.GLOBAL_CONSENSUS_ALGO_ORDERER:
-		return 1
-	case common.GLOBAL_CONSENSUS_ALGO_HEIRARCHICAL:
-		return 2
-	case common.GLOBAL_CONSENSUS_ALGO_SLPBFT:
-		return 3
-	}
-	return 1
 }
 
 func IsByzantineTolerant(appName string) bool { //For now, we better put it in the config file
