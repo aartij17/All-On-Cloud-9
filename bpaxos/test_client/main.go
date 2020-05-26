@@ -2,12 +2,12 @@ package main
 
 import (
 	"All-On-Cloud-9/common"
-	"github.com/nats-io/nats.go"
-	"time"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
-)
+	"time"
 
+	log "github.com/Sirupsen/logrus"
+	"github.com/nats-io/nats.go"
+)
 
 type Socket struct {
 	conn *nats.Conn
@@ -63,7 +63,7 @@ func main() {
 	_ = socket.Connect(nats.DefaultURL)
 
 	numMessages := 200
-	
+
 	socket.Subscribe(common.NATS_CONSENSUS_DONE_MSG, func(m *nats.Msg) {
 		numConsensusDone += 1
 		fmt.Println("Received")
@@ -71,7 +71,7 @@ func main() {
 			cleanupDone <- true
 		}
 	})
-	
+
 	start := time.Now()
 	for i := 0; i < numMessages; i++ {
 		go socket.Publish(common.NATS_CONSENSUS_INITIATE_MSG, []byte("bitch"))
