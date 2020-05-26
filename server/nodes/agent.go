@@ -89,7 +89,7 @@ func (server *Server) initiateLocalGlobalConsensus(ctx context.Context, fromNode
 			go server.startLocalConsensus(commonMessage) //WHY?
 			<-server.LocalConsensusComplete              //WHY?
 			common.UpdateGlobalClock(commonMessage.Clock.Clock, false)
-			server.InitiateAddBlock(ctx, commonMessage)
+			server.InitiateAddBlock(ctx, commonMessage.Txn)
 			return
 		}
 	}
@@ -121,7 +121,7 @@ func (server *Server) startNatsSubscriber(ctx context.Context) {
 		var (
 			natsMsg *nats.Msg
 			msg     *common.Message
-			//txn common.Transaction
+			txn     common.Transaction
 		)
 		for {
 			select {
@@ -143,15 +143,14 @@ func (server *Server) startNatsSubscriber(ctx context.Context) {
 					_ = json.Unmarshal(natsMsg.Data, &ordererMsg)
 					//log.Info(ordererMsg.CommonMessage.Clock)
 					common.UpdateGlobalClock(ordererMsg.CommonMessage.Clock.Clock, false)
-					server.InitiateAddBlock(ctx, ordererMsg.CommonMessage)
+					server.InitiateAddBlock(ctx, ordererMsg.CommonMessage.Txn)
 				}
-			case _ = <-server.pbftNode.MessageOut:
-				// TODO: [Aarti] Assuming that messageout returns a common.Message
+			case txn = <-server.pbftNode.MessageOut:
 				common.UpdateGlobalClock(msg.Clock.Clock, false)
-				//server.InitiateAddBlock(ctx, txn)
-			case _ = <-server.pbftSLNode.MessageOut:
+				server.InitiateAddBlock(ctx, &txn)
+			case txn = <-server.pbftSLNode.MessageOut:
 				common.UpdateGlobalClock(msg.Clock.Clock, false)
-				//server.InitiateAddBlock(ctx, txn)
+				server.InitiateAddBlock(ctx, &txn)
 			}
 		}
 	}()
