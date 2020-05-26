@@ -43,7 +43,7 @@ func main() {
 		os.Exit(1)
 	}
 	log.WithFields(log.Fields{
-		"nodeId": nodeId,
+		"nodeId":         nodeId,
 		"configFilePath": configFilePath,
 	}).Info("Orderer agent flags")
 

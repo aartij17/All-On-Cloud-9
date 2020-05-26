@@ -1,9 +1,9 @@
 package replica
 
 import (
+	"All-On-Cloud-9/bpaxos/debug"
 	"All-On-Cloud-9/common"
 	"All-On-Cloud-9/messenger"
-	"All-On-Cloud-9/bpaxos/debug"
 	"context"
 	"encoding/json"
 	"fmt"
