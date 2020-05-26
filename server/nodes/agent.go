@@ -12,6 +12,7 @@ import (
 	"context"
 	"encoding/json"
 	"os"
+	"reflect"
 	"sync"
 
 	log "github.com/Sirupsen/logrus"
@@ -44,9 +45,18 @@ type Server struct {
 
 func (server *Server) startLocalConsensus(commonMessage *common.Message) {
 	log.Info("starting local consensus")
-	// TODO: [Aarti]: This is a placeholder for now.
 	server.pbftNode.MessageIn <- *commonMessage.Txn
-	server.LocalConsensusComplete <- true
+	go func() {
+		for {
+			txn := <- server.pbftNode.MessageOut
+			if !reflect.DeepEqual(txn, *commonMessage.Txn) {
+				server.pbftNode.MessageOut <- txn
+			} else {
+				break
+			}
+		}
+		server.LocalConsensusComplete <- true
+	}()
 }
 
 func (server *Server) initiateLocalGlobalConsensus(ctx context.Context, fromNodeId string, msg []byte) {
