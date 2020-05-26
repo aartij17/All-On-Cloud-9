@@ -60,9 +60,9 @@ func GetGlobalConsensusMethod() int {
 	switch SystemConfig.GlobalConsensusAlgo {
 	case common.GLOBAL_CONSENSUS_ALGO_ORDERER:
 		return 1
-	case common.GLOBAL_CONSENSUS_ALGO_SLPBFT:
-		return 2
 	case common.GLOBAL_CONSENSUS_ALGO_HEIRARCHICAL:
+		return 2
+	case common.GLOBAL_CONSENSUS_ALGO_SLPBFT:
 		return 3
 	}
 	return 1

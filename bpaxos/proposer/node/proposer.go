@@ -1,9 +1,9 @@
 package proposer
 
 import (
+	"All-On-Cloud-9/bpaxos/debug"
 	"All-On-Cloud-9/common"
 	"All-On-Cloud-9/messenger"
-	"All-On-Cloud-9/bpaxos/debug"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -11,6 +11,7 @@ import (
 	"os/signal"
 	"sync"
 	"time"
+
 	// "strconv"
 
 	log "github.com/Sirupsen/logrus"
@@ -36,7 +37,7 @@ func newProposer() Proposer {
 	proposer := Proposer{}
 	proposer.VoteCount = 0
 
-	proposer.ProposerId = 0  // Hardcode one id
+	proposer.ProposerId = 0 // Hardcode one id
 	// i, err := strconv.Atoi(os.Getenv("PROP_ID"))
 	// if err != nil {
 
@@ -85,7 +86,7 @@ func (proposer *Proposer) timeout() {
 	case <-timer.C:
 		log.Info("[BPAXOS] taking timeout lock for proposer")
 		mux.Lock()
-		
+
 		if (len(requestQ) > 0) && (requestQ[0].VertexId.Id == proposer.Message.VertexId.Id) &&
 			(requestQ[0].VertexId.Index == proposer.Message.VertexId.Index) {
 			// Set Message Vertex to -1 so it will ignore any subsequent message related to this vertex
@@ -95,7 +96,7 @@ func (proposer *Proposer) timeout() {
 			log.Error("Proposer timeout")
 		}
 		log.Info("[BPAXOS] release timeout lock for proposer")
-        mux.Unlock()
+		mux.Unlock()
 	case <-timeout_quit:
 		log.Info("[BPAXOS] Timeout not needed")
 	}

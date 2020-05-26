@@ -65,13 +65,10 @@ func (server *Server) initiateLocalGlobalConsensus(ctx context.Context, fromNode
 	// [Aarti]: This needs to be a go routine since we want to ensure that we appropriately wait for the
 	// local consensus to finish
 	if commonMessage.Clock.Clock%config.GetAppNodeCnt(server.AppName) == server.ServerNumId {
-		go server.startLocalConsensus(commonMessage) //WHY?
-		<-server.LocalConsensusComplete              //WHY?
-
 		if commonMessage.Txn.TxnType == common.GLOBAL_TXN {
 			switch config.GetGlobalConsensusMethod() {
 			case 1: //Orderer based
-				server.startGlobalConsensusProcess(ctx, commonMessage)
+				server.startGlobalOrdererConsensusProcess(ctx, commonMessage)
 			case 2: //Hierarchical PBFT
 				server.pbftNode.MessageIn <- *commonMessage.Txn
 				//server.pbftNode.MessageOut
@@ -79,6 +76,8 @@ func (server *Server) initiateLocalGlobalConsensus(ctx context.Context, fromNode
 				server.pbftSLNode.MessageIn <- *commonMessage.Txn
 			}
 		} else if commonMessage.Txn.TxnType == common.LOCAL_TXN {
+			go server.startLocalConsensus(commonMessage) //WHY?
+			<-server.LocalConsensusComplete              //WHY?
 			common.UpdateGlobalClock(commonMessage.Clock.Clock, false)
 			server.InitiateAddBlock(ctx, commonMessage)
 			return
@@ -88,8 +87,8 @@ func (server *Server) initiateLocalGlobalConsensus(ctx context.Context, fromNode
 }
 
 // postConsensusProcessTxn is called once the local consensus has been reached by the nodes.
-func (server *Server) startGlobalConsensusProcess(ctx context.Context, commonMessage *common.Message) {
-	log.Info("LET'S START THE GLOBAL CONSENSUS, HERE WE GOOOOO")
+func (server *Server) startGlobalOrdererConsensusProcess(ctx context.Context, commonMessage *common.Message) {
+	log.Info("LET'S START THE ORDERER BASED GLOBAL CONSENSUS, HERE WE GOOOOO")
 	// send ORDER message to the primary of the orderer node
 	message := nodes.Message{
 		MessageType:   common.O_ORDER,
@@ -105,15 +104,6 @@ func (server *Server) startGlobalConsensusProcess(ctx context.Context, commonMes
 }
 
 func (server *Server) startNatsSubscriber(ctx context.Context) {
-
-	//// this will receive the request message from other applications
-	//_ = messenger.SubscribeToInbox(ctx, server.NatsConn, common.NATS_ORD_REQUEST, AppServerNatsChan)
-
-	// subscribe to the NATS inbox for messages from the BPAXOS module.
-	// for orderer based consensus, this message will NEVER be sent to the server agent, instead, it will be
-	// sent to the orderer primary node
-	// _ = messenger.SubscribeToInbox(ctx, server.NatsConn, common.NATS_CONSENSUS_DONE_MSG, AppServerNatsChan, false)
-
 	// subscribe to the NATS inbox to receive result of the final consensus success message
 	_ = messenger.SubscribeToInbox(ctx, server.NatsConn, common.NATS_ADD_TO_BC, AppServerNatsChan, false)
 
@@ -130,9 +120,8 @@ func (server *Server) startNatsSubscriber(ctx context.Context) {
 				log.WithFields(log.Fields{
 					"fromApp": msg.FromApp,
 					"toApp":   msg.ToApp,
-				}).Info("recieved a message from one of the applications")
+				}).Info("received a message from one of the applications")
 				jMsg, _ := json.Marshal(msg)
-				// TODO: [Aarti]: choose which consensus has to be initiated here. Orderer based or otherwise?
 				server.initiateLocalGlobalConsensus(ctx, msg.FromNodeId, jMsg)
 			case natsMsg = <-AppServerNatsChan:
 				switch natsMsg.Subject {
@@ -145,6 +134,14 @@ func (server *Server) startNatsSubscriber(ctx context.Context) {
 					common.UpdateGlobalClock(ordererMsg.CommonMessage.Clock.Clock, false)
 					server.InitiateAddBlock(ctx, ordererMsg.CommonMessage)
 				}
+			case msg = <-server.pbftNode.MessageOut:
+				// TODO: [Aarti] Assuming that messageout returns a common.Message
+				common.UpdateGlobalClock(msg.Clock.Clock, false)
+				server.InitiateAddBlock(ctx, msg)
+			case msg = <-server.pbftSLNode.MessageOut:
+				common.UpdateGlobalClock(msg.Clock.Clock, false)
+				server.InitiateAddBlock(ctx, msg)
+
 			}
 		}
 	}()
@@ -187,14 +184,15 @@ func StartServer(ctx context.Context, nodeId string, appName string, id int) {
 	totalNodes := config.GetAppNodeCnt(appName)
 
 	AppServer = &Server{
-		Id:                     nodeId,
-		AppName:                appName,
-		ServerNumId:            id,
-		IsPrimaryAgent:         primaryAgent,
-		VertexMap:              make(map[string]*blockchain.Vertex),
-		PIDMap:                 make(map[string]bool),
-		NatsConn:               nc,
-		pbftNode:               pbft.NewPbftNode(ctx, nc, appName, totalNodes/3, totalNodes, totalNodesGlobal/3, totalNodesGlobal, id, config.GetAppId(appName)),
+		Id:             nodeId,
+		AppName:        appName,
+		ServerNumId:    id,
+		IsPrimaryAgent: primaryAgent,
+		VertexMap:      make(map[string]*blockchain.Vertex),
+		PIDMap:         make(map[string]bool),
+		NatsConn:       nc,
+		pbftNode: pbft.NewPbftNode(ctx, nc, appName, totalNodes/3, totalNodes, totalNodesGlobal/3,
+			totalNodesGlobal, id, config.GetAppId(appName)),
 		pbftSLNode:             pbftSingleLayer.NewPbftNode(ctx, nc, appName, id, config.GetAppId(appName)),
 		LastAddedLocalBlock:    genesisBlock,
 		LastAddedGlobalBlock:   nil,
@@ -202,7 +200,7 @@ func StartServer(ctx context.Context, nodeId string, appName string, id int) {
 		LastAddedGlobalNodeId:  -1,
 		LocalConsensusComplete: make(chan bool),
 	}
-	pbft.PipeInHierarchicalLocalConsensus(AppServer.pbftNode) // use pbft for local consensus as well
+	go pbft.PipeInHierarchicalLocalConsensus(AppServer.pbftNode) // use pbft for local consensus as well
 
 	// add the genesis block to the map
 	AppServer.VertexMap[common.LAMBDA_BLOCK] = genesisBlock
