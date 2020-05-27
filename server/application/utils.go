@@ -64,6 +64,7 @@ func advertiseTransactionMessage(ctx context.Context, nc *nats.Conn,
 			txn.FromId = serverId
 			txn.FromApp = fromApp
 			txn.ToId = fmt.Sprintf(config.NODE_NAME, txn.ToApp, 0)
+			txn.FromNodeNum = serverNumId
 			// TODO: Fill these fields correctly
 			msg := common.Message{
 				ToApp:       txn.ToApp,
