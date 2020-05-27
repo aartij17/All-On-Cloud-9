@@ -6,6 +6,7 @@ import (
 	"All-On-Cloud-9/messenger"
 	"context"
 	"encoding/json"
+	"strconv"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -56,13 +57,13 @@ func (node *PbftNode) generateGlobalGetId() func() int {
 		case 3:
 			return node.id + config.GetAppNodeCntInt(0) + config.GetAppNodeCntInt(1) + config.GetAppNodeCntInt(2)
 		}
-		panic("no such id")
+		panic("no such id " + strconv.Itoa(node.appId))
 	}
 }
 
 func (node *PbftNode) generateGlobalLeader(globalState *pbftState) func() bool {
 	return func() bool {
-		totalNodes := config.GetAppNodeCntInt(0) + config.GetAppNodeCntInt(1) + config.GetAppNodeCntInt(2) + config.GetAppNodeCntInt(0) + config.GetAppNodeCntInt(1) + config.GetAppNodeCntInt(3)
+		totalNodes := config.GetAppNodeCntInt(0) + config.GetAppNodeCntInt(1) + config.GetAppNodeCntInt(2) + config.GetAppNodeCntInt(3)
 
 		return globalState.viewNumber%totalNodes == node.generateGlobalGetId()()
 	}
@@ -70,7 +71,7 @@ func (node *PbftNode) generateGlobalLeader(globalState *pbftState) func() bool {
 
 func (node *PbftNode) generateSuggestedGlobalLeader() func(int) bool {
 	return func(id int) bool {
-		totalNodes := config.GetAppNodeCntInt(0) + config.GetAppNodeCntInt(1) + config.GetAppNodeCntInt(2) + config.GetAppNodeCntInt(0) + config.GetAppNodeCntInt(1) + config.GetAppNodeCntInt(3)
+		totalNodes := config.GetAppNodeCntInt(0) + config.GetAppNodeCntInt(1) + config.GetAppNodeCntInt(2) + config.GetAppNodeCntInt(3)
 
 		return id%totalNodes == node.generateGlobalGetId()()
 	}
@@ -78,6 +79,7 @@ func (node *PbftNode) generateSuggestedGlobalLeader() func(int) bool {
 
 func (node *PbftNode) generateGlobalBroadcast() func(common.Message) {
 	return func(message common.Message) {
+		message.FromApp = config.GetAppName(node.appId)
 		_txn := *message.Txn
 		pckedMsg := packedMessage{
 			Msg: message,
@@ -143,6 +145,7 @@ func (node *PbftNode) startMessageListeners(msgChan chan *nats.Msg) {
 				Timestamp:   packedMsg.Msg.Timestamp,
 				FromNodeId:  packedMsg.Msg.FromNodeId,
 				FromNodeNum: packedMsg.Msg.FromNodeNum,
+				FromApp: packedMsg.Msg.FromApp,
 				Txn:         &packedMsg.Txn,
 				Digest:      packedMsg.Msg.Digest,
 				PKeySig:     packedMsg.Msg.PKeySig,

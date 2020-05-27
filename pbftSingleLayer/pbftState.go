@@ -49,11 +49,18 @@ func (state *pbftState) stopTimer() {
 }
 
 func (state *pbftState) hasQuorum(message reducedMessage) bool {
-	for i := 0; i < 4; i++ {
+	for i := 0; i < config.GetAppCnt(); i++ {
 		message.appId = i
-		left := config.GetAppNodeCntInt(i) - state.counter[message]
-		if float64(left) >= float64(state.counter[message])/float64(2) {
-			return false
+		if config.IsByzantineTolerant(config.GetAppName(i)) {
+			left := config.GetAppNodeCntInt(i) - state.counter[message]
+			if float64(left) >= float64(state.counter[message])/float64(2) {
+				return false
+			}
+		} else {
+			left := config.GetAppNodeCntInt(i) - state.counter[message]
+			if left >= state.counter[message] {
+				return false
+			}
 		}
 	}
 

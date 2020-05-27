@@ -55,8 +55,8 @@ type Config struct {
 	Consensus           string        `json:"consensus"`
 }
 
-func IsByzantineTolerant(appName string) bool { //For now, we better put it in the config file
-	return GetAppId(appName) < 2
+func IsByzantineTolerant(appName string) bool { //Configurable based on the app
+	return GetAppId(appName) < 4
 }
 
 func getAppNum(appName string) int {
@@ -71,6 +71,20 @@ func getAppNum(appName string) int {
 		return 3
 	}
 	panic("no such app: " + appName)
+}
+
+func GetAppName(appId int) string {
+	switch appId {
+	case 0:
+		return APP_BUYER
+	case 1:
+		return APP_CARRIER
+	case 2:
+		return APP_MANUFACTURER
+	case 3:
+		return APP_SUPPLIER
+	}
+	panic("no such app: " + strconv.Itoa(appId))
 }
 
 func GetAppCnt() int { //How many applications we have in total
