@@ -3,6 +3,7 @@ package pbftSingleLayer
 import (
 	"All-On-Cloud-9/common"
 	"All-On-Cloud-9/config"
+	"math"
 	"time"
 )
 
@@ -49,6 +50,13 @@ func (state *pbftState) stopTimer() {
 }
 
 func (state *pbftState) hasQuorum(message reducedMessage) bool {
+	//debugTxt := ""
+	//for key, val := range state.counter {
+	//	if val > 0 {
+	//		debugTxt += key.messageType + ", " + strconv.Itoa(key.appId) + " : " + strconv.Itoa(val) + "\n"
+	//	}
+	//}
+	//println(debugTxt)
 	for i := 0; i < config.GetAppCnt(); i++ {
 		message.appId = i
 		if config.IsByzantineTolerant(config.GetAppName(i)) {
@@ -62,6 +70,15 @@ func (state *pbftState) hasQuorum(message reducedMessage) bool {
 				return false
 			}
 		}
+	}
+
+	return true
+}
+
+func (state *pbftState) markAsUsed(message reducedMessage) bool {
+	for i := 0; i < config.GetAppCnt(); i++ {
+		message.appId = i
+		state.counter[message] = -math.MaxInt16
 	}
 
 	return true
@@ -128,6 +145,7 @@ func (state *pbftState) handleMessage(
 
 		state.counter[reduced]++
 		if state.hasQuorum(reduced) {
+			state.markAsUsed(reduced)
 			go broadcast(common.Message{
 				MessageType: COMMIT,
 				Timestamp:   _message.Timestamp,
@@ -144,6 +162,7 @@ func (state *pbftState) handleMessage(
 
 		state.counter[reduced]++
 		if state.hasQuorum(reduced) {
+			state.markAsUsed(reduced)
 			go broadcast(common.Message{
 				MessageType: COMMITED,
 				Timestamp:   _message.Timestamp,
@@ -160,6 +179,7 @@ func (state *pbftState) handleMessage(
 
 		state.counter[reduced]++
 		if state.hasQuorum(reduced) {
+			state.markAsUsed(reduced)
 			state.currentTimestamp = _message.Timestamp
 			state.messageOut <- *_message.Txn
 		}
