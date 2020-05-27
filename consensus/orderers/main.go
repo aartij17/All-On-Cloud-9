@@ -42,6 +42,11 @@ func main() {
 		log.Error("invalid config file path, exiting now")
 		os.Exit(1)
 	}
+	log.WithFields(log.Fields{
+		"nodeId":         nodeId,
+		"configFilePath": configFilePath,
+	}).Info("Orderer agent flags")
+
 	ctx, cancel := context.WithCancel(context.Background())
 	cleanupDone := make(chan bool)
 

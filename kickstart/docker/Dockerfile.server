@@ -1,0 +1,12 @@
+FROM alpine:3.3
+ARG basedir
+
+RUN mkdir /server/
+
+COPY $basedir/bin/server /server/
+
+WORKDIR /server
+
+EXPOSE 8090
+
+ENTRYPOINT [ "/server/server" ] 

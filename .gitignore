@@ -1,8 +1,10 @@
 .idea/
 *.pem
 target/
+mainStub.go 
 statuslog.txt
 examine.txt
+
 # Created by https://www.gitignore.io/api/linux,macos
 # Edit at https://www.gitignore.io/?templates=linux,macos
 

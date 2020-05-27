@@ -2,6 +2,14 @@ BASE_DIR=$(GOPATH)/src/All-On-Cloud-9
 TARGET_DIR=$(BASE_DIR)/target
 BIN_OUT=$(TARGET_DIR)/bin
 
+KUBE_OUT=$(TARGET_DIR)/kubernetes
+SERVICE_OUT=$(KUBE_OUT)/services
+DOCKER_OUT=$(TARGET_DIR)
+TAR_OUT=$(TARGET_DIR)/tar_dir
+
+KUBE_DIR=$(BASE_DIR)/kickstart/kubernetes
+DOCKER_DIR=$(BASE_DIR)/kickstart/docker
+
 GO_PATH=${GOPATH}
 
 # mandatory env variables for us to proceed
@@ -76,4 +84,30 @@ build:
 	done;
 
 
+copy-instance:
+	scp -i cluster_name.pem -r $(BIN_OUT)/* ubuntu@${INSTANCE}:/home/ubuntu/cloud/bin
+	scp -i cluster_name.pem -r $(KUBE_OUT)/* ubuntu@${INSTANCE}:/home/ubuntu/cloud/kubernetes
+	scp -i cluster_name.pem -r $(DOCKER_OUT)/* ubuntu@${INSTANCE}:/home/ubuntu/cloud
+
+prepare-service-files:
+	mkdir -p $(SERVICE_OUT)
+	for i in orderer_service.yaml ; do\
+    		cp $(KUBE_DIR)/$${i} $(SERVICE_OUT); \
+    done
+
+prepare-deployment-files:
+	for j in orderer_deployment.yaml ;do\
+			cp $(KUBE_DIR)/$${j} $(KUBE_OUT); \
+	done
+
+prepare-kubernetes-files:
+	mkdir -p $(KUBE_OUT)
+	cp -r $(KUBE_DIR)/* $(KUBE_OUT)
+
+prepare-docker-files:
+	mkdir -p $(DOCKER_OUT)
+	cp -r $(DOCKER_DIR)/* $(DOCKER_OUT)/
+
 local: clean build
+
+deploy: clean build prepare-kubernetes-files prepare-docker-files copy-instance
