@@ -3,6 +3,8 @@ package pbft
 import (
 	"All-On-Cloud-9/common"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 type pbftState struct {
@@ -118,7 +120,12 @@ func (state *pbftState) handleMessage(
 				Txn:         _message.Txn,
 			})
 		} else if state.counter[reduced] > 2*state.failureTolerance+1 {
-			//println("PREPARE")
+			log.WithFields(log.Fields{
+				"phase":             "PREPARE",
+				"state counter":     state.counter[reduced],
+				//"reduced":           reduced,
+				//"failure tolerance": state.failureTolerance,
+			}).Info("PREPARE")
 		}
 	case COMMIT:
 		reduced := reducedMessage{

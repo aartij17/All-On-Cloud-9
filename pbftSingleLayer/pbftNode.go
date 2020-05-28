@@ -133,14 +133,18 @@ func (node *PbftNode) subToNatsChannels(suffix string) {
 }
 
 func (node *PbftNode) handleGlobalOut(state *pbftState) {
-	txn := <-state.messageOut
-	_txn := txn
-	log.WithFields(log.Fields{
-		"txn":   _txn,
-		"id":    node.id,
-		"appId": node.appId,
-	}).Info("GLOBAL CONSENSUS DONE")
-	node.MessageOut <- _txn
+	for {
+		log.Error("gonna receive from message out")
+		txn := <-state.messageOut
+		log.Error("received from message out")
+		_txn := txn
+		log.WithFields(log.Fields{
+			//"txn":   _txn,
+			"id":    node.id,
+			"appId": node.appId,
+		}).Info("GLOBAL CONSENSUS DONE")
+		node.MessageOut <- _txn
+	}
 }
 
 func (node *PbftNode) startMessageListeners(msgChan chan *nats.Msg) {

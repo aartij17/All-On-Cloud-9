@@ -26,6 +26,7 @@ type Transaction struct {
 	TxnType     string        `json:"transaction_type"`
 	Clock       *LamportClock `json:"lamport_clock"`
 	FromNodeNum int           `json:"from_node_num,omitempty"`
+	Timestamp   int64         `json:"timestamp,omitempty"`
 }
 
 type Message struct {

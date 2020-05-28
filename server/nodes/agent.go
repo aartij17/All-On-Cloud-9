@@ -11,6 +11,7 @@ import (
 	"All-On-Cloud-9/server/blockchain"
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"reflect"
 	"sync"
@@ -46,6 +47,7 @@ type Server struct {
 func (server *Server) startLocalConsensus(commonMessage *common.Message) {
 	log.Info("starting local consensus")
 	server.pbftNode.MessageIn <- *commonMessage.Txn
+	log.Info("message sent to channel")
 	go func() {
 		for {
 			txn := <-server.pbftNode.MessageOut
@@ -74,25 +76,27 @@ func (server *Server) initiateLocalGlobalConsensus(ctx context.Context, fromNode
 	// TODO: THIS WILL BLOCK! Initiate local consensus - Make sure that true is published to LocalConsensusCompleteChannel
 	// [Aarti]: This needs to be a go routine since we want to ensure that we appropriately wait for the
 	// local consensus to finish
-	if commonMessage.Clock.Clock%config.GetAppNodeCnt(server.AppName) == server.ServerNumId {
-		if commonMessage.Txn.TxnType == common.GLOBAL_TXN {
-			switch common.GetGlobalConsensusMethod() {
-			case 1: //Orderer based
-				server.startGlobalOrdererConsensusProcess(ctx, commonMessage)
-			case 2: //Hierarchical PBFT
-				server.pbftNode.MessageIn <- *commonMessage.Txn
-				//server.pbftNode.MessageOut
-			case 3: //Single-layer PBFT
-				server.pbftSLNode.MessageIn <- *commonMessage.Txn
-			}
-		} else if commonMessage.Txn.TxnType == common.LOCAL_TXN {
-			go server.startLocalConsensus(commonMessage) //WHY?
-			<-server.LocalConsensusComplete              //WHY?
-			common.UpdateGlobalClock(commonMessage.Clock.Clock, false)
-			server.InitiateAddBlock(ctx, commonMessage.Txn)
-			return
+	fmt.Println("gonna enter IF loop")
+	//if commonMessage.Clock.Clock%config.GetAppNodeCnt(server.AppName) == server.ServerNumId {
+	fmt.Println("entered IF loop")
+	if commonMessage.Txn.TxnType == common.GLOBAL_TXN {
+		switch config.SystemConfig.GlobalConsensusAlgo {
+		case common.GLOBAL_CONSENSUS_ALGO_ORDERER: //Orderer based
+			server.startGlobalOrdererConsensusProcess(ctx, commonMessage)
+		case common.GLOBAL_CONSENSUS_ALGO_HEIRARCHICAL: //Hierarchical PBFT
+			server.pbftNode.MessageIn <- *commonMessage.Txn
+			//server.pbftNode.MessageOut
+		case common.GLOBAL_CONSENSUS_ALGO_SLPBFT: //Single-layer PBFT
+			server.pbftSLNode.MessageIn <- *commonMessage.Txn
 		}
+	} else if commonMessage.Txn.TxnType == common.LOCAL_TXN {
+		go server.startLocalConsensus(commonMessage) //WHY?
+		<-server.LocalConsensusComplete              //WHY?
+		common.UpdateGlobalClock(commonMessage.Txn.Clock.Clock, false)
+		server.InitiateAddBlock(ctx, commonMessage.Txn)
+		return
 	}
+	//}
 
 }
 
@@ -142,14 +146,22 @@ func (server *Server) startNatsSubscriber(ctx context.Context) {
 					var ordererMsg *nodes.Message
 					_ = json.Unmarshal(natsMsg.Data, &ordererMsg)
 					//log.Info(ordererMsg.CommonMessage.Clock)
-					common.UpdateGlobalClock(ordererMsg.CommonMessage.Clock.Clock, false)
+					common.UpdateGlobalClock(ordererMsg.CommonMessage.Txn.Clock.Clock, false)
 					server.InitiateAddBlock(ctx, ordererMsg.CommonMessage.Txn)
 				}
 			case txn = <-server.pbftNode.MessageOut:
-				common.UpdateGlobalClock(msg.Clock.Clock, false)
+				log.WithFields(log.Fields{
+					"type": txn.TxnType,
+					"PID": txn.Clock.PID,
+				}).Info("received message out from pbft")
+				common.UpdateGlobalClock(txn.Clock.Clock, false)
 				server.InitiateAddBlock(ctx, &txn)
 			case txn = <-server.pbftSLNode.MessageOut:
-				common.UpdateGlobalClock(msg.Clock.Clock, false)
+				log.WithFields(log.Fields{
+					"type": txn.TxnType,
+					"PID": txn.Clock.PID,
+				}).Info("received message out from slpbft")
+				common.UpdateGlobalClock(txn.Clock.Clock, false)
 				server.InitiateAddBlock(ctx, &txn)
 			}
 		}

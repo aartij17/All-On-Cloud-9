@@ -51,7 +51,7 @@ func main() {
 	flag.StringVar(&appName, "appName", config.APP_MANUFACTURER, fmt.Sprintf("apps - %s, %s, %s, %s",
 		config.APP_MANUFACTURER, config.APP_BUYER, config.APP_CARRIER, config.APP_SUPPLIER))
 	flag.StringVar(&configFilePath, "configFilePath",
-		"/Users/danielshu/go/src/All-On-Cloud-9/config/config.json", "")
+		"/Users/aartij17/go/src/All-On-Cloud-9/config/config.json", "")
 
 	flag.Parse()
 

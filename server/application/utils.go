@@ -33,9 +33,8 @@ func startInterAppNatsListener(ctx context.Context, msgChan chan *nats.Msg) {
 		select {
 		case natsMsg := <-msgChan:
 			_ = json.Unmarshal(natsMsg.Data, &msg)
-			fmt.Println(msg.Clock)
 			fmt.Println(msg)
-			common.UpdateGlobalClock(msg.Clock.Clock, false)
+			common.UpdateGlobalClock(msg.Txn.Clock.Clock, false)
 			AppAgentChan <- msg
 		}
 	}
@@ -52,7 +51,6 @@ func startClient(ctx context.Context, addr string, port string, handler func(htt
 // in this case, supplier will adverstise a message to NATS_MANUFACTURER_INBOX
 func advertiseTransactionMessage(ctx context.Context, nc *nats.Conn,
 	fromApp string, serverId string, serverNumId int) {
-	log.Info("adverstising....")
 	var (
 		txn *common.Transaction
 	)

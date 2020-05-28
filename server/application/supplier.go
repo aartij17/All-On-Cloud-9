@@ -59,11 +59,11 @@ func handleSupplierRequest(w http.ResponseWriter, r *http.Request) {
 	common.UpdateGlobalClock(0, false)
 	id := guuid.New()
 	clock := &common.LamportClock{
-		PID:   fmt.Sprintf("%s_%d-%s", config.APP_MANUFACTURER, 0, id.String()),
+		PID:   fmt.Sprintf(	"%s_%d-%s", config.APP_MANUFACTURER, 0, id.String()),
 		Clock: common.GlobalClock,
 	}
+	//blockchain.PrintBlockchain()
 
-	fmt.Println("HandleSupplierRequest")
 	_ = json.NewDecoder(r.Body).Decode(&sTxn)
 	jTxn, err = json.Marshal(sTxn)
 	fmt.Println(sTxn)
@@ -74,6 +74,10 @@ func handleSupplierRequest(w http.ResponseWriter, r *http.Request) {
 		}).Error("error handleSupplierRequest")
 		return
 	}
+	log.WithFields(log.Fields{
+		"request": sTxn,
+		"pid": clock.PID,
+	}).Info("handling supplier request")
 
 	txn = &common.Transaction{
 		TxnBody: jTxn,
@@ -83,6 +87,7 @@ func handleSupplierRequest(w http.ResponseWriter, r *http.Request) {
 		FromId:  "",
 		TxnType: sTxn.TxnType,
 		Clock:   clock,
+		Timestamp: time.Now().Unix(),
 	}
 	log.Info("about to enter -- sendSupplierRequestToAppsChan <- txn")
 	sendClientRequestToAppsChan <- txn

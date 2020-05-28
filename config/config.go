@@ -62,33 +62,33 @@ func IsByzantineTolerant(appName string) bool { //Configurable based on the app
 func getAppNum(appName string) int {
 	switch appName {
 	case APP_BUYER:
-		return 0
-	case APP_CARRIER:
-		return 1
-	case APP_MANUFACTURER:
 		return 2
-	case APP_SUPPLIER:
+	case APP_CARRIER:
 		return 3
+	case APP_MANUFACTURER:
+		return 0
+	case APP_SUPPLIER:
+		return 1
 	}
 	panic("no such app: " + appName)
 }
 
 func GetAppName(appId int) string {
 	switch appId {
-	case 0:
-		return APP_BUYER
-	case 1:
-		return APP_CARRIER
 	case 2:
-		return APP_MANUFACTURER
+		return APP_BUYER
 	case 3:
+		return APP_CARRIER
+	case 0:
+		return APP_MANUFACTURER
+	case 1:
 		return APP_SUPPLIER
 	}
 	panic("no such app: " + strconv.Itoa(appId))
 }
 
 func GetAppCnt() int { //How many applications we have in total
-	return 4
+	return 2
 }
 
 func GetAppId(appName string) int {

@@ -89,6 +89,7 @@ func (node *PbftNode) generateSuggestedGlobalLeader(globalState *pbftState, loca
 }
 
 func (node *PbftNode) generateLocalBroadcast() func(common.Message) {
+	//log.Info("generateLocalBroadcast")
 	return func(message common.Message) {
 		pckedMsg := packedMessage{
 			Msg: message,
@@ -97,7 +98,7 @@ func (node *PbftNode) generateLocalBroadcast() func(common.Message) {
 		//log.WithFields(log.Fields{
 		//	"appId":       node.appId,
 		//	"msg.Type": message.MessageType,
-		//	"txn": message.Txn,
+		//	"txn_type": message.Txn.TxnType,
 		//}).Info("broadcast locally")
 		byteMessage, _ := json.Marshal(pckedMsg)
 		messenger.PublishNatsMessage(node.ctx, node.nc, _inbox(node.localState.suffix), byteMessage)
@@ -195,13 +196,14 @@ func (node *PbftNode) handleLocalOut(state *pbftState) {
 				"appId": node.appId,
 			}).Info("LOCAL CONSENSUS DONE")
 			node.MessageOut <- _txn
+			log.Info("sent message to message out")
 		} else if strings.HasPrefix(_txn.TxnType, LOCAL_CONSENSUS) {
 			if node.generateLocalLeader(node.localState)() {
-				log.WithFields(log.Fields{
-					"txn":   _txn,
-					"id":    node.id,
-					"appId": node.appId,
-				}).Info("MIDDLE CONSENSUS DONE")
+				//log.WithFields(log.Fields{
+				//	"txn":   _txn,
+				//	"id":    node.id,
+				//	"appId": node.appId,
+				//}).Info("MIDDLE CONSENSUS DONE")
 				node.LocalConsensusDone <- _txn
 			}
 		}
@@ -209,14 +211,16 @@ func (node *PbftNode) handleLocalOut(state *pbftState) {
 }
 
 func (node *PbftNode) handleGlobalOut(state *pbftState) {
-	txn := <-state.messageOut
-	_txn := txn
-	log.WithFields(log.Fields{
-		"txn":   _txn,
-		"id":    node.id,
-		"appId": node.appId,
-	}).Info("GLOBAL CONSENSUS DONE")
-	node.MessageOut <- _txn
+	for {
+		txn := <-state.messageOut
+		_txn := txn
+		log.WithFields(log.Fields{
+			//"txn":   _txn,
+			"id":    node.id,
+			"appId": node.appId,
+		}).Info("GLOBAL CONSENSUS DONE")
+		node.MessageOut <- _txn
+	}
 }
 
 func (node *PbftNode) startMessageListeners(msgChan chan *nats.Msg) {
@@ -245,7 +249,7 @@ func (node *PbftNode) startMessageListeners(msgChan chan *nats.Msg) {
 			//	"inbox": _inbox(node.localState.suffix),
 			//}).Info("nats message received")
 			//msg.Txn.FromId = ""
-
+			//log.Info("PBFT!! LOOKOUT")
 			if msg.Txn.TxnType == LOCAL || strings.HasPrefix(msg.Txn.TxnType, LOCAL_CONSENSUS) {
 				node.localState.handleMessage(
 					msg,
