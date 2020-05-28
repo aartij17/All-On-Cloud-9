@@ -152,14 +152,14 @@ func (server *Server) startNatsSubscriber(ctx context.Context) {
 			case txn = <-server.pbftNode.MessageOut:
 				log.WithFields(log.Fields{
 					"type": txn.TxnType,
-					"PID": txn.Clock.PID,
+					"PID":  txn.Clock.PID,
 				}).Info("received message out from pbft")
 				common.UpdateGlobalClock(txn.Clock.Clock, false)
 				server.InitiateAddBlock(ctx, &txn)
 			case txn = <-server.pbftSLNode.MessageOut:
 				log.WithFields(log.Fields{
 					"type": txn.TxnType,
-					"PID": txn.Clock.PID,
+					"PID":  txn.Clock.PID,
 				}).Info("received message out from slpbft")
 				common.UpdateGlobalClock(txn.Clock.Clock, false)
 				server.InitiateAddBlock(ctx, &txn)

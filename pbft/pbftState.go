@@ -121,8 +121,8 @@ func (state *pbftState) handleMessage(
 			})
 		} else if state.counter[reduced] > 2*state.failureTolerance+1 {
 			log.WithFields(log.Fields{
-				"phase":             "PREPARE",
-				"state counter":     state.counter[reduced],
+				"phase":         "PREPARE",
+				"state counter": state.counter[reduced],
 				//"reduced":           reduced,
 				//"failure tolerance": state.failureTolerance,
 			}).Info("PREPARE")

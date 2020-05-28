@@ -71,7 +71,7 @@ func handleManufacturerRequest(w http.ResponseWriter, r *http.Request) {
 
 	log.WithFields(log.Fields{
 		"request": mTxn,
-		"pid": clock.PID,
+		"pid":     clock.PID,
 	}).Info("handling manufacturer request")
 
 	txn = &common.Transaction{

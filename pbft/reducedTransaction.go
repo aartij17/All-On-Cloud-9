@@ -18,13 +18,13 @@ type reducedTransaction struct {
 
 func newReducedTransaction(txn common.Transaction) reducedTransaction {
 	return reducedTransaction{
-		TxnBody: fmt.Sprintf("%q", txn.TxnBody),
-		FromApp: txn.FromApp,
-		ToApp:   txn.ToApp,
-		ToId:    txn.ToId,
-		FromId:  txn.FromId,
-		TxnType: txn.TxnType,
-		Clock:   txn.Clock,
+		TxnBody:   fmt.Sprintf("%q", txn.TxnBody),
+		FromApp:   txn.FromApp,
+		ToApp:     txn.ToApp,
+		ToId:      txn.ToId,
+		FromId:    txn.FromId,
+		TxnType:   txn.TxnType,
+		Clock:     txn.Clock,
 		Timestamp: txn.Timestamp,
 	}
 }
