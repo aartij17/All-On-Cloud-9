@@ -34,7 +34,7 @@ func main() {
 	)
 	flag.IntVar(&nodeId, "nodeId", 0, "node ID(0 - leader, 1 - proposer, 2, 3, 4 - consensus)")
 	flag.StringVar(&configFilePath, "configFilePath",
-		"/Users/danielshu/go/src/All-On-Cloud-9/config/config.json", "")
+		"/Users/aartij17/go/src/All-On-Cloud-9/config/config.json", "")
 
 	flag.Parse()
 

@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	guuid "github.com/google/uuid"
 
@@ -27,6 +28,8 @@ type Manufacturer struct {
 	IsPrimary     bool
 }
 
+// subToInterAppNats subscribes to their own nats inbox to receive messages from other applications which
+// may act as clients wanting to carry out a transaction
 func (m *Manufacturer) subToInterAppNats(ctx context.Context, nc *nats.Conn, serverId string, serverNumId int) {
 	var (
 		err error
@@ -56,6 +59,7 @@ func handleManufacturerRequest(w http.ResponseWriter, r *http.Request) {
 		mTxn *ManufacturerClientRequest
 		txn  *common.Transaction
 	)
+	//blockchain.PrintBlockchain()
 	common.UpdateGlobalClock(0, false)
 	id := guuid.New()
 	clock := &common.LamportClock{
@@ -67,12 +71,15 @@ func handleManufacturerRequest(w http.ResponseWriter, r *http.Request) {
 
 	log.WithFields(log.Fields{
 		"request": mTxn,
+		"pid":     clock.PID,
 	}).Info("handling manufacturer request")
+
 	txn = &common.Transaction{
-		TxnBody: jTxn,
-		FromApp: config.APP_MANUFACTURER,
-		TxnType: mTxn.TxnType,
-		Clock:   clock,
+		TxnBody:   jTxn,
+		FromApp:   config.APP_MANUFACTURER,
+		TxnType:   mTxn.TxnType,
+		Clock:     clock,
+		Timestamp: time.Now().Unix(),
 	}
 	if mTxn.TxnType == common.GLOBAL_TXN {
 		txn.ToApp = mTxn.ToApp

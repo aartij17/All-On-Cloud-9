@@ -3,10 +3,13 @@ package nodes
 import (
 	"All-On-Cloud-9/bpaxos"
 	"All-On-Cloud-9/common"
+	"All-On-Cloud-9/config"
 	"All-On-Cloud-9/messenger"
+	"All-On-Cloud-9/pbft"
 	"context"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"time"
 
 	"github.com/nats-io/nats.go"
@@ -27,6 +30,7 @@ type Orderer struct {
 	IsPrimary       bool       `json:"is_primary"`
 	Id              int        `json:"agent_id"`
 	NatsConn        *nats.Conn `json:"nats_connection"`
+	pbftNode        *pbft.PbftNode
 	isConsensusNode bool
 	isLeader        bool
 	isProposer      bool
@@ -66,6 +70,8 @@ func CreateOrderer(ctx context.Context, nodeId int) error {
 		return fmt.Errorf("error connecting to NATS")
 	}
 
+	orderersCnt := len(config.SystemConfig.Orderers.Servers)
+	orderersFTolerance := (orderersCnt - 1) / 3
 	ONode = &Orderer{
 		Id:              nodeId,
 		IsPrimary:       isPrimary,
@@ -75,7 +81,14 @@ func CreateOrderer(ctx context.Context, nodeId int) error {
 		isReplica:       runReplica,
 		isConsensusNode: runConsensus,
 	}
-	bpaxos.SetupBPaxos(ctx, ONode.NatsConn, runConsensus, runLeader, runProposer, runReplica)
+	if config.SystemConfig.Consensus == common.CONSENSUS_BPAXOS {
+		bpaxos.SetupBPaxos(ctx, ONode.NatsConn, runConsensus, runLeader, runProposer, runReplica)
+	} else if config.SystemConfig.Consensus == common.CONSENSUS_PBFT {
+		ONode.pbftNode = pbft.NewPbftNode(ctx, nc, common.ORDERER, orderersFTolerance, orderersCnt, orderersFTolerance*5, //some random huge number
+			orderersFTolerance*5, nodeId, -1)
+	} else {
+		panic("please provide a valid consensus algorithm")
+	}
 	go ONode.StartOrdListener(ctx)
 	return nil
 }
@@ -133,8 +146,28 @@ func (o *Orderer) StartOrdListener(ctx context.Context) {
 			case common.NATS_ORD_ORDER:
 				numOrderMessagesRecvd += 1
 				if numOrderMessagesRecvd >= common.F && o.IsPrimary {
-					// sufficient number of ORDER messages received, initiate global consensus
-					go o.initiateGlobalConsensus(ctx, natsMsg.Data)
+					if config.SystemConfig.Consensus == common.CONSENSUS_PBFT {
+						_txn := *msg.Transaction
+						_txn.TxnType = pbft.LOCAL
+						o.pbftNode.MessageIn <- _txn
+						go func() {
+							for {
+								__txn := <-o.pbftNode.MessageOut
+								if !reflect.DeepEqual(__txn, _txn) {
+									o.pbftNode.MessageOut <- __txn
+								} else {
+									break
+								}
+							}
+							_ = messenger.SubscribeToInbox(ctx, o.NatsConn, common.NATS_CONSENSUS_DONE_MSG, GlobalConsensusDone, true)
+							msg.MessageType = common.O_SYNC // Might break
+							_natsMsg, _ := json.Marshal(msg)
+							messenger.PublishNatsMessage(ctx, o.NatsConn, common.NATS_ORD_SYNC, _natsMsg)
+						}()
+					} else if config.SystemConfig.Consensus == common.CONSENSUS_BPAXOS {
+						// sufficient number of ORDER messages received, initiate global consensus
+						go o.initiateGlobalConsensus(ctx, natsMsg.Data)
+					}
 					numOrderMessagesRecvd = 0
 				}
 			case common.NATS_ORD_SYNC:

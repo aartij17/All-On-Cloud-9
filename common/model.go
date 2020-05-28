@@ -18,13 +18,15 @@ type ConsensusMessage struct {
 }
 
 type Transaction struct {
-	TxnBody []byte        `json:"txn_body"`
-	FromApp string        `json:"from_app"`
-	ToApp   string        `json:"to_app,omitempty"`
-	ToId    string        `json:"to_id,omitempty"`
-	FromId  string        `json:"from_id,omitempty"`
-	TxnType string        `json:"transaction_type"`
-	Clock   *LamportClock `json:"lamport_clock"`
+	TxnBody     []byte        `json:"txn_body"`
+	FromApp     string        `json:"from_app"`
+	ToApp       string        `json:"to_app,omitempty"`
+	ToId        string        `json:"to_id,omitempty"`
+	FromId      string        `json:"from_id,omitempty"`
+	TxnType     string        `json:"transaction_type"`
+	Clock       *LamportClock `json:"lamport_clock"`
+	FromNodeNum int           `json:"from_node_num,omitempty"`
+	Timestamp   int64         `json:"timestamp,omitempty"`
 }
 
 type Message struct {

@@ -1,4 +1,4 @@
-package pbft
+package pbftSingleLayer
 
 import (
 	"All-On-Cloud-9/common"
@@ -6,6 +6,7 @@ import (
 	"All-On-Cloud-9/messenger"
 	"context"
 	"encoding/json"
+	"strconv"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -44,33 +45,43 @@ func newPbftNode(ctx context.Context, nc *nats.Conn, id int, appId int, globalSt
 	}
 }
 
+func getNodeId(appId, id int) int {
+	switch appId {
+	case 0:
+		return id
+	case 1:
+		return id + config.GetAppNodeCntInt(0)
+	case 2:
+		return id + config.GetAppNodeCntInt(0) + config.GetAppNodeCntInt(1)
+	case 3:
+		return id + config.GetAppNodeCntInt(0) + config.GetAppNodeCntInt(1) + config.GetAppNodeCntInt(2)
+	}
+	panic("no such id " + strconv.Itoa(appId))
+}
+
 func (node *PbftNode) generateGlobalGetId() func() int {
 	return func() int {
-		switch node.appId {
-		case 0:
-			return node.id
-		case 1:
-			return node.id + config.GetAppNodeCntInt(0)
-		case 2:
-			return node.id + config.GetAppNodeCntInt(0) + config.GetAppNodeCntInt(1)
-		case 3:
-			return node.id + config.GetAppNodeCntInt(0) + config.GetAppNodeCntInt(1) + config.GetAppNodeCntInt(2)
-		}
-		panic("no such id")
+		return getNodeId(node.appId, node.id)
+	}
+}
+
+func (node *PbftNode) generateIsGlobalLeader(globalState *pbftState) func(int) bool {
+	return func(id int) bool {
+		totalNodes := config.GetAppNodeCntInt(0) + config.GetAppNodeCntInt(1) + config.GetAppNodeCntInt(2) + config.GetAppNodeCntInt(3)
+
+		return globalState.viewNumber%totalNodes == id
 	}
 }
 
 func (node *PbftNode) generateGlobalLeader(globalState *pbftState) func() bool {
 	return func() bool {
-		totalNodes := config.GetAppNodeCntInt(0) + config.GetAppNodeCntInt(1) + config.GetAppNodeCntInt(2) + config.GetAppNodeCntInt(0) + config.GetAppNodeCntInt(1) + config.GetAppNodeCntInt(3)
-
-		return globalState.viewNumber%totalNodes == node.generateGlobalGetId()()
+		return node.generateIsGlobalLeader(globalState)(node.generateGlobalGetId()())
 	}
 }
 
 func (node *PbftNode) generateSuggestedGlobalLeader() func(int) bool {
 	return func(id int) bool {
-		totalNodes := config.GetAppNodeCntInt(0) + config.GetAppNodeCntInt(1) + config.GetAppNodeCntInt(2) + config.GetAppNodeCntInt(0) + config.GetAppNodeCntInt(1) + config.GetAppNodeCntInt(3)
+		totalNodes := config.GetAppNodeCntInt(0) + config.GetAppNodeCntInt(1) + config.GetAppNodeCntInt(2) + config.GetAppNodeCntInt(3)
 
 		return id%totalNodes == node.generateGlobalGetId()()
 	}
@@ -78,6 +89,8 @@ func (node *PbftNode) generateSuggestedGlobalLeader() func(int) bool {
 
 func (node *PbftNode) generateGlobalBroadcast() func(common.Message) {
 	return func(message common.Message) {
+		message.FromApp = config.GetAppName(node.appId)
+		message.FromNodeNum = node.id
 		_txn := *message.Txn
 		pckedMsg := packedMessage{
 			Msg: message,
@@ -120,14 +133,18 @@ func (node *PbftNode) subToNatsChannels(suffix string) {
 }
 
 func (node *PbftNode) handleGlobalOut(state *pbftState) {
-	txn := <-state.messageOut
-	_txn := txn
-	log.WithFields(log.Fields{
-		"txn":   _txn,
-		"id":    node.id,
-		"appId": node.appId,
-	}).Info("GLOBAL CONSENSUS DONE")
-	node.MessageOut <- _txn
+	for {
+		log.Error("gonna receive from message out")
+		txn := <-state.messageOut
+		log.Error("received from message out")
+		_txn := txn
+		log.WithFields(log.Fields{
+			//"txn":   _txn,
+			"id":    node.id,
+			"appId": node.appId,
+		}).Info("GLOBAL CONSENSUS DONE")
+		node.MessageOut <- _txn
+	}
 }
 
 func (node *PbftNode) startMessageListeners(msgChan chan *nats.Msg) {
@@ -143,6 +160,7 @@ func (node *PbftNode) startMessageListeners(msgChan chan *nats.Msg) {
 				Timestamp:   packedMsg.Msg.Timestamp,
 				FromNodeId:  packedMsg.Msg.FromNodeId,
 				FromNodeNum: packedMsg.Msg.FromNodeNum,
+				FromApp:     packedMsg.Msg.FromApp,
 				Txn:         &packedMsg.Txn,
 				Digest:      packedMsg.Msg.Digest,
 				PKeySig:     packedMsg.Msg.PKeySig,
@@ -171,6 +189,7 @@ func (node *PbftNode) startMessageListeners(msgChan chan *nats.Msg) {
 			go node.generateGlobalBroadcast()(common.Message{
 				MessageType: NEW_MESSAGE,
 				FromNodeNum: node.id,
+				FromApp:     config.GetAppName(node.appId),
 				Txn:         &newTransaction,
 			})
 		}

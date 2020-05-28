@@ -39,9 +39,9 @@ func SubscribeToInbox(ctx context.Context, nc *nats.Conn, subject string, messag
 			}).Error("error subscribing to NATS inbox")
 			return
 		}
-		log.WithFields(log.Fields{
-			"subject": subject,
-		}).Info("Received a message from NATS")
+		//log.WithFields(log.Fields{
+		//	"subject": subject,
+		//}).Info("Received a message from NATS")
 		messageChannel <- m
 	})
 	if unsubscribe {
@@ -70,7 +70,7 @@ func PublishNatsMessage(ctx context.Context, nc *nats.Conn, reqSubj string, mess
 			"requestSubject": reqSubj,
 		}).Error("error publishing request to NATS")
 	}
-	log.WithFields(log.Fields{
-		"requestSubj": reqSubj,
-	}).Info("published request to NATS")
+	//log.WithFields(log.Fields{
+	//	"requestSubj": reqSubj,
+	//}).Info("published request to NATS")
 }

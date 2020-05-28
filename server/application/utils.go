@@ -23,6 +23,8 @@ var (
 	sendClientRequestToAppsChan = make(chan *common.Transaction)
 )
 
+// startInterAppNatsListener is basically the server side of the applications
+// handling all the incoming requests from the other applications acting like clients
 func startInterAppNatsListener(ctx context.Context, msgChan chan *nats.Msg) {
 	var (
 		msg *common.Message
@@ -31,9 +33,8 @@ func startInterAppNatsListener(ctx context.Context, msgChan chan *nats.Msg) {
 		select {
 		case natsMsg := <-msgChan:
 			_ = json.Unmarshal(natsMsg.Data, &msg)
-			fmt.Println(msg.Clock)
 			fmt.Println(msg)
-			common.UpdateGlobalClock(msg.Clock.Clock, false)
+			common.UpdateGlobalClock(msg.Txn.Clock.Clock, false)
 			AppAgentChan <- msg
 		}
 	}
@@ -45,9 +46,11 @@ func startClient(ctx context.Context, addr string, port string, handler func(htt
 	return err
 }
 
+// advertiseTransactionMessage starts a listener on messages incoming from other applications.
+// so for example, supplier could act as a client and send a message to manufacturer.
+// in this case, supplier will adverstise a message to NATS_MANUFACTURER_INBOX
 func advertiseTransactionMessage(ctx context.Context, nc *nats.Conn,
 	fromApp string, serverId string, serverNumId int) {
-	log.Info("adverstising....")
 	var (
 		txn *common.Transaction
 	)
@@ -59,6 +62,7 @@ func advertiseTransactionMessage(ctx context.Context, nc *nats.Conn,
 			txn.FromId = serverId
 			txn.FromApp = fromApp
 			txn.ToId = fmt.Sprintf(config.NODE_NAME, txn.ToApp, 0)
+			txn.FromNodeNum = serverNumId
 			// TODO: Fill these fields correctly
 			msg := common.Message{
 				ToApp:       txn.ToApp,

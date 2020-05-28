@@ -66,10 +66,6 @@ func (c *Carrier) subToInterAppNats(ctx context.Context, nc *nats.Conn, serverId
 	}
 }
 
-func (c *Carrier) processTxn(ctx context.Context, msg *common.Message) {
-
-}
-
 func StartCarrierApplication(ctx context.Context, nc *nats.Conn, serverId string,
 	serverNumId int) {
 	CarrierObj = &Carrier{

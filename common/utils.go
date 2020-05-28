@@ -17,7 +17,6 @@ import (
 	"encoding/pem"
 	"fmt"
 	"os"
-	"strconv"
 )
 
 var (
@@ -108,18 +107,20 @@ func importPublicKey(appId, id int) *rsa.PublicKey {
 }
 
 func getNodeId(message Message) int {
-	if message.FromNodeId == "" {
-		panic("fill FromNodeId")
-	}
-	id, err := strconv.Atoi(message.FromNodeId)
-	if err != nil {
-		panic(fmt.Sprintf("%q doesn't look like a number.\n", message.FromNodeId))
-	}
-	if id != message.FromNodeNum {
-		panic(fmt.Sprintf("message.FromNodeNum(%v) is not equal to message.FromNodeId(%v)", message.FromNodeNum, message.FromNodeId))
-	}
+	//if message.FromNodeId == "" {
+	//	panic("fill FromNodeId")
+	//}
+	//id, err := strconv.Atoi(message.FromNodeId)
+	//if err != nil {
+	//	panic(fmt.Sprintf("%q doesn't look like a number.\n", message.FromNodeId))
+	//}
+	//if id != message.FromNodeNum {
+	//	panic(fmt.Sprintf("message.FromNodeNum(%v) is not equal to message.FromNodeId(%v)", message.FromNodeNum, message.FromNodeId))
+	//}
 
-	return id
+	//return id
+
+	return message.FromNodeNum
 }
 
 func Encrypt(message Message) Message {

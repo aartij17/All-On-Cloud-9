@@ -1,8 +1,8 @@
-package pbft
+package pbftSingleLayer
 
 const (
-	GLOBAL_APPLICATION = "GLOBAL_PBFT"
-	GLOBAL             = "GLOBAL"
+	GLOBAL_APPLICATION = "GLOBAL_SLPBFT"
+	GLOBAL             = "GLOBAL_TXN"
 
 	TIMEOUT     = 4
 	NEW_MESSAGE = "NEW_MESSAGE"

@@ -1,4 +1,4 @@
-package pbft
+package pbftSingleLayer
 
 import "All-On-Cloud-9/common"
 
