@@ -123,7 +123,7 @@ func (server *Server) InitiateAddBlock(ctx context.Context, txn *common.Transact
 	}
 	if txn.TxnType == common.LOCAL_TXN && server.AppName == txn.ToApp {
 		blockchain.LocalSeqNumber += 1
-		blockId = fmt.Sprintf(common.LOCAL_BLOCK_NUM, server.AppName, config.GetAppId(server.AppName),
+		blockId = fmt.Sprintf(common.LOCAL_BLOCK_NUM, txn.ToApp, config.GetAppId(txn.ToApp),
 			blockchain.LocalSeqNumber)
 		isLocal = true
 	} else if txn.TxnType == common.GLOBAL_TXN {
@@ -132,7 +132,7 @@ func (server *Server) InitiateAddBlock(ctx context.Context, txn *common.Transact
 		blockchain.GlobalSeqNumber += 1
 		isGlobal = true
 
-		blockId = fmt.Sprintf(common.GLOBAL_BLOCK_NUM, server.AppName, config.GetAppId(server.AppName), blockchain.LocalSeqNumber,
+		blockId = fmt.Sprintf(common.GLOBAL_BLOCK_NUM, txn.ToApp, config.GetAppId(txn.ToApp), blockchain.LocalSeqNumber,
 			blockchain.GlobalSeqNumber)
 	}
 
