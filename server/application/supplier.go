@@ -59,7 +59,7 @@ func handleSupplierRequest(w http.ResponseWriter, r *http.Request) {
 	common.UpdateGlobalClock(0, false)
 	id := guuid.New()
 	clock := &common.LamportClock{
-		PID:   fmt.Sprintf("%s_%d-%s", config.APP_MANUFACTURER, 0, id.String()),
+		PID:   fmt.Sprintf("%s_%d-%s", config.APP_SUPPLIER, 0, id.String()),
 		Clock: common.GlobalClock,
 	}
 	//blockchain.PrintBlockchain()
@@ -88,6 +88,11 @@ func handleSupplierRequest(w http.ResponseWriter, r *http.Request) {
 		TxnType:   sTxn.TxnType,
 		Clock:     clock,
 		Timestamp: time.Now().Unix(),
+	}
+	if sTxn.TxnType == common.GLOBAL_TXN {
+		txn.ToApp = sTxn.ToApp
+	} else {
+		txn.ToApp = config.APP_SUPPLIER
 	}
 	log.Info("about to enter -- sendSupplierRequestToAppsChan <- txn")
 	sendClientRequestToAppsChan <- txn
