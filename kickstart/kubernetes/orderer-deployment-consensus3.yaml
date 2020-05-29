@@ -1,16 +1,16 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
- name: orderer-deployment-consensus
+ name: orderer-deployment-consensus3
 spec:
  replicas: 1
  selector:
   matchLabels:
-    app: orderer-consensus
+    app: orderer-consensus3
  template:
    metadata:
      labels:
-       app: orderer-consensus
+       app: orderer-consensus3
    spec:
      volumes:
      - name: config-vol
@@ -24,7 +24,7 @@ spec:
        volumeMounts:
         - name: config-vol
           mountPath: /etc/config
-       args: ["-nodeId=2", "-configFilePath=/etc/config/config.json"]
+       args: ["-nodeId=4", "-configFilePath=/etc/config/config.json"]
        ports:
-       - containerPort: 3000
+       - containerPort: 3004
     

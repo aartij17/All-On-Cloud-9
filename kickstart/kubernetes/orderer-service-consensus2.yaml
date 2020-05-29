@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+ name: orderer-consensus-service2
+ labels:
+   app: orderer-consensus2
+spec:
+ type: NodePort
+ ports:
+ - port: 3003
+   name: http
+   nodePort: 30181
+ selector:
+   app: orderer-consensus2

@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+ name: orderer-deployment-consensus2
+spec:
+ replicas: 1
+ selector:
+  matchLabels:
+    app: orderer-consensus2
+ template:
+   metadata:
+     labels:
+       app: orderer-consensus2
+   spec:
+     volumes:
+     - name: config-vol
+       configMap:
+        name: orderer-configmap 
+
+     containers:
+     - name: orderer
+       imagePullPolicy: IfNotPresent
+       image: orderer:v1
+       volumeMounts:
+        - name: config-vol
+          mountPath: /etc/config
+       args: ["-nodeId=3", "-configFilePath=/etc/config/config.json"]
+       ports:
+       - containerPort: 3003
+    
