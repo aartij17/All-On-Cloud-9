@@ -88,6 +88,7 @@
       "nats://0.0.0.0:4222"
     ]
   },
-  "global_consensus_algorithm": "slpbft",
-  "consensus": "bpaxos"
+  "global_consensus_algorithm": "orderer",
+  "consensus": "bpaxos",
+  "num_applications": 2
 }
