@@ -1,6 +1,5 @@
 FROM alpine:3.3
 ARG basedir
-ARG configdir
 
 RUN mkdir /orderer/
 

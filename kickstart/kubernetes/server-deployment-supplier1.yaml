@@ -20,7 +20,7 @@ spec:
      containers:
      - name: server
        imagePullPolicy: IfNotPresent
-       image: server:v1
+       image: aartij17/server:v1
        volumeMounts:
         - name: config-vol
           mountPath: /etc/config
