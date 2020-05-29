@@ -6,9 +6,10 @@ import (
 	"All-On-Cloud-9/messenger"
 	"context"
 	"fmt"
-	guuid "github.com/google/uuid"
 	"strconv"
 	"time"
+
+	guuid "github.com/google/uuid"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/nats-io/nats.go"
@@ -50,13 +51,13 @@ func handleCarrierRequest(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(cTxn)
 
 	txn = &common.Transaction{
-		TxnBody: jTxn,
-		FromApp: config.APP_CARRIER,
-		ToApp:   cTxn.ToApp,
-		ToId:    "",
-		FromId:  "",
-		TxnType: cTxn.TxnType,
-		Clock:   clock,
+		TxnBody:   jTxn,
+		FromApp:   config.APP_CARRIER,
+		ToApp:     cTxn.ToApp,
+		ToId:      "",
+		FromId:    "",
+		TxnType:   cTxn.TxnType,
+		Clock:     clock,
 		Timestamp: time.Now().Unix(),
 	}
 	if txn.TxnType == common.GLOBAL_TXN {
