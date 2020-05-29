@@ -88,8 +88,8 @@ func TestGlobalSingleNodeApp(t *testing.T) {
 }
 
 func TestGlobalOneMultipleNodeApp(t *testing.T) {
-	//timeout := time.After(3 * TIMEOUT * time.Second)
-	timeout := time.After(500 * time.Second)
+	timeout := time.After(3 * TIMEOUT * time.Second)
+	//timeout := time.After(500 * time.Second)
 	done := make(chan bool)
 
 	ctx, _ := context.WithCancel(context.Background())
@@ -140,6 +140,96 @@ func TestGlobalOneMultipleNodeApp(t *testing.T) {
 	}
 
 	for i := 0; i < AppCount+NodePerApp-1; i++ {
+		select {
+		case <-timeout:
+			t.Error("Global pbft timed out")
+		case <-done:
+		}
+	}
+	time.Sleep(500 * time.Millisecond)
+}
+
+func TestGlobalAndLocalOneMultipleNodeApp(t *testing.T) {
+	timeout := time.After(3 * TIMEOUT * time.Second)
+	//timeout := time.After(500 * time.Second)
+	done := make(chan bool)
+
+	ctx, _ := context.WithCancel(context.Background())
+	config.LoadConfig(ctx, "../config/config.json")
+
+	const AppCount = 4
+	const NodePerFirstApp = 4
+	dummyTxn := common.Transaction{
+		TxnType: GLOBAL,
+		Timestamp: 1,
+	}
+	dummyTxn2 := common.Transaction{
+		TxnType: GLOBAL,
+		Timestamp: 3,
+	}
+	dummyLocalTxn := common.Transaction{
+		TxnType: LOCAL,
+		Timestamp: 2,
+	}
+	dummyLocalTxn2 := common.Transaction{
+		TxnType: LOCAL,
+		Timestamp: 4,
+	}
+	Txns := [4]common.Transaction{
+		dummyTxn,
+		dummyLocalTxn,
+		dummyTxn2,
+		dummyLocalTxn2,
+	}
+	for j := 0; j < NodePerFirstApp; j++ {
+		go func(id int, appId int) {
+			nc, _ := messenger.NatsConnect(ctx)
+			node := NewPbftNode(ctx, nc, "APP_0", 1, 4, 1, 4, id, appId)
+			go PipeInHierarchicalLocalConsensus(node)
+
+			for i, _txn := range Txns {
+				if id == 0 && appId == 0 {
+					println(i)
+					//println(_txn)
+					node.MessageIn <- _txn
+				}
+				txn := <-node.MessageOut
+				if !reflect.DeepEqual(txn, _txn) {
+					t.Error("Wrong GLOBAL outcome, transaction is:")
+					t.Error(txn)
+					t.Error("Expected is:")
+					t.Error(_txn)
+				}
+				done <- true
+			}
+		}(j, 0)
+	}
+	for i := 1; i < AppCount; i++ {
+		go func(id int, appId int) {
+			nc, _ := messenger.NatsConnect(ctx)
+			node := NewPbftNode(ctx, nc, "APP_"+strconv.Itoa(appId), 0, 1, 1, 4, id, appId)
+			go PipeInHierarchicalLocalConsensus(node)
+
+			for _, _txn := range Txns {
+				if _txn.TxnType == GLOBAL {
+					txn := <-node.MessageOut
+					if !reflect.DeepEqual(txn, _txn) {
+						t.Error("Wrong GLOBAL outcome, transaction is:")
+						t.Error(txn)
+						t.Error("Expected is:")
+						t.Error(_txn)
+					}
+					done <- true
+				}
+			}
+		}(0, i)
+	}
+
+	const (
+		GlobalCnt = 2
+		LocalCnt  = 2
+	)
+	for i := 0; i < GlobalCnt*AppCount+(GlobalCnt+LocalCnt)*NodePerFirstApp-GlobalCnt; i++ {
 		select {
 		case <-timeout:
 			t.Error("Global pbft timed out")
