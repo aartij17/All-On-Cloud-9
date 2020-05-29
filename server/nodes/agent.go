@@ -212,7 +212,7 @@ func StartServer(ctx context.Context, nodeId string, appName string, id int) {
 		VertexMap:      make(map[string]*blockchain.Vertex),
 		PIDMap:         make(map[string]bool),
 		NatsConn:       nc,
-		pbftNode: pbft.NewPbftNode(ctx, nc, appName, totalNodes/3, totalNodes, totalNodesGlobal/3,
+		pbftNode: pbft.NewPbftNode(ctx, nc, appName, (totalNodes-1)/3, totalNodes, (totalNodesGlobal-1)/3,
 			totalNodesGlobal, id, config.GetAppId(appName)),
 		pbftSLNode:             pbftSingleLayer.NewPbftNode(ctx, nc, appName, id, config.GetAppId(appName)),
 		LastAddedLocalBlock:    genesisBlock,

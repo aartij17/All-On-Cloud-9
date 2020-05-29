@@ -146,7 +146,6 @@ func TestGlobalOneMultipleNodeApp(t *testing.T) {
 		case <-done:
 		}
 	}
-	time.Sleep(500 * time.Millisecond)
 }
 
 func TestGlobalAndLocalOneMultipleNodeApp(t *testing.T) {
@@ -177,8 +176,8 @@ func TestGlobalAndLocalOneMultipleNodeApp(t *testing.T) {
 	}
 	Txns := [4]common.Transaction{
 		dummyTxn,
-		dummyLocalTxn,
 		dummyTxn2,
+		dummyLocalTxn,
 		dummyLocalTxn2,
 	}
 	for j := 0; j < NodePerFirstApp; j++ {
@@ -236,12 +235,11 @@ func TestGlobalAndLocalOneMultipleNodeApp(t *testing.T) {
 		case <-done:
 		}
 	}
-	time.Sleep(500 * time.Millisecond)
 }
 
 func TestGlobalMultipleNodeApp(t *testing.T) {
-	//timeout := time.After(3 * TIMEOUT * time.Second)
-	timeout := time.After(500 * time.Second)
+	timeout := time.After(3 * TIMEOUT * time.Second)
+	//timeout := time.After(500 * time.Second)
 	done := make(chan bool)
 
 	ctx, _ := context.WithCancel(context.Background())
@@ -281,5 +279,4 @@ func TestGlobalMultipleNodeApp(t *testing.T) {
 		case <-done:
 		}
 	}
-	time.Sleep(500 * time.Millisecond)
 }
