@@ -26,5 +26,5 @@ spec:
           mountPath: /etc/config
        args: ["-nodeId=3", "-configFilePath=/etc/config/config.json"]
        ports:
-       - containerPort: 3003
+       - containerPort: 14004
     

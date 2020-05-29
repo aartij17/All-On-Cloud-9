@@ -76,16 +76,28 @@ data:
         "servers": [
           {
             "_comment": "by default, the first node in this list is the primary node",
-            "host": "0.0.0.0",
+            "host": "orderer-leader-service",
             "port": 14001
           },
           {
-            "host": "0.0.0.0",
+            "host": "orderer-leader-proposer",
             "port": 14002
           },
           {
-            "host": "0.0.0.0",
+            "host": "orderer-consensus-service1",
             "port": 14003
+          },
+          {
+            "host": "orderer-consensus-service2",
+            "port": 14004
+          },
+          {
+            "host": "orderer-consensus-service3",
+            "port": 14005
+          },
+          {
+            "host": "orderer-replica-service",
+            "port": 14006
           }
         ]
       },
