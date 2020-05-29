@@ -6,7 +6,9 @@ import (
 	"All-On-Cloud-9/messenger"
 	"context"
 	"fmt"
+	guuid "github.com/google/uuid"
 	"strconv"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/nats-io/nats.go"
@@ -32,22 +34,35 @@ type CarrierClientRequest struct {
 
 func handleCarrierRequest(w http.ResponseWriter, r *http.Request) {
 	var (
-		mTxn *CarrierClientRequest
+		cTxn *CarrierClientRequest
 		txn  *common.Transaction
 	)
+	common.UpdateGlobalClock(0, false)
+	id := guuid.New()
+	clock := &common.LamportClock{
+		PID:   fmt.Sprintf("%s_%d-%s", config.APP_CARRIER, 0, id.String()),
+		Clock: common.GlobalClock,
+	}
+
 	fmt.Println("HandleCarrierRequest")
-	_ = json.NewDecoder(r.Body).Decode(&mTxn)
-	jTxn, _ := json.Marshal(mTxn)
-	fmt.Println(mTxn)
+	_ = json.NewDecoder(r.Body).Decode(&cTxn)
+	jTxn, _ := json.Marshal(cTxn)
+	fmt.Println(cTxn)
 
 	txn = &common.Transaction{
 		TxnBody: jTxn,
 		FromApp: config.APP_CARRIER,
-		ToApp:   mTxn.ToApp,
+		ToApp:   cTxn.ToApp,
 		ToId:    "",
 		FromId:  "",
-		TxnType: mTxn.TxnType,
-		Clock:   nil,
+		TxnType: cTxn.TxnType,
+		Clock:   clock,
+		Timestamp: time.Now().Unix(),
+	}
+	if txn.TxnType == common.GLOBAL_TXN {
+		txn.ToApp = cTxn.ToApp
+	} else {
+		txn.ToApp = config.APP_CARRIER
 	}
 	sendClientRequestToAppsChan <- txn
 }
@@ -77,5 +92,5 @@ func StartCarrierApplication(ctx context.Context, nc *nats.Conn, serverId string
 		strconv.Itoa(config.SystemConfig.AppInstance.AppCarrier.Servers[serverNumId].Port), handleCarrierRequest)
 	// all the other app-specific business logic can come here.
 	CarrierObj.subToInterAppNats(ctx, nc, serverId, serverNumId)
-	startInterAppNatsListener(ctx, CarrierObj.MsgChannel)
+	go startInterAppNatsListener(ctx, CarrierObj.MsgChannel)
 }

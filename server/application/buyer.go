@@ -6,7 +6,9 @@ import (
 	"All-On-Cloud-9/messenger"
 	"context"
 	"fmt"
+	guuid "github.com/google/uuid"
 	"strconv"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/nats-io/nats.go"
@@ -54,23 +56,36 @@ func (b *Buyer) subToInterAppNats(ctx context.Context, nc *nats.Conn, serverId s
 }
 func handleBuyerRequest(w http.ResponseWriter, r *http.Request) {
 	var (
-		mTxn *BuyerClientRequest
+		bTxn *BuyerClientRequest
 		txn  *common.Transaction
 	)
-	fmt.Println("HandleBuyerRequest")
-	_ = json.NewDecoder(r.Body).Decode(&mTxn)
-	fmt.Println(mTxn)
+	common.UpdateGlobalClock(0, false)
+	id := guuid.New()
+	clock := &common.LamportClock{
+		PID:   fmt.Sprintf("%s_%d-%s", config.APP_BUYER, 0, id.String()),
+		Clock: common.GlobalClock,
+	}
 
-	jTxn, _ := json.Marshal(mTxn)
+	fmt.Println("HandleBuyerRequest")
+	_ = json.NewDecoder(r.Body).Decode(&bTxn)
+	fmt.Println(bTxn)
+
+	jTxn, _ := json.Marshal(bTxn)
 
 	txn = &common.Transaction{
 		TxnBody: jTxn,
 		FromApp: config.APP_BUYER,
-		ToApp:   mTxn.ToApp,
+		ToApp:   bTxn.ToApp,
 		ToId:    "",
 		FromId:  "",
-		TxnType: mTxn.Type,
-		Clock:   nil,
+		TxnType: bTxn.Type,
+		Clock:   clock,
+		Timestamp: time.Now().Unix(),
+	}
+	if bTxn.TxnType == common.GLOBAL_TXN {
+		txn.ToApp = bTxn.ToApp
+	} else {
+		txn.ToApp = config.APP_BUYER
 	}
 	sendClientRequestToAppsChan <- txn
 }
@@ -85,5 +100,5 @@ func StartBuyerApplication(ctx context.Context, nc *nats.Conn, serverId string, 
 	go startClient(ctx, "/app/buyer",
 		strconv.Itoa(config.SystemConfig.AppInstance.AppBuyer.Servers[serverNumId].Port), handleBuyerRequest)
 	BuyerObj.subToInterAppNats(ctx, nc, serverId, serverNumId)
-	startInterAppNatsListener(ctx, BuyerObj.MsgChannel)
+	go startInterAppNatsListener(ctx, BuyerObj.MsgChannel)
 }
