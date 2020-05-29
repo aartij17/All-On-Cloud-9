@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+ name: server-service-carrier2
+ labels:
+   app: server-carrier2
+spec:
+
+ type: NodePort
+ ports:
+ - port: 12002
+   name: http
+   nodePort: 30188
+ selector:
+   app: server-carrier2

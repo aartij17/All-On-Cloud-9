@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: Service
 metadata:
- name: server-service-buyer
+ name: server-service-buyer1
  labels:
-   app: server-buyer
+   app: server-buyer1
 spec:
 
  type: NodePort
@@ -12,4 +12,4 @@ spec:
    name: http
    nodePort: 30087
  selector:
-   app: server-buyer
+   app: server-buyer1

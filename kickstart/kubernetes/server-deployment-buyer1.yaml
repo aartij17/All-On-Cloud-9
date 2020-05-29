@@ -1,16 +1,16 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
- name: orderer-deployment-proposer
+ name: server-deployment-buyer1
 spec:
  replicas: 1
  selector:
   matchLabels:
-    app: orderer-proposer
+    app: server-buyer1
  template:
    metadata:
      labels:
-       app: orderer-proposer
+       app: server-buyer1
    spec:
      volumes:
      - name: config-vol
@@ -18,13 +18,13 @@ spec:
         name: orderer-configmap 
 
      containers:
-     - name: orderer
+     - name: server
        imagePullPolicy: IfNotPresent
-       image: orderer:v1
+       image: server:v1
        volumeMounts:
         - name: config-vol
           mountPath: /etc/config
-       args: ["-nodeId=1", "-configFilePath=/etc/config/config.json"]
+       args: ["-nodeId=0", "-appName=BUYER", "-configFilePath=/etc/config/config.json"]
        ports:
-       - containerPort: 14002
+       - containerPort: 13001
     

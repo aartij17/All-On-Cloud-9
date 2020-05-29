@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+ name: server-service-supplier3
+ labels:
+   app: server-supplier3
+spec:
+
+ type: NodePort
+ ports:
+ - port: 11003
+   name: http
+   nodePort: 30286
+
+ selector:
+   app: server-supplier3
