@@ -19,7 +19,7 @@ spec:
     spec: 
       containers: 
         - 
-          image: "nats:v1"
+          image: "aartij17/cloud:nats"
           imagePullPolicy: IfNotPresent
           name: cloud-nats
           ports: 
