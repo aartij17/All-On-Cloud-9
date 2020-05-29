@@ -89,5 +89,6 @@
     ]
   },
   "global_consensus_algorithm": "orderer",
-  "consensus": "bpaxos"
+  "consensus": "bpaxos",
+  "num_applications": 2
 }

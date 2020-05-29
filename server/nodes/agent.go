@@ -11,7 +11,6 @@ import (
 	"All-On-Cloud-9/server/blockchain"
 	"context"
 	"encoding/json"
-	"fmt"
 	"os"
 	"reflect"
 	"sync"
@@ -76,9 +75,7 @@ func (server *Server) initiateLocalGlobalConsensus(ctx context.Context, fromNode
 	// TODO: THIS WILL BLOCK! Initiate local consensus - Make sure that true is published to LocalConsensusCompleteChannel
 	// [Aarti]: This needs to be a go routine since we want to ensure that we appropriately wait for the
 	// local consensus to finish
-	fmt.Println("gonna enter IF loop")
 	//if commonMessage.Clock.Clock%config.GetAppNodeCnt(server.AppName) == server.ServerNumId {
-	fmt.Println("entered IF loop")
 	if commonMessage.Txn.TxnType == common.GLOBAL_TXN {
 		switch config.SystemConfig.GlobalConsensusAlgo {
 		case common.GLOBAL_CONSENSUS_ALGO_ORDERER: //Orderer based
@@ -90,6 +87,7 @@ func (server *Server) initiateLocalGlobalConsensus(ctx context.Context, fromNode
 			server.pbftSLNode.MessageIn <- *commonMessage.Txn
 		}
 	} else if commonMessage.Txn.TxnType == common.LOCAL_TXN {
+		// TODO: [DEMO]: if we are gonna demo orderer + bpaxos, comment the next 2 lines of code
 		go server.startLocalConsensus(commonMessage) //WHY?
 		<-server.LocalConsensusComplete              //WHY?
 		common.UpdateGlobalClock(commonMessage.Txn.Clock.Clock, false)
@@ -102,7 +100,7 @@ func (server *Server) initiateLocalGlobalConsensus(ctx context.Context, fromNode
 
 // postConsensusProcessTxn is called once the local consensus has been reached by the nodes.
 func (server *Server) startGlobalOrdererConsensusProcess(ctx context.Context, commonMessage *common.Message) {
-	log.Info("LET'S START THE ORDERER BASED GLOBAL CONSENSUS, HERE WE GOOOOO")
+	log.Info("Starting orderer based consensus")
 	// send ORDER message to the primary of the orderer node
 	message := nodes.Message{
 		MessageType:   common.O_ORDER,
@@ -145,7 +143,6 @@ func (server *Server) startNatsSubscriber(ctx context.Context) {
 				case common.NATS_ADD_TO_BC:
 					var ordererMsg *nodes.Message
 					_ = json.Unmarshal(natsMsg.Data, &ordererMsg)
-					//log.Info(ordererMsg.CommonMessage.Clock)
 					common.UpdateGlobalClock(ordererMsg.CommonMessage.Txn.Clock.Clock, false)
 					server.InitiateAddBlock(ctx, ordererMsg.CommonMessage.Txn)
 				}

@@ -53,6 +53,7 @@ type Config struct {
 	Nats                *NatsServers  `json:"nats"`
 	GlobalConsensusAlgo string        `json:"global_consensus_algorithm"`
 	Consensus           string        `json:"consensus"`
+	NumApplications     int           `json:"num_applications"`
 }
 
 func IsByzantineTolerant(appName string) bool { //Configurable based on the app
@@ -88,7 +89,7 @@ func GetAppName(appId int) string {
 }
 
 func GetAppCnt() int { //How many applications we have in total
-	return 2
+	return SystemConfig.NumApplications
 }
 
 func GetAppId(appName string) int {

@@ -6,9 +6,10 @@ import (
 	"All-On-Cloud-9/messenger"
 	"context"
 	"fmt"
-	guuid "github.com/google/uuid"
 	"strconv"
 	"time"
+
+	guuid "github.com/google/uuid"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/nats-io/nats.go"
@@ -73,13 +74,13 @@ func handleBuyerRequest(w http.ResponseWriter, r *http.Request) {
 	jTxn, _ := json.Marshal(bTxn)
 
 	txn = &common.Transaction{
-		TxnBody: jTxn,
-		FromApp: config.APP_BUYER,
-		ToApp:   bTxn.ToApp,
-		ToId:    "",
-		FromId:  "",
-		TxnType: bTxn.Type,
-		Clock:   clock,
+		TxnBody:   jTxn,
+		FromApp:   config.APP_BUYER,
+		ToApp:     bTxn.ToApp,
+		ToId:      "",
+		FromId:    "",
+		TxnType:   bTxn.Type,
+		Clock:     clock,
 		Timestamp: time.Now().Unix(),
 	}
 	if bTxn.TxnType == common.GLOBAL_TXN {
