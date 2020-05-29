@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+ name: server-service-manufacturer3
+ labels:
+   app: server-manufacturer3
+spec:
+ type: NodePort
+ ports:
+ - port: 9003
+   name: http
+   nodePort: 30285
+ selector:
+   app: server-manufacturer3

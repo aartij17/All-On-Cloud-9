@@ -10,15 +10,15 @@ data:
         "MANUFACTURER": {
           "servers": [
             {
-              "host": "server-service-manufacturer",
+              "host": "server-service-manufacturer1",
               "port": 9001
             },
             {
-              "host": "server-service-manufacturer",
+              "host": "server-service-manufacturer2",
               "port": 9002
             },
             {
-              "host": "server-service-manufacturer",
+              "host": "server-service-manufacturer3",
               "port": 9003
             }
           ]
@@ -26,15 +26,15 @@ data:
         "SUPPLIER": {
           "servers": [
             {
-              "host": "server-service-supplier",
+              "host": "server-service-supplier1",
               "port": 11001
             },
             {
-              "host": "server-service-supplier",
+              "host": "server-service-supplier2",
               "port": 11002
             },
             {
-              "host": "server-service-supplier",
+              "host": "server-service-supplier3",
               "port": 11003
             }
           ]
@@ -42,15 +42,15 @@ data:
         "CARRIER": {
           "servers": [
             {
-              "host": "server-service-carrier",
+              "host": "server-service-carrier1",
               "port": 12001
             },
             {
-              "host": "server-service-carrier",
+              "host": "server-service-carrier2",
               "port": 12002
             },
             {
-              "host": "server-service-carrier",
+              "host": "server-service-carrier3",
               "port": 12003
             }
           ]
@@ -58,15 +58,15 @@ data:
         "BUYER": {
           "servers": [
             {
-              "host": "server-service-buyer",
+              "host": "server-service-buyer1",
               "port": 13001
             },
             {
-              "host": "server-service-buyer",
+              "host": "server-service-buyer2",
               "port": 13002
             },
             {
-              "host": "server-service-buyer",
+              "host": "server-service-buyer3",
               "port": 13003
             }
           ]
@@ -93,5 +93,7 @@ data:
         "servers": [
           "nats://cloud-nats-svc:4222"
         ]
-      }
+      },
+      "global_consensus_algorithm": "slpbft",
+      "consensus": "bpaxos"
     }
