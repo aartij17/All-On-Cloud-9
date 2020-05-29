@@ -100,17 +100,17 @@ func (server *Server) InitiateAddBlock(ctx context.Context, txn *common.Transact
 			}).Warn("not going to add an older global block, skipping..")
 			return
 		}
-		if server.LastAddedGlobalBlock != nil {
-			log.WithFields(log.Fields{
-				"pid": server.LastAddedGlobalBlock.V.(*blockchain.Block).Transaction.Clock.PID,
-			}).Error("lets see what the previously added global block is")
-			if server.LastAddedGlobalBlock.V.(*blockchain.Block).Transaction.Clock.PID == txn.Clock.PID {
-				log.WithFields(log.Fields{
-					"messageClockId": txn.Clock.PID,
-				}).Warn("global block already added to the blockchain, nothing to do")
-				return
-			}
-		}
+		//if server.LastAddedGlobalBlock != nil {
+		//	log.WithFields(log.Fields{
+		//		"pid": server.LastAddedGlobalBlock.V.(*blockchain.Block).Transaction.Clock.PID,
+		//	}).Error("lets see what the previously added global block is")
+		//	if server.LastAddedGlobalBlock.V.(*blockchain.Block).Transaction.Clock.PID == txn.Clock.PID {
+		//		log.WithFields(log.Fields{
+		//			"messageClockId": txn.Clock.PID,
+		//		}).Warn("global block already added to the blockchain, nothing to do")
+		//		return
+		//	}
+		//}
 	}
 
 	// if this is a local txn, the message should be intended for the current application
