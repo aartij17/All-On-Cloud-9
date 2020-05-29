@@ -188,9 +188,12 @@ func (server *Server) InitiateAddBlock(ctx context.Context, txn *common.Transact
 		blockchain.Blockchain.Connect(edge)
 	}
 	// irrespective of it being a local/global block, the new vertex HAS to point to
-	// the last added local block
-	edgeLocal := dag.BasicEdge(dag.Vertex(newVertex), dag.Vertex(server.LastAddedLocalBlock))
-	blockchain.Blockchain.Connect(edgeLocal)
+	// the last added local block. But dont connect a global block to the lcoal block if the target app
+	// does not match the current app
+	if !(isGlobal && server.AppName != txn.ToApp) {
+		edgeLocal := dag.BasicEdge(dag.Vertex(newVertex), dag.Vertex(server.LastAddedLocalBlock))
+		blockchain.Blockchain.Connect(edgeLocal)
+	}
 
 	server.VertexMap[blockId] = newVertex
 	server.PIDMap[txn.Clock.PID] = true
