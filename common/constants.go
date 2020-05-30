@@ -15,8 +15,6 @@ const (
 	O_SYNC    = "SYNC"
 
 	// -------------- inter application messages --------------
-	// Message from primary agent of the sender application to the receiver application
-	NATS_ORD_REQUEST = "NATS_ORDERER_REQUEST"
 
 	// NATS inbox messages
 	// ORDERER MESSAGES
@@ -49,6 +47,7 @@ const (
 	NATS_CARRIER_INBOX      = "NATS_CARRIER_INBOX"
 	NATS_BUYER_INBOX        = "NATS_BUYER_INBOX"
 	NATS_SUPPLIER_INBOX     = "NATS_SUPPLIER_INBOX"
+	NATS_GLOBAL_BLOCK_INBOX = "NATS_GLOBAL_BLOCK_INBOX"
 
 	NATS_ADD_TO_BC = "NATS_ADD_TO_BLOCKCHAIN"
 
