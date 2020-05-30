@@ -22,7 +22,7 @@ func TestLocal(t *testing.T) {
 	for i := 0; i < 4; i++ {
 		go func(id int) {
 			nc, _ := messenger.NatsConnect(ctx)
-			node := NewPbftNode(ctx, nc, "APP", 1, 4, 0, 1, id, 0)
+			node := NewPbftNode(ctx, nc, "APP", 1, 4, 0, 1, id, 0, false)
 
 			dummyTxn := common.Transaction{
 				TxnType: LOCAL,
@@ -58,7 +58,7 @@ func TestGlobalSingleNodeApp(t *testing.T) {
 	for i := 0; i < 4; i++ {
 		go func(id int) {
 			nc, _ := messenger.NatsConnect(ctx)
-			node := NewPbftNode(ctx, nc, "APP_"+strconv.Itoa(id), 0, 1, 1, 4, 0, id)
+			node := NewPbftNode(ctx, nc, "APP_"+strconv.Itoa(id), 0, 1, 1, 4, 0, id, false)
 			go PipeInHierarchicalLocalConsensus(node)
 
 			dummyTxn := common.Transaction{
@@ -100,7 +100,7 @@ func TestGlobalOneMultipleNodeApp(t *testing.T) {
 	for j := 0; j < NodePerApp; j++ {
 		go func(id int, appId int) {
 			nc, _ := messenger.NatsConnect(ctx)
-			node := NewPbftNode(ctx, nc, "APP_0", 1, 4, 1, 4, id, appId)
+			node := NewPbftNode(ctx, nc, "APP_0", 1, 4, 1, 4, id, appId, false)
 			go PipeInHierarchicalLocalConsensus(node)
 
 			dummyTxn := common.Transaction{
@@ -122,7 +122,7 @@ func TestGlobalOneMultipleNodeApp(t *testing.T) {
 	for i := 1; i < AppCount; i++ {
 		go func(id int, appId int) {
 			nc, _ := messenger.NatsConnect(ctx)
-			node := NewPbftNode(ctx, nc, "APP_"+strconv.Itoa(appId), 0, 1, 1, 4, id, appId)
+			node := NewPbftNode(ctx, nc, "APP_"+strconv.Itoa(appId), 0, 1, 1, 4, id, appId, false)
 			go PipeInHierarchicalLocalConsensus(node)
 
 			dummyTxn := common.Transaction{
@@ -183,7 +183,7 @@ func TestGlobalAndLocalOneMultipleNodeApp(t *testing.T) {
 	for j := 0; j < NodePerFirstApp; j++ {
 		go func(id int, appId int) {
 			nc, _ := messenger.NatsConnect(ctx)
-			node := NewPbftNode(ctx, nc, "APP_0", 1, 4, 1, 4, id, appId)
+			node := NewPbftNode(ctx, nc, "APP_0", 1, 4, 1, 4, id, appId, false)
 			go PipeInHierarchicalLocalConsensus(node)
 
 			for i, _txn := range Txns {
@@ -206,7 +206,7 @@ func TestGlobalAndLocalOneMultipleNodeApp(t *testing.T) {
 	for i := 1; i < AppCount; i++ {
 		go func(id int, appId int) {
 			nc, _ := messenger.NatsConnect(ctx)
-			node := NewPbftNode(ctx, nc, "APP_"+strconv.Itoa(appId), 0, 1, 1, 4, id, appId)
+			node := NewPbftNode(ctx, nc, "APP_"+strconv.Itoa(appId), 0, 1, 1, 4, id, appId, false)
 			go PipeInHierarchicalLocalConsensus(node)
 
 			for _, _txn := range Txns {
@@ -251,7 +251,7 @@ func TestGlobalMultipleNodeApp(t *testing.T) {
 		for j := 0; j < NodePerApp; j++ {
 			go func(id int, appId int) {
 				nc, _ := messenger.NatsConnect(ctx)
-				node := NewPbftNode(ctx, nc, "APP_"+strconv.Itoa(appId), 1, 4, 1, 4, id, appId)
+				node := NewPbftNode(ctx, nc, "APP_"+strconv.Itoa(appId), 1, 4, 1, 4, id, appId, false)
 				go PipeInHierarchicalLocalConsensus(node)
 
 				dummyTxn := common.Transaction{
