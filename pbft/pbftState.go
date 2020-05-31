@@ -112,20 +112,20 @@ func (state *pbftState) handleMessage(
 		}
 
 		state.counter[reduced]++
-		if state.totalNodes - state.counter[reduced] == state.failureTolerance {
+		if state.totalNodes-state.counter[reduced] == state.failureTolerance {
 			go broadcast(common.Message{
 				MessageType: COMMIT,
 				Timestamp:   _message.Timestamp,
 				FromNodeNum: getId(),
 				Txn:         _message.Txn,
 			})
-		} else if state.totalNodes - state.counter[reduced] < state.failureTolerance {
+		} else if state.totalNodes-state.counter[reduced] < state.failureTolerance {
 			log.WithFields(log.Fields{
 				"phase":         "PREPARE",
 				"state counter": state.counter[reduced],
 				//"reduced":           reduced,
 				//"failure tolerance": state.failureTolerance,
-			}).Info("PREPARE")
+			}).Debug("PREPARE")
 		}
 	case COMMIT:
 		reduced := reducedMessage{
@@ -134,14 +134,14 @@ func (state *pbftState) handleMessage(
 		}
 
 		state.counter[reduced]++
-		if state.totalNodes - state.counter[reduced] == state.failureTolerance {
+		if state.totalNodes-state.counter[reduced] == state.failureTolerance {
 			go broadcast(common.Message{
 				MessageType: COMMITED,
 				Timestamp:   _message.Timestamp,
 				FromNodeNum: getId(),
 				Txn:         _message.Txn,
 			})
-		} else if state.totalNodes - state.counter[reduced] < state.failureTolerance {
+		} else if state.totalNodes-state.counter[reduced] < state.failureTolerance {
 			//println("COMMIT") //
 		}
 	case COMMITED:
@@ -151,10 +151,10 @@ func (state *pbftState) handleMessage(
 		}
 
 		state.counter[reduced]++
-		if state.totalNodes - state.counter[reduced] == 2 * state.failureTolerance {
+		if state.totalNodes-state.counter[reduced] == 2*state.failureTolerance {
 			state.currentTimestamp = _message.Timestamp
 			state.messageOut <- *_message.Txn
-		} else if state.totalNodes - state.counter[reduced] < 2 * state.failureTolerance {
+		} else if state.totalNodes-state.counter[reduced] < 2*state.failureTolerance {
 			//println("COMMITTED")
 		}
 	}

@@ -53,7 +53,7 @@ func SubscribeToInbox(ctx context.Context, nc *nats.Conn, subject string, messag
 	}
 	log.WithFields(log.Fields{
 		"topic": subject,
-	}).Info("subscribed to NATS inbox")
+	}).Debug("subscribed to NATS inbox")
 
 	return nil
 }
