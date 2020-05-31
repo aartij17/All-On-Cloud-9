@@ -172,7 +172,7 @@ func (node *PbftNode) startMessageListeners(msgChan chan *nats.Msg) {
 				"id":    node.id,
 				"appId": node.appId,
 				"inbox": GLOBAL_APPLICATION,
-			}).Info("nats message received")
+			}).Debug("nats message received")
 
 			node.globalState.handleMessage(
 				msg,
