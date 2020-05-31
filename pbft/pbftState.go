@@ -119,7 +119,12 @@ func (state *pbftState) handleMessage(
 		}
 
 		state.counter[reduced]++
-		if state.totalNodes - state.counter[reduced] == state.failureTolerance {
+		//log.WithFields(log.Fields{
+		//	"totalNode": state.totalNodes,
+		//	"counter": state.counter[reduced],
+		//	"failureTolerance": state.failureTolerance,
+		//}).Info("checking threshold")
+		if state.totalNodes - state.counter[reduced] == state.failureTolerance || state.trustedHardware {
 			go broadcast(common.Message{
 				MessageType: COMMIT,
 				Timestamp:   _message.Timestamp,

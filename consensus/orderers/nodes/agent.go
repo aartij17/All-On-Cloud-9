@@ -84,8 +84,11 @@ func CreateOrderer(ctx context.Context, nodeId int) error {
 	if config.SystemConfig.Consensus == common.CONSENSUS_BPAXOS {
 		bpaxos.SetupBPaxos(ctx, ONode.NatsConn, runConsensus, runLeader, runProposer, runReplica)
 	} else if config.SystemConfig.Consensus == common.CONSENSUS_PBFT {
-		ONode.pbftNode = pbft.NewPbftNode(ctx, nc, common.ORDERER, orderersFTolerance, orderersCnt, orderersFTolerance*5, //some random huge number
-			orderersFTolerance*5, nodeId, -1)
+		ONode.pbftNode = pbft.NewPbftNode(ctx, nc, common.ORDERER, orderersFTolerance, orderersCnt, orderersCnt*5, //some random huge number
+			orderersCnt*5, nodeId, -1, false)
+	} else if config.SystemConfig.Consensus == common.CONSENSUS_THPBFT {
+		ONode.pbftNode = pbft.NewPbftNode(ctx, nc, common.ORDERER, orderersFTolerance, orderersCnt, orderersCnt*5, //some random huge number
+			orderersCnt*5, nodeId, -1, true)
 	} else {
 		panic("please provide a valid consensus algorithm")
 	}
@@ -146,7 +149,8 @@ func (o *Orderer) StartOrdListener(ctx context.Context) {
 			case common.NATS_ORD_ORDER:
 				numOrderMessagesRecvd += 1
 				if numOrderMessagesRecvd >= common.F && o.IsPrimary {
-					if config.SystemConfig.Consensus == common.CONSENSUS_PBFT {
+					if config.SystemConfig.Consensus == common.CONSENSUS_PBFT ||
+						config.SystemConfig.Consensus == common.CONSENSUS_THPBFT {
 						_txn := *msg.Transaction
 						_txn.TxnType = pbft.LOCAL
 						o.pbftNode.MessageIn <- _txn

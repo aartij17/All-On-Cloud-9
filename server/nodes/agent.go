@@ -35,7 +35,6 @@ type Server struct {
 	PIDMap                 map[string]bool               `json:"pid_map"`
 	NatsConn               *nats.Conn                    `json:"nats_connection"`
 	pbftNode               *pbft.PbftNode
-	pbftTHNode *pbft.PbftNode
 	pbftSLNode             *pbftSingleLayer.PbftNode
 	LocalConsensusComplete chan bool
 	LastAddedLocalBlock    *blockchain.Vertex
@@ -212,8 +211,6 @@ func StartServer(ctx context.Context, nodeId string, appName string, id int) {
 		NatsConn:       nc,
 		pbftNode: pbft.NewPbftNode(ctx, nc, appName, (totalNodes-1)/3, totalNodes, (totalNodesGlobal-1)/3,
 			totalNodesGlobal, id, config.GetAppId(appName), false),
-		pbftTHNode: pbft.NewPbftNode(ctx, nc, appName, (totalNodes-1)/2, totalNodes, (totalNodesGlobal-1)/2,
-			totalNodesGlobal, id, config.GetAppId(appName), true),
 		pbftSLNode:             pbftSingleLayer.NewPbftNode(ctx, nc, appName, id, config.GetAppId(appName)),
 		LastAddedLocalBlock:    genesisBlock,
 		LastAddedGlobalBlock:   nil,
@@ -221,7 +218,10 @@ func StartServer(ctx context.Context, nodeId string, appName string, id int) {
 		LastAddedGlobalNodeId:  -1,
 		LocalConsensusComplete: make(chan bool),
 	}
-
+	if config.SystemConfig.Consensus == common.CONSENSUS_THPBFT {
+		AppServer.pbftNode = pbft.NewPbftNode(ctx, nc, appName, (totalNodes-1)/2, totalNodes, (totalNodesGlobal-1)/2,
+			totalNodesGlobal, id, config.GetAppId(appName), true)
+	}
 	go pbft.PipeInHierarchicalLocalConsensus(AppServer.pbftNode) // use pbft for local consensus as well
 
 	// add the genesis block to the map
