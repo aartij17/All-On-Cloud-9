@@ -22,8 +22,9 @@ import (
 )
 
 var (
-	AppServer         *Server
-	AppServerNatsChan = make(chan *nats.Msg)
+	AppServer          *Server
+	AppServerNatsChan  = make(chan *nats.Msg)
+	AppGlobalBlockChan = make(chan *nats.Msg)
 )
 
 type Server struct {
@@ -83,12 +84,12 @@ func (server *Server) initiateLocalGlobalConsensus(ctx context.Context, fromNode
 			server.startGlobalOrdererConsensusProcess(ctx, commonMessage)
 		case common.GLOBAL_CONSENSUS_ALGO_HEIRARCHICAL: //Hierarchical PBFT
 			server.pbftNode.MessageIn <- *commonMessage.Txn
-			//server.pbftNode.MessageOut
 		case common.GLOBAL_CONSENSUS_ALGO_TH_HEIRARCHICAL:
 			server.pbftNode.MessageIn <- *commonMessage.Txn
-			//server.pbftNode.MessageOut
 		case common.GLOBAL_CONSENSUS_ALGO_SLPBFT: //Single-layer PBFT
 			server.pbftSLNode.MessageIn <- *commonMessage.Txn
+		case common.GLOBAL_CONSENSUS_ALGO_TH_HEIRARCHICAL:
+			server.pbftNode.MessageIn <- *commonMessage.Txn
 		}
 	} else if commonMessage.Txn.TxnType == common.LOCAL_TXN {
 		// TODO: [DEMO]: if we are gonna demo orderer + bpaxos, comment the next 2 lines of code
@@ -122,12 +123,14 @@ func (server *Server) startGlobalOrdererConsensusProcess(ctx context.Context, co
 func (server *Server) startNatsSubscriber(ctx context.Context) {
 	// subscribe to the NATS inbox to receive result of the final consensus success message
 	_ = messenger.SubscribeToInbox(ctx, server.NatsConn, common.NATS_ADD_TO_BC, AppServerNatsChan, false)
+	_ = messenger.SubscribeToInbox(ctx, server.NatsConn, common.NATS_GLOBAL_BLOCK_INBOX, AppGlobalBlockChan, false)
 
 	go func() {
 		var (
 			natsMsg *nats.Msg
 			msg     *common.Message
 			txn     common.Transaction
+			vertex  *nats.Msg
 		)
 		for {
 			select {
@@ -153,6 +156,10 @@ func (server *Server) startNatsSubscriber(ctx context.Context) {
 					common.UpdateGlobalClock(ordererMsg.CommonMessage.Txn.Clock.Clock, false)
 					server.InitiateAddBlock(ctx, ordererMsg.CommonMessage.Txn)
 				}
+			case vertex = <-AppGlobalBlockChan:
+				var block *blockchain.Block
+				_ = json.Unmarshal(vertex.Data, &block)
+				server.AddForeignGlobalBlock(ctx, block)
 			case txn = <-server.pbftNode.MessageOut:
 				log.WithFields(log.Fields{
 					"type": txn.TxnType,

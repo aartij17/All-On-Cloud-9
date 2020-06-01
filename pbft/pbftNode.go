@@ -194,9 +194,9 @@ func (node *PbftNode) handleLocalOut(state *pbftState) {
 				"txn":   _txn,
 				"id":    node.id,
 				"appId": node.appId,
-			}).Info("LOCAL CONSENSUS DONE")
+			}).Debug("LOCAL CONSENSUS DONE")
 			node.MessageOut <- _txn
-			log.Info("sent message to message out")
+			log.Debug("sent message to message out")
 		} else if strings.HasPrefix(_txn.TxnType, LOCAL_CONSENSUS) {
 			if node.generateLocalLeader(node.localState)() {
 				//log.WithFields(log.Fields{
