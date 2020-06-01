@@ -134,9 +134,9 @@ func (node *PbftNode) subToNatsChannels(suffix string) {
 
 func (node *PbftNode) handleGlobalOut(state *pbftState) {
 	for {
-		log.Error("gonna receive from message out")
+		//log.Error("gonna receive from message out")
 		txn := <-state.messageOut
-		log.Error("received from message out")
+		//log.Error("received from message out")
 		_txn := txn
 		log.WithFields(log.Fields{
 			//"txn":   _txn,
@@ -166,13 +166,13 @@ func (node *PbftNode) startMessageListeners(msgChan chan *nats.Msg) {
 				PKeySig:     packedMsg.Msg.PKeySig,
 			}
 
-			log.WithFields(log.Fields{
-				"type":  packedMsg.Msg.MessageType,
-				"txn":   packedMsg.Txn,
-				"id":    node.id,
-				"appId": node.appId,
-				"inbox": GLOBAL_APPLICATION,
-			}).Debug("nats message received")
+			//log.WithFields(log.Fields{
+			//	"type":  packedMsg.Msg.MessageType,
+			//	"txn":   packedMsg.Txn,
+			//	"id":    node.id,
+			//	"appId": node.appId,
+			//	"inbox": GLOBAL_APPLICATION,
+			//}).Info("nats message received")
 
 			node.globalState.handleMessage(
 				msg,

@@ -14,6 +14,7 @@ import (
 	"os"
 	"reflect"
 	"sync"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 
@@ -83,6 +84,8 @@ func (server *Server) initiateLocalGlobalConsensus(ctx context.Context, fromNode
 			server.startGlobalOrdererConsensusProcess(ctx, commonMessage)
 		case common.GLOBAL_CONSENSUS_ALGO_HEIRARCHICAL: //Hierarchical PBFT
 			server.pbftNode.MessageIn <- *commonMessage.Txn
+		case common.GLOBAL_CONSENSUS_ALGO_TH_HEIRARCHICAL:
+			server.pbftNode.MessageIn <- *commonMessage.Txn
 		case common.GLOBAL_CONSENSUS_ALGO_SLPBFT: //Single-layer PBFT
 			server.pbftSLNode.MessageIn <- *commonMessage.Txn
 		case common.GLOBAL_CONSENSUS_ALGO_TH_HEIRARCHICAL:
@@ -145,6 +148,9 @@ func (server *Server) startNatsSubscriber(ctx context.Context) {
 				case common.NATS_CONSENSUS_DONE_MSG:
 					log.Info("NATS_CONSENSUS_DONE_MSG_RCVD, nothing to do")
 				case common.NATS_ADD_TO_BC:
+					log.WithFields(log.Fields{
+						"currentNTime": time.Now().UnixNano(),
+					}).Info("received message out from orderers")
 					var ordererMsg *nodes.Message
 					_ = json.Unmarshal(natsMsg.Data, &ordererMsg)
 					common.UpdateGlobalClock(ordererMsg.CommonMessage.Txn.Clock.Clock, false)
@@ -158,6 +164,8 @@ func (server *Server) startNatsSubscriber(ctx context.Context) {
 				log.WithFields(log.Fields{
 					"type": txn.TxnType,
 					"PID":  txn.Clock.PID,
+					"timestamp": txn.Timestamp,
+					"currentNTime": time.Now().UnixNano(),
 				}).Info("received message out from pbft")
 				common.UpdateGlobalClock(txn.Clock.Clock, false)
 				server.InitiateAddBlock(ctx, &txn)
@@ -165,6 +173,8 @@ func (server *Server) startNatsSubscriber(ctx context.Context) {
 				log.WithFields(log.Fields{
 					"type": txn.TxnType,
 					"PID":  txn.Clock.PID,
+					"timestamp": txn.Timestamp,
+					"currentNTime": time.Now().UnixNano(),
 				}).Info("received message out from slpbft")
 				common.UpdateGlobalClock(txn.Clock.Clock, false)
 				server.InitiateAddBlock(ctx, &txn)
