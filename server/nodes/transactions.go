@@ -236,7 +236,7 @@ func (server *Server) AddForeignGlobalBlock(ctx context.Context, newBlock *block
 	defer server.MapLock.Unlock()
 
 	if server.AppName == newBlock.Transaction.ToApp {
-		log.Info("AddForeignGlobalBlock: nothing to do")
+		log.Debug("AddForeignGlobalBlock: nothing to do")
 		return
 	}
 
@@ -285,6 +285,7 @@ func (server *Server) AddForeignGlobalBlock(ctx context.Context, newBlock *block
 		"pid":        newBlock.Transaction.Clock.PID,
 	}).Info("added new edge for global block")
 	blockchain.GlobalSeqNumber += 1
+	blockchain.LocalSeqNumber += 1
 
 	blockchain.PrintBlockchain()
 }

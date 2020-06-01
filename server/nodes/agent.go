@@ -83,9 +83,10 @@ func (server *Server) initiateLocalGlobalConsensus(ctx context.Context, fromNode
 			server.startGlobalOrdererConsensusProcess(ctx, commonMessage)
 		case common.GLOBAL_CONSENSUS_ALGO_HEIRARCHICAL: //Hierarchical PBFT
 			server.pbftNode.MessageIn <- *commonMessage.Txn
-			//server.pbftNode.MessageOut
 		case common.GLOBAL_CONSENSUS_ALGO_SLPBFT: //Single-layer PBFT
 			server.pbftSLNode.MessageIn <- *commonMessage.Txn
+		case common.GLOBAL_CONSENSUS_ALGO_TH_HEIRARCHICAL:
+			server.pbftNode.MessageIn <- *commonMessage.Txn
 		}
 	} else if commonMessage.Txn.TxnType == common.LOCAL_TXN {
 		// TODO: [DEMO]: if we are gonna demo orderer + bpaxos, comment the next 2 lines of code
