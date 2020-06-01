@@ -40,9 +40,10 @@ func NewPbftNode(
 	globalTotalNodes int,
 	id int,
 	appId int,
+	trustedHardware bool,
 ) *PbftNode {
-	localState := newPbftState(failureTolerance, totalNodes, application)
-	globalState := newPbftState(globalFailureTolerance, globalTotalNodes, GLOBAL_APPLICATION)
+	localState := newPbftState(failureTolerance, totalNodes, application, trustedHardware)
+	globalState := newPbftState(globalFailureTolerance, globalTotalNodes, GLOBAL_APPLICATION, trustedHardware)
 	node := newPbftNode(ctx, nc, id, appId, localState, globalState)
 	node.initTimer(localState, node.generateLocalBroadcast())
 	node.initTimer(globalState, node.generateGlobalBroadcast(localState))

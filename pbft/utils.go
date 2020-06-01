@@ -8,7 +8,8 @@ import (
 )
 
 func PipeInHierarchicalLocalConsensus(pbftNode *PbftNode) {
-	if config.SystemConfig.GlobalConsensusAlgo != common.GLOBAL_CONSENSUS_ALGO_HEIRARCHICAL {
+	if config.SystemConfig.GlobalConsensusAlgo != common.GLOBAL_CONSENSUS_ALGO_HEIRARCHICAL &&
+		config.SystemConfig.GlobalConsensusAlgo != common.GLOBAL_CONSENSUS_ALGO_TH_HEIRARCHICAL {
 		log.Info("not gonna start heirarchical consensus listener, since the config doesn't permit it")
 		return
 	}

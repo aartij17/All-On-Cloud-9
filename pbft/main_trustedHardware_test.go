@@ -12,17 +12,17 @@ import (
 	"strconv"
 )
 
-func TestLocal(t *testing.T) {
+func TestTHLocal(t *testing.T) {
 	timeout := time.After(3 * TIMEOUT * time.Second)
 	done := make(chan bool)
 
 	ctx, _ := context.WithCancel(context.Background())
 	config.LoadConfig(ctx, "../config/config.json")
 
-	for i := 0; i < 4; i++ {
+	for i := 0; i < 3; i++ {
 		go func(id int) {
 			nc, _ := messenger.NatsConnect(ctx)
-			node := NewPbftNode(ctx, nc, "APP", 1, 4, 0, 1, id, 0, false)
+			node := NewPbftNode(ctx, nc, "APP", 1, 3, 0, 1, id, 0, true)
 
 			dummyTxn := common.Transaction{
 				TxnType: LOCAL,
@@ -48,17 +48,17 @@ func TestLocal(t *testing.T) {
 	}
 }
 
-func TestGlobalSingleNodeApp(t *testing.T) {
+func TestTHGlobalSingleNodeApp(t *testing.T) {
 	timeout := time.After(3 * TIMEOUT * time.Second)
 	done := make(chan bool)
 
 	ctx, _ := context.WithCancel(context.Background())
 	config.LoadConfig(ctx, "../config/config.json")
 
-	for i := 0; i < 4; i++ {
+	for i := 0; i < 3; i++ {
 		go func(id int) {
 			nc, _ := messenger.NatsConnect(ctx)
-			node := NewPbftNode(ctx, nc, "APP_"+strconv.Itoa(id), 0, 1, 1, 4, 0, id, false)
+			node := NewPbftNode(ctx, nc, "APP_"+strconv.Itoa(id), 0, 1, 1, 3, 0, id, true)
 			go PipeInHierarchicalLocalConsensus(node)
 
 			dummyTxn := common.Transaction{
@@ -78,7 +78,7 @@ func TestGlobalSingleNodeApp(t *testing.T) {
 		}(i)
 	}
 
-	for i := 0; i < 4; i++ {
+	for i := 0; i < 3; i++ {
 		select {
 		case <-timeout:
 			t.Error("Global pbft timed out")
@@ -87,7 +87,7 @@ func TestGlobalSingleNodeApp(t *testing.T) {
 	}
 }
 
-func TestGlobalOneMultipleNodeApp(t *testing.T) {
+func TestTHGlobalOneMultipleNodeApp(t *testing.T) {
 	timeout := time.After(3 * TIMEOUT * time.Second)
 	//timeout := time.After(500 * time.Second)
 	done := make(chan bool)
@@ -95,12 +95,12 @@ func TestGlobalOneMultipleNodeApp(t *testing.T) {
 	ctx, _ := context.WithCancel(context.Background())
 	config.LoadConfig(ctx, "../config/config.json")
 
-	const AppCount = 4
-	const NodePerApp = 4
+	const AppCount = 3
+	const NodePerApp = 3
 	for j := 0; j < NodePerApp; j++ {
 		go func(id int, appId int) {
 			nc, _ := messenger.NatsConnect(ctx)
-			node := NewPbftNode(ctx, nc, "APP_0", 1, 4, 1, 4, id, appId, false)
+			node := NewPbftNode(ctx, nc, "APP_0", 1, NodePerApp, 1, AppCount, id, appId, true)
 			go PipeInHierarchicalLocalConsensus(node)
 
 			dummyTxn := common.Transaction{
@@ -122,7 +122,7 @@ func TestGlobalOneMultipleNodeApp(t *testing.T) {
 	for i := 1; i < AppCount; i++ {
 		go func(id int, appId int) {
 			nc, _ := messenger.NatsConnect(ctx)
-			node := NewPbftNode(ctx, nc, "APP_"+strconv.Itoa(appId), 0, 1, 1, 4, id, appId, false)
+			node := NewPbftNode(ctx, nc, "APP_"+strconv.Itoa(appId), 0, 1, 1, AppCount, id, appId, true)
 			go PipeInHierarchicalLocalConsensus(node)
 
 			dummyTxn := common.Transaction{
@@ -148,7 +148,7 @@ func TestGlobalOneMultipleNodeApp(t *testing.T) {
 	}
 }
 
-func TestGlobalAndLocalOneMultipleNodeApp(t *testing.T) {
+func TestTHGlobalAndLocalOneMultipleNodeApp(t *testing.T) {
 	timeout := time.After(3 * TIMEOUT * time.Second)
 	//timeout := time.After(500 * time.Second)
 	done := make(chan bool)
@@ -156,8 +156,8 @@ func TestGlobalAndLocalOneMultipleNodeApp(t *testing.T) {
 	ctx, _ := context.WithCancel(context.Background())
 	config.LoadConfig(ctx, "../config/config.json")
 
-	const AppCount = 4
-	const NodePerFirstApp = 4
+	const AppCount = 3
+	const NodePerFirstApp = 3
 	dummyTxn := common.Transaction{
 		TxnType: GLOBAL,
 		Timestamp: 1,
@@ -183,7 +183,7 @@ func TestGlobalAndLocalOneMultipleNodeApp(t *testing.T) {
 	for j := 0; j < NodePerFirstApp; j++ {
 		go func(id int, appId int) {
 			nc, _ := messenger.NatsConnect(ctx)
-			node := NewPbftNode(ctx, nc, "APP_0", 1, 4, 1, 4, id, appId, false)
+			node := NewPbftNode(ctx, nc, "APP_0", 1, NodePerFirstApp, 1, AppCount, id, appId, true)
 			go PipeInHierarchicalLocalConsensus(node)
 
 			for i, _txn := range Txns {
@@ -206,7 +206,7 @@ func TestGlobalAndLocalOneMultipleNodeApp(t *testing.T) {
 	for i := 1; i < AppCount; i++ {
 		go func(id int, appId int) {
 			nc, _ := messenger.NatsConnect(ctx)
-			node := NewPbftNode(ctx, nc, "APP_"+strconv.Itoa(appId), 0, 1, 1, 4, id, appId, false)
+			node := NewPbftNode(ctx, nc, "APP_"+strconv.Itoa(appId), 0, 1, 1, AppCount, id, appId, true)
 			go PipeInHierarchicalLocalConsensus(node)
 
 			for _, _txn := range Txns {
@@ -237,7 +237,7 @@ func TestGlobalAndLocalOneMultipleNodeApp(t *testing.T) {
 	}
 }
 
-func TestGlobalMultipleNodeApp(t *testing.T) {
+func TestTHGlobalMultipleNodeApp(t *testing.T) {
 	timeout := time.After(3 * TIMEOUT * time.Second)
 	//timeout := time.After(500 * time.Second)
 	done := make(chan bool)
@@ -245,13 +245,13 @@ func TestGlobalMultipleNodeApp(t *testing.T) {
 	ctx, _ := context.WithCancel(context.Background())
 	config.LoadConfig(ctx, "../config/config.json")
 
-	const AppCount = 4
-	const NodePerApp = 4
+	const AppCount = 3
+	const NodePerApp = 3
 	for i := 0; i < AppCount; i++ {
 		for j := 0; j < NodePerApp; j++ {
 			go func(id int, appId int) {
 				nc, _ := messenger.NatsConnect(ctx)
-				node := NewPbftNode(ctx, nc, "APP_"+strconv.Itoa(appId), 1, 4, 1, 4, id, appId, false)
+				node := NewPbftNode(ctx, nc, "APP_"+strconv.Itoa(appId), 1, NodePerApp, 1, AppCount, id, appId, true)
 				go PipeInHierarchicalLocalConsensus(node)
 
 				dummyTxn := common.Transaction{

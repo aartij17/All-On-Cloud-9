@@ -83,9 +83,10 @@ func (server *Server) initiateLocalGlobalConsensus(ctx context.Context, fromNode
 			server.startGlobalOrdererConsensusProcess(ctx, commonMessage)
 		case common.GLOBAL_CONSENSUS_ALGO_HEIRARCHICAL: //Hierarchical PBFT
 			server.pbftNode.MessageIn <- *commonMessage.Txn
-			//server.pbftNode.MessageOut
 		case common.GLOBAL_CONSENSUS_ALGO_SLPBFT: //Single-layer PBFT
 			server.pbftSLNode.MessageIn <- *commonMessage.Txn
+		case common.GLOBAL_CONSENSUS_ALGO_TH_HEIRARCHICAL:
+			server.pbftNode.MessageIn <- *commonMessage.Txn
 		}
 	} else if commonMessage.Txn.TxnType == common.LOCAL_TXN {
 		// TODO: [DEMO]: if we are gonna demo orderer + bpaxos, comment the next 2 lines of code
@@ -217,13 +218,17 @@ func StartServer(ctx context.Context, nodeId string, appName string, id int) {
 		PIDMap:         make(map[string]bool),
 		NatsConn:       nc,
 		pbftNode: pbft.NewPbftNode(ctx, nc, appName, (totalNodes-1)/3, totalNodes, (totalNodesGlobal-1)/3,
-			totalNodesGlobal, id, config.GetAppId(appName)),
+			totalNodesGlobal, id, config.GetAppId(appName), false),
 		pbftSLNode:             pbftSingleLayer.NewPbftNode(ctx, nc, appName, id, config.GetAppId(appName)),
 		LastAddedLocalBlock:    genesisBlock,
 		LastAddedGlobalBlock:   nil,
 		LastAddedLocalNodeId:   -1,
 		LastAddedGlobalNodeId:  -1,
 		LocalConsensusComplete: make(chan bool),
+	}
+	if config.SystemConfig.Consensus == common.CONSENSUS_THPBFT {
+		AppServer.pbftNode = pbft.NewPbftNode(ctx, nc, appName, (totalNodes-1)/2, totalNodes, (totalNodesGlobal-1)/2,
+			totalNodesGlobal, id, config.GetAppId(appName), true)
 	}
 	go pbft.PipeInHierarchicalLocalConsensus(AppServer.pbftNode) // use pbft for local consensus as well
 
