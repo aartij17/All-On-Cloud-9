@@ -148,7 +148,7 @@ func StartProposer(ctx context.Context, nc *nats.Conn) {
 	p := newProposer()
 
 	go func(nc *nats.Conn, proposer *Proposer) {
-		natsMessage := make(chan *nats.Msg)
+		natsMessage := make(chan *nats.Msg, 100)
 		subj := fmt.Sprintf("%s%d", common.LEADER_TO_PROPOSER, proposer.ProposerId)
 		err := messenger.SubscribeToInbox(ctx, nc, subj, natsMessage, false)
 
