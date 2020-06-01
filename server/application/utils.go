@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/nats-io/nats.go"
@@ -76,11 +77,15 @@ func advertiseTransactionMessage(ctx context.Context, nc *nats.Conn,
 				PKeySig:     "",
 				Clock:       txn.Clock,
 			}
+			log.WithField("currentNTime", time.Now().UnixNano()).Info("ready to send a message to nats")
+			const testCnt = 50
+			for i := 0; i < testCnt; i++ {
+				msg.Txn.Timestamp = int64(i) + 10000
+				jMsg, _ := json.Marshal(msg)
+				toNatsInbox := fmt.Sprintf("NATS_%s_INBOX", txn.ToApp)
 
-			jMsg, _ := json.Marshal(msg)
-			toNatsInbox := fmt.Sprintf("NATS_%s_INBOX", txn.ToApp)
-			log.Info("ready to send a message to nats")
-			messenger.PublishNatsMessage(ctx, nc, toNatsInbox, jMsg)
+				messenger.PublishNatsMessage(ctx, nc, toNatsInbox, jMsg)
+			}
 		}
 	}
 }

@@ -14,6 +14,7 @@ import (
 	"os"
 	"reflect"
 	"sync"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 
@@ -150,6 +151,8 @@ func (server *Server) startNatsSubscriber(ctx context.Context) {
 				log.WithFields(log.Fields{
 					"type": txn.TxnType,
 					"PID":  txn.Clock.PID,
+					"timestamp": txn.Timestamp,
+					"currentNTime": time.Now().UnixNano(),
 				}).Info("received message out from pbft")
 				common.UpdateGlobalClock(txn.Clock.Clock, false)
 				server.InitiateAddBlock(ctx, &txn)
@@ -157,6 +160,8 @@ func (server *Server) startNatsSubscriber(ctx context.Context) {
 				log.WithFields(log.Fields{
 					"type": txn.TxnType,
 					"PID":  txn.Clock.PID,
+					"timestamp": txn.Timestamp,
+					"currentNTime": time.Now().UnixNano(),
 				}).Info("received message out from slpbft")
 				common.UpdateGlobalClock(txn.Clock.Clock, false)
 				server.InitiateAddBlock(ctx, &txn)

@@ -135,6 +135,7 @@ func (state *pbftState) handleMessage(
 			log.WithFields(log.Fields{
 				"phase":         "PREPARE",
 				"state counter": state.counter[reduced],
+				"timestamp": reduced.Txn.Timestamp,
 				//"reduced":           reduced,
 				//"failure tolerance": state.failureTolerance,
 			}).Info("PREPARE")
