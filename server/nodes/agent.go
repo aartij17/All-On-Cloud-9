@@ -145,6 +145,9 @@ func (server *Server) startNatsSubscriber(ctx context.Context) {
 				case common.NATS_CONSENSUS_DONE_MSG:
 					log.Info("NATS_CONSENSUS_DONE_MSG_RCVD, nothing to do")
 				case common.NATS_ADD_TO_BC:
+					log.WithFields(log.Fields{
+						"currentNTime": time.Now().UnixNano(),
+					}).Info("received message out from orderers")
 					var ordererMsg *nodes.Message
 					_ = json.Unmarshal(natsMsg.Data, &ordererMsg)
 					common.UpdateGlobalClock(ordererMsg.CommonMessage.Txn.Clock.Clock, false)
