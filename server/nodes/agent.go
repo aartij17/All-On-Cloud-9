@@ -84,6 +84,9 @@ func (server *Server) initiateLocalGlobalConsensus(ctx context.Context, fromNode
 		case common.GLOBAL_CONSENSUS_ALGO_HEIRARCHICAL: //Hierarchical PBFT
 			server.pbftNode.MessageIn <- *commonMessage.Txn
 			//server.pbftNode.MessageOut
+		case common.GLOBAL_CONSENSUS_ALGO_TH_HEIRARCHICAL:
+			server.pbftNode.MessageIn <- *commonMessage.Txn
+			//server.pbftNode.MessageOut
 		case common.GLOBAL_CONSENSUS_ALGO_SLPBFT: //Single-layer PBFT
 			server.pbftSLNode.MessageIn <- *commonMessage.Txn
 		}
