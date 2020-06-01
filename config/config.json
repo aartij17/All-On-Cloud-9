@@ -88,7 +88,7 @@
       "nats://0.0.0.0:4222"
     ]
   },
-  "global_consensus_algorithm": "orderer",
-  "consensus": "bpaxos",
+  "global_consensus_algorithm": "orderer", //values are: orderer, hpbft, slpbft (soon thhpbft)
+  "consensus": "bpaxos", // valuse are: pbft, bpaxos (soon thpbft)
   "num_applications": 2
 }
