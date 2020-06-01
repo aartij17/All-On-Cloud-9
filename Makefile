@@ -85,9 +85,9 @@ build:
 
 
 copy-instance:
-	scp -i cluster_name.pem -r $(BIN_OUT)/* ubuntu@${INSTANCE}:/home/ubuntu/cloud/bin
-	scp -i cluster_name.pem -r $(KUBE_OUT)/* ubuntu@${INSTANCE}:/home/ubuntu/cloud/kubernetes
-	scp -i cluster_name.pem -r $(DOCKER_OUT)/* ubuntu@${INSTANCE}:/home/ubuntu/cloud
+	scp -i cloud_test.pem -r $(BIN_OUT)/* ubuntu@${INSTANCE}:/home/ubuntu/cloud/bin
+	scp -i cloud_test.pem -r $(KUBE_OUT)/* ubuntu@${INSTANCE}:/home/ubuntu/cloud/kubernetes
+	scp -i cloud_test.pem -r $(DOCKER_OUT)/* ubuntu@${INSTANCE}:/home/ubuntu/cloud
 
 prepare-service-files:
 	mkdir -p $(SERVICE_OUT)

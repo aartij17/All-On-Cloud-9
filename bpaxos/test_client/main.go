@@ -62,7 +62,7 @@ func main() {
 	socket := Socket{}
 	_ = socket.Connect(nats.DefaultURL)
 
-	numMessages := 200
+	numMessages := 50
 
 	socket.Subscribe(common.NATS_CONSENSUS_DONE_MSG, func(m *nats.Msg) {
 		numConsensusDone += 1

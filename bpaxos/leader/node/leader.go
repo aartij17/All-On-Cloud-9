@@ -168,7 +168,7 @@ func StartLeader(ctx context.Context, nc *nats.Conn, leaderindex int) {
 	l := NewLeader(leaderindex) // Hard Coded User Id.
 
 	go func(nc *nats.Conn, leader *Leader) {
-		natsMessage := make(chan *nats.Msg)
+		natsMessage := make(chan *nats.Msg, 100)
 		err := messenger.SubscribeToInbox(ctx, nc, common.NATS_CONSENSUS_INITIATE_MSG, natsMessage, false)
 
 		if err != nil {
