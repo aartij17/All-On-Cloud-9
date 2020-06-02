@@ -3,7 +3,7 @@ package debug
 import (
 	"os"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 )
 
 // For debug purposes

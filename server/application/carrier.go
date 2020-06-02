@@ -11,7 +11,7 @@ import (
 
 	guuid "github.com/google/uuid"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/nats-io/nats.go"
 
 	"encoding/json"

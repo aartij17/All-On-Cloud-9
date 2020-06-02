@@ -4,7 +4,7 @@ import (
 	"All-On-Cloud-9/common"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 )
 
 type pbftState struct {

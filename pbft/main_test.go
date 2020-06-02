@@ -159,19 +159,19 @@ func TestGlobalAndLocalOneMultipleNodeApp(t *testing.T) {
 	const AppCount = 4
 	const NodePerFirstApp = 4
 	dummyTxn := common.Transaction{
-		TxnType: GLOBAL,
+		TxnType:   GLOBAL,
 		Timestamp: 1,
 	}
 	dummyTxn2 := common.Transaction{
-		TxnType: GLOBAL,
+		TxnType:   GLOBAL,
 		Timestamp: 3,
 	}
 	dummyLocalTxn := common.Transaction{
-		TxnType: LOCAL,
+		TxnType:   LOCAL,
 		Timestamp: 2,
 	}
 	dummyLocalTxn2 := common.Transaction{
-		TxnType: LOCAL,
+		TxnType:   LOCAL,
 		Timestamp: 4,
 	}
 	Txns := [4]common.Transaction{
