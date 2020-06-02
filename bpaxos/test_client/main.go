@@ -5,7 +5,7 @@ import (
 	"github.com/nats-io/nats.go"
 	"time"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 )
 
 

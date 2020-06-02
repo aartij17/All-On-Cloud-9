@@ -11,7 +11,7 @@ import (
 
 	"github.com/nats-io/nats.go"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 )
 
 var (

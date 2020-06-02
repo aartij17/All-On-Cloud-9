@@ -8,7 +8,7 @@ import (
 	"context"
 	"fmt"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/hashicorp/terraform/dag"
 )
 

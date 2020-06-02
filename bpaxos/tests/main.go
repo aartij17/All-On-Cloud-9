@@ -4,7 +4,7 @@ import (
 	"All-On-Cloud-9/bpaxos"
 	"flag"
 	"context"
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"os"
 	"os/signal"
 	"github.com/nats-io/nats.go"

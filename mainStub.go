@@ -12,7 +12,7 @@ import (
 	"fmt"
 	"os/signal"
 	"os"
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 )
 
 

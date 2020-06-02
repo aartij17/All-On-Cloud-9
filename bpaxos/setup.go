@@ -7,7 +7,7 @@ import (
 	replica "All-On-Cloud-9/bpaxos/replica/node"
 	"context"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/nats-io/nats.go"
 )

@@ -4,7 +4,7 @@ import (
 	"All-On-Cloud-9/server/blockchain"
 	"encoding/json"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 )
 
 // This file has all the contracts that are invoked when the consensus is reached and just BEFORE
