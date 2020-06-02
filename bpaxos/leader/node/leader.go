@@ -215,7 +215,7 @@ func StartLeader(ctx context.Context, nc *nats.Conn, leaderindex int) {
 					sentMessage, err := json.Marshal(&data)
 					// Respond back to the client
 					if err == nil {
-						fmt.Println("leader can publish a message to deps")
+						//fmt.Println("leader can publish a message to deps")
 						messenger.PublishNatsMessage(ctx, nc, common.NATS_CONSENSUS_DONE_MSG, sentMessage)
 
 					} else {

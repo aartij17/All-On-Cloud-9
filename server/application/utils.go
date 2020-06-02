@@ -34,7 +34,7 @@ func startInterAppNatsListener(ctx context.Context, msgChan chan *nats.Msg) {
 		select {
 		case natsMsg := <-msgChan:
 			_ = json.Unmarshal(natsMsg.Data, &msg)
-			fmt.Println(msg)
+			//fmt.Println(msg)
 			common.UpdateGlobalClock(msg.Txn.Clock.Clock, false)
 			AppAgentChan <- msg
 		}

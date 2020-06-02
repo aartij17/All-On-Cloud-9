@@ -6,7 +6,6 @@ import (
 	"All-On-Cloud-9/messenger"
 	"context"
 	"encoding/json"
-	"fmt"
 	"os"
 	"os/signal"
 
@@ -36,7 +35,7 @@ func (replica *Replica) HandleReceive(message *common.MessageEvent) string {
 
 // add the dependency to the graph
 func (replica *Replica) AddDepsToGraph(message *common.MessageEvent) {
-	fmt.Println("add dependency to graph")
+	//fmt.Println("add dependency to graph")
 	// newNode := &GraphNode {VertexId:message.VertexId.Id, LeaderIndex:message.VertexId.Index, Message:message.Message}
 	// strkey := fmt.Sprintf("%d:%d", message.VertexId.Id, message.VertexId.Index)
 	// m[strkey] = message.Message
@@ -49,7 +48,7 @@ func (replica *Replica) AddDepsToGraph(message *common.MessageEvent) {
 }
 
 func (replica *Replica) ExecVertices() string {
-	fmt.Println("execute every eligible vertex Vy")
+	//fmt.Println("execute every eligible vertex Vy")
 	// Vy := common.Vertex{0,0}
 	// if hash(vy) % num replicas = replica index then send result
 	if true {
@@ -60,7 +59,7 @@ func (replica *Replica) ExecVertices() string {
 }
 
 func ProcessReplicaMessage(m *nats.Msg, nc *nats.Conn, ctx context.Context, rep *Replica) {
-	fmt.Println("Received proposer to replica")
+	//fmt.Println("Received proposer to replica")
 	data := common.MessageEvent{}
 	json.Unmarshal(m.Data, &data)
 	// newMessage := rep.HandleReceive(&data)

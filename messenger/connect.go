@@ -11,8 +11,8 @@ import (
 
 func NatsConnect(ctx context.Context) (*nats.Conn, error) {
 	natsOptions := nats.Options{
-		Servers:        config.SystemConfig.Nats.Servers,
-		AllowReconnect: true,
+		Servers:          config.SystemConfig.Nats.Servers,
+		AllowReconnect:   true,
 		ReconnectBufSize: 8 * 1024 * 1024,
 	}
 	nc, err := natsOptions.Connect()

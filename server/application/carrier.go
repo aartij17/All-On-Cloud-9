@@ -48,7 +48,7 @@ func handleCarrierRequest(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("HandleCarrierRequest")
 	_ = json.NewDecoder(r.Body).Decode(&cTxn)
 	jTxn, _ := json.Marshal(cTxn)
-	fmt.Println(cTxn)
+	//fmt.Println(cTxn)
 
 	txn = &common.Transaction{
 		TxnBody:   jTxn,

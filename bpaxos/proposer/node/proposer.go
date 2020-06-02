@@ -103,7 +103,7 @@ func (proposer *Proposer) timeout() {
 }
 
 func (proposer *Proposer) ProcessMessageFromConsensus(m *nats.Msg, nc *nats.Conn, ctx context.Context) {
-	fmt.Println("Received consensus to proposer")
+	//fmt.Println("Received consensus to proposer")
 	data := common.Vertex{}
 	err := json.Unmarshal(m.Data, &data)
 	if err != nil {
