@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/nats-io/nats.go"
+	log "github.com/sirupsen/logrus"
 )
 
 type PbftNode struct {
@@ -217,7 +217,7 @@ func (node *PbftNode) handleGlobalOut(state *pbftState) {
 			//"txn":   _txn,
 			"id":    node.id,
 			"appId": node.appId,
-		}).Info("GLOBAL CONSENSUS DONE")
+		}).Debug("GLOBAL CONSENSUS DONE")
 		node.MessageOut <- _txn
 	}
 }

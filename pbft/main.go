@@ -5,8 +5,8 @@ import (
 	"os"
 	"strings"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/nats-io/nats.go"
+	log "github.com/sirupsen/logrus"
 )
 
 func _inbox(suffix string) string {
