@@ -127,7 +127,7 @@ func (server *Server) InitiateAddBlock(ctx context.Context, txn *common.Transact
 		log.WithFields(log.Fields{
 			"currentApp": server.AppName,
 			"targetApp":  txn.ToApp,
-		}).Warn("global block received from consensus, target app not matching")
+		}).Debug("global block received from consensus, target app not matching")
 		return
 	}
 
@@ -243,7 +243,7 @@ func (server *Server) AddForeignGlobalBlock(ctx context.Context, newBlock *block
 	if _, OK := server.PIDMap[newBlock.Transaction.Clock.PID]; OK {
 		log.WithFields(log.Fields{
 			"pid": newBlock.Transaction.Clock.PID,
-		}).Warn("foreign block already present in blockchain")
+		}).Debug("foreign block already present in blockchain")
 		return
 	}
 
@@ -285,7 +285,7 @@ func (server *Server) AddForeignGlobalBlock(ctx context.Context, newBlock *block
 		"pid":        newBlock.Transaction.Clock.PID,
 	}).Info("added new edge for global block")
 	blockchain.GlobalSeqNumber += 1
-	blockchain.LocalSeqNumber += 1
+	//blockchain.LocalSeqNumber += 1
 
 	blockchain.PrintBlockchain()
 }

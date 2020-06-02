@@ -67,9 +67,9 @@ func handleBuyerRequest(w http.ResponseWriter, r *http.Request) {
 		Clock: common.GlobalClock,
 	}
 
-	fmt.Println("HandleBuyerRequest")
+	//fmt.Println("HandleBuyerRequest")
 	_ = json.NewDecoder(r.Body).Decode(&bTxn)
-	fmt.Println(bTxn)
+	//fmt.Println(bTxn)
 
 	jTxn, _ := json.Marshal(bTxn)
 

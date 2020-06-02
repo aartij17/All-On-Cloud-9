@@ -160,18 +160,18 @@ func (server *Server) startNatsSubscriber(ctx context.Context) {
 				server.AddForeignGlobalBlock(ctx, block)
 			case txn = <-server.pbftNode.MessageOut:
 				log.WithFields(log.Fields{
-					"type": txn.TxnType,
-					"PID":  txn.Clock.PID,
-					"timestamp": txn.Timestamp,
+					"type":         txn.TxnType,
+					"PID":          txn.Clock.PID,
+					"timestamp":    txn.Timestamp,
 					"currentNTime": time.Now().UnixNano(),
 				}).Info("received message out from pbft")
 				common.UpdateGlobalClock(txn.Clock.Clock, false)
 				server.InitiateAddBlock(ctx, &txn)
 			case txn = <-server.pbftSLNode.MessageOut:
 				log.WithFields(log.Fields{
-					"type": txn.TxnType,
-					"PID":  txn.Clock.PID,
-					"timestamp": txn.Timestamp,
+					"type":         txn.TxnType,
+					"PID":          txn.Clock.PID,
+					"timestamp":    txn.Timestamp,
 					"currentNTime": time.Now().UnixNano(),
 				}).Info("received message out from slpbft")
 				common.UpdateGlobalClock(txn.Clock.Clock, false)

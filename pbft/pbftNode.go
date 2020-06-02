@@ -5,7 +5,6 @@ import (
 	"All-On-Cloud-9/messenger"
 	"context"
 	"encoding/json"
-	"fmt"
 	"reflect"
 	"strings"
 	"time"
@@ -148,9 +147,9 @@ func (node *PbftNode) initTimer(state *pbftState, broadcast func(common.Message)
 	state.timeoutTimer = time.NewTimer(TIMEOUT * time.Second)
 	go func() {
 		for {
-			fmt.Println("waiting for timeout")
+			//fmt.Println("waiting for timeout")
 			<-state.timeoutTimer.C
-			fmt.Println("timeout")
+			//fmt.Println("timeout")
 			broadcast(common.Message{
 				MessageType: VIEW_CHANGE,
 				Timestamp:   state.candidateNumber,

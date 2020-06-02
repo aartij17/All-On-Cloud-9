@@ -14,7 +14,7 @@ type pbftState struct {
 	currentTimestamp  int
 	viewChangeCounter int
 	timerIsRunning    bool
-	trustedHardware bool
+	trustedHardware   bool
 	candidateNumber   int
 	suffix            string
 	counter           map[reducedMessage]int
@@ -31,7 +31,7 @@ func newPbftState(failureTolerance int, totalNodes int, suffix string, trustedHa
 		currentTimestamp:  -1,
 		viewChangeCounter: 0,
 		timerIsRunning:    false,
-		trustedHardware: trustedHardware,
+		trustedHardware:   trustedHardware,
 		candidateNumber:   1,
 		suffix:            suffix,
 		counter:           make(map[reducedMessage]int),
@@ -124,7 +124,7 @@ func (state *pbftState) handleMessage(
 		//	"counter": state.counter[reduced],
 		//	"failureTolerance": state.failureTolerance,
 		//}).Info("checking threshold")
-		if state.totalNodes - state.counter[reduced] == state.failureTolerance || state.trustedHardware {
+		if state.totalNodes-state.counter[reduced] == state.failureTolerance || state.trustedHardware {
 			go broadcast(common.Message{
 				MessageType: COMMIT,
 				Timestamp:   _message.Timestamp,
@@ -135,7 +135,7 @@ func (state *pbftState) handleMessage(
 			log.WithFields(log.Fields{
 				"phase":         "PREPARE",
 				"state counter": state.counter[reduced],
-				"timestamp": reduced.Txn.Timestamp,
+				"timestamp":     reduced.Txn.Timestamp,
 				//"reduced":           reduced,
 				//"failure tolerance": state.failureTolerance,
 			}).Debug("PREPARE")
@@ -168,10 +168,10 @@ func (state *pbftState) handleMessage(
 		if state.trustedHardware {
 			threshold = state.failureTolerance
 		}
-		if state.totalNodes - state.counter[reduced] == threshold {
+		if state.totalNodes-state.counter[reduced] == threshold {
 			state.currentTimestamp = _message.Timestamp
 			state.messageOut <- *_message.Txn
-		} else if state.totalNodes - state.counter[reduced] < threshold {
+		} else if state.totalNodes-state.counter[reduced] < threshold {
 			//println("COMMITTED")
 		}
 	}

@@ -66,7 +66,6 @@ func handleSupplierRequest(w http.ResponseWriter, r *http.Request) {
 
 	_ = json.NewDecoder(r.Body).Decode(&sTxn)
 	jTxn, err = json.Marshal(sTxn)
-	fmt.Println(sTxn)
 
 	if err != nil {
 		log.WithFields(log.Fields{
