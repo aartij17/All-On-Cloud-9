@@ -27,9 +27,7 @@ func (server *Server) listenToContractChannel(c chan bool, resp chan bool) {
 func (server *Server) InvokeSmartContract(block *blockchain.Block) bool {
 	respChan := make(chan bool)
 	contractValid := make(chan bool)
-	log.WithFields(log.Fields{
-		"app": block.Transaction.FromApp,
-	}).Info("invoking smart contract")
+	log.Info("invoking smart contract")
 	switch block.Transaction.FromApp {
 	case config.APP_MANUFACTURER:
 		go server.listenToContractChannel(contractValid, respChan)
@@ -163,7 +161,7 @@ func (server *Server) InitiateAddBlock(ctx context.Context, txn *common.Transact
 		log.Error("smart contract violated, skipping the block addition")
 		return
 	} else {
-		log.Info("moving on......, contract check done!")
+		log.Info("Contract is valid! Let's add the block already, shall we?")
 	}
 
 	if isGlobal {
