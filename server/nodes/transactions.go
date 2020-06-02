@@ -10,8 +10,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/hashicorp/terraform/dag"
+	log "github.com/sirupsen/logrus"
 )
 
 func (server *Server) listenToContractChannel(c chan bool, resp chan bool) {
@@ -71,7 +71,7 @@ func (server *Server) InitiateAddBlock(ctx context.Context, txn *common.Transact
 		"txn type":  txn.TxnType,
 		"pid":       txn.Clock.PID,
 		"timestamp": txn.Timestamp,
-	}).Info("message details for the new block")
+	}).Debug("message details for the new block")
 
 	if _, OK := server.PIDMap[txn.Clock.PID]; OK {
 		log.WithFields(log.Fields{
@@ -185,7 +185,7 @@ func (server *Server) InitiateAddBlock(ctx context.Context, txn *common.Transact
 		log.WithFields(log.Fields{
 			"fromVertex": newVertex.VertexId,
 			"toVertex":   server.LastAddedGlobalBlock.VertexId,
-		}).Info("added new edge for global block")
+		}).Debug("added new edge for global block")
 	}
 	// if this is the first global block, add an edge b/w this block and the lambda block as well
 	if isGlobal && blockchain.GlobalSeqNumber == 1 {
@@ -216,7 +216,7 @@ func (server *Server) InitiateAddBlock(ctx context.Context, txn *common.Transact
 			"fromVertex": newVertex.VertexId,
 			"toVertex":   server.LastAddedLocalBlock.VertexId,
 			"pid":        txn.Clock.PID,
-		}).Info("added new edge for local block")
+		}).Debug("added new edge for local block")
 	} else if isGlobal {
 		server.LastAddedGlobalBlock = newVertex
 		server.LastAddedGlobalNodeId = txn.FromNodeNum
@@ -224,7 +224,7 @@ func (server *Server) InitiateAddBlock(ctx context.Context, txn *common.Transact
 			"fromVertex": newVertex.VertexId,
 			"toVertex":   server.LastAddedGlobalBlock.VertexId,
 			"pid":        txn.Clock.PID,
-		}).Info("added new edge for global block")
+		}).Debug("added new edge for global block")
 		jVertex, _ := json.Marshal(newBlock)
 		messenger.PublishNatsMessage(ctx, server.NatsConn, common.NATS_GLOBAL_BLOCK_INBOX, jVertex)
 	}
@@ -253,7 +253,7 @@ func (server *Server) AddForeignGlobalBlock(ctx context.Context, newBlock *block
 		"txn type":  newBlock.Transaction.TxnType,
 		"pid":       newBlock.Transaction.Clock.PID,
 		"timestamp": newBlock.Transaction.Timestamp,
-	}).Info("message details for the new foreign block")
+	}).Debug("message details for the new foreign block")
 
 	newVertex := &blockchain.Vertex{
 		V:        dag.Vertex(newBlock),
@@ -266,7 +266,7 @@ func (server *Server) AddForeignGlobalBlock(ctx context.Context, newBlock *block
 		log.WithFields(log.Fields{
 			"fromVertex": newVertex.VertexId,
 			"toVertex":   server.LastAddedGlobalBlock.VertexId,
-		}).Info("added new edge for global block")
+		}).Debug("added new edge for global block")
 	}
 	// if this is the first global block, add an edge b/w this block and the lambda block as well
 	if blockchain.GlobalSeqNumber == 0 {
@@ -283,7 +283,7 @@ func (server *Server) AddForeignGlobalBlock(ctx context.Context, newBlock *block
 		"fromVertex": newVertex.VertexId,
 		"toVertex":   server.LastAddedGlobalBlock.VertexId,
 		"pid":        newBlock.Transaction.Clock.PID,
-	}).Info("added new edge for global block")
+	}).Debug("added new edge for global block")
 	blockchain.GlobalSeqNumber += 1
 	//blockchain.LocalSeqNumber += 1
 

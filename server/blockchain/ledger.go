@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"sync"
 
-	log "github.com/sirupsen/logrus"
 	guuid "github.com/google/uuid"
 	"github.com/hashicorp/terraform/dag"
 	"github.com/hashicorp/terraform/tfdiags"
+	log "github.com/sirupsen/logrus"
 )
 
 /**
@@ -73,9 +73,9 @@ func PrintBlockchain() {
 		gpArr = append(gpArr, gp)
 		return nil
 	})
-	log.Info("NODE, OUTGOING EDGE, INCOMING EDGE")
+	log.Warn("[Node], [Outgoing edges], [Incoming Edges]")
 	for gp := range gpArr {
-		log.Info(gpArr[gp])
+		log.Warn(gpArr[gp])
 	}
 }
 

@@ -90,5 +90,6 @@
   },
   "global_consensus_algorithm": "hpbft",
   "consensus": "pbft",
-  "num_applications": 2
+  "num_applications": 2,
+  "log_level": "info"
 }

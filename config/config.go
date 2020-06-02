@@ -54,6 +54,7 @@ type Config struct {
 	GlobalConsensusAlgo string        `json:"global_consensus_algorithm"`
 	Consensus           string        `json:"consensus"`
 	NumApplications     int           `json:"num_applications"`
+	LogLevel            string        `json:"log_level"`
 }
 
 func IsByzantineTolerant(appName string) bool { //Configurable based on the app

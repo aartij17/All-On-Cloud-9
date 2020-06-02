@@ -9,8 +9,8 @@ import (
 	"os"
 	"os/signal"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/nats-io/nats.go"
+	log "github.com/sirupsen/logrus"
 	// "github.com/hashicorp/terraform/dag"
 )
 
