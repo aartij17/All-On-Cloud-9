@@ -73,10 +73,12 @@ func PrintBlockchain() {
 		gpArr = append(gpArr, gp)
 		return nil
 	})
+	log.Warn("**********************************************************************************************")
 	log.Warn("[Node], [Outgoing edges], [Incoming Edges]")
 	for gp := range gpArr {
 		log.Warn(gpArr[gp])
 	}
+	log.Warn("**********************************************************************************************")
 }
 
 func InitBlockchain(nodeId string) *Vertex {
