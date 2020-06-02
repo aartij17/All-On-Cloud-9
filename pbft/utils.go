@@ -4,7 +4,7 @@ import (
 	"All-On-Cloud-9/common"
 	"All-On-Cloud-9/config"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 )
 
 func PipeInHierarchicalLocalConsensus(pbftNode *PbftNode) {
