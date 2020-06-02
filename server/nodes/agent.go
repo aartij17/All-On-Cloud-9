@@ -46,9 +46,9 @@ type Server struct {
 }
 
 func (server *Server) startLocalConsensus(commonMessage *common.Message) {
-	log.Info("starting local consensus")
+	log.Debug("starting local consensus")
 	server.pbftNode.MessageIn <- *commonMessage.Txn
-	log.Info("message sent to channel")
+	log.Debug("message sent to channel")
 	go func() {
 		for {
 			txn := <-server.pbftNode.MessageOut
