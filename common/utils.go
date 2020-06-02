@@ -1,9 +1,10 @@
 package common
 
 import (
+	"strings"
 	"sync"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 
 	"All-On-Cloud-9/config"
 	"bufio"
@@ -24,6 +25,37 @@ var (
 	GlobalClock     = 0
 )
 
+func ConfigureLogger(level string) {
+	logrus.SetFormatter(&logrus.TextFormatter{
+		ForceColors:               true,
+		DisableColors:             false,
+		ForceQuote:                false,
+		DisableQuote:              false,
+		EnvironmentOverrideColors: false,
+		DisableTimestamp:          false,
+		FullTimestamp:             false,
+		TimestampFormat:           "",
+		DisableSorting:            false,
+		SortingFunc:               nil,
+		DisableLevelTruncation:    true,
+		PadLevelText:              false,
+		QuoteEmptyFields:          false,
+		FieldMap:                  nil,
+		CallerPrettyfier:          nil,
+	})
+	logrus.SetOutput(os.Stdout)
+	switch strings.ToLower(level) {
+	case "panic":
+		logrus.SetLevel(logrus.PanicLevel)
+	case "debug":
+		logrus.SetLevel(logrus.DebugLevel)
+	case "info":
+		logrus.SetLevel(logrus.InfoLevel)
+	case "warning", "warn":
+		logrus.SetLevel(logrus.WarnLevel)
+	}
+}
+
 func UpdateGlobalClock(currTimestamp int, local bool) {
 	GlobalClockLock.Lock()
 	defer GlobalClockLock.Unlock()
@@ -37,7 +69,7 @@ func UpdateGlobalClock(currTimestamp int, local bool) {
 	} else {
 		GlobalClock += 1
 	}
-	log.WithFields(log.Fields{
+	logrus.WithFields(logrus.Fields{
 		"clock": GlobalClock,
 	}).Debug("updated the global clock")
 }

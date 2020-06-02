@@ -1,6 +1,7 @@
 package main
 
 import (
+	"All-On-Cloud-9/common"
 	"All-On-Cloud-9/config"
 	"All-On-Cloud-9/consensus/orderers/nodes"
 	"context"
@@ -37,6 +38,12 @@ func main() {
 		"/Users/aartij17/go/src/All-On-Cloud-9/config/config.json", "")
 
 	flag.Parse()
+	ctx, cancel := context.WithCancel(context.Background())
+	cleanupDone := make(chan bool)
+
+	config.LoadConfig(ctx, configFilePath)
+
+	common.ConfigureLogger(config.SystemConfig.LogLevel)
 
 	if configFilePath == "" {
 		log.Error("invalid config file path, exiting now")
@@ -47,10 +54,6 @@ func main() {
 		"configFilePath": configFilePath,
 	}).Info("Orderer agent flags")
 
-	ctx, cancel := context.WithCancel(context.Background())
-	cleanupDone := make(chan bool)
-
-	config.LoadConfig(ctx, configFilePath)
 	err = nodes.CreateOrderer(ctx, nodeId)
 	if err != nil {
 		cancel()

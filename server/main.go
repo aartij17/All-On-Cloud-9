@@ -1,6 +1,7 @@
 package main
 
 import (
+	"All-On-Cloud-9/common"
 	"All-On-Cloud-9/config"
 	"All-On-Cloud-9/server/nodes"
 	"context"
@@ -8,24 +9,40 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"strings"
 
 	log "github.com/sirupsen/logrus"
 )
 
-func configureLogger(level string) {
-	log.SetOutput(os.Stderr)
-	switch strings.ToLower(level) {
-	case "panic":
-		log.SetLevel(log.PanicLevel)
-	case "debug":
-		log.SetLevel(log.DebugLevel)
-	case "info":
-		log.SetLevel(log.InfoLevel)
-	case "warning", "warn":
-		log.SetLevel(log.WarnLevel)
-	}
-}
+//func configureLogger(level string) {
+//	log.SetFormatter(&log.TextFormatter{
+//		ForceColors:               true,
+//		DisableColors:             false,
+//		ForceQuote:                false,
+//		DisableQuote:              false,
+//		EnvironmentOverrideColors: false,
+//		DisableTimestamp:          false,
+//		FullTimestamp:             false,
+//		TimestampFormat:           "",
+//		DisableSorting:            false,
+//		SortingFunc:               nil,
+//		DisableLevelTruncation:    false,
+//		PadLevelText:              false,
+//		QuoteEmptyFields:          false,
+//		FieldMap:                  nil,
+//		CallerPrettyfier:          nil,
+//	})
+//	log.SetOutput(os.Stdout)
+//	switch strings.ToLower(level) {
+//	case "panic":
+//		log.SetLevel(log.PanicLevel)
+//	case "debug":
+//		log.SetLevel(log.DebugLevel)
+//	case "info":
+//		log.SetLevel(log.InfoLevel)
+//	case "warning", "warn":
+//		log.SetLevel(log.WarnLevel)
+//	}
+//}
 
 func getNodeId(appName string, nodeIdNum int) string {
 	switch appName {
@@ -55,13 +72,16 @@ func main() {
 
 	flag.Parse()
 
+	ctx, cancel := context.WithCancel(context.Background())
+	// load all the config details - hosts, ports, service names
+	config.LoadConfig(ctx, configFilePath)
+	common.ConfigureLogger(config.SystemConfig.LogLevel)
+
 	if configFilePath == "" {
 		log.Error("invalid config file path found, exiting now")
 		os.Exit(1)
 	}
-	ctx, cancel := context.WithCancel(context.Background())
-	// load all the config details - hosts, ports, service names
-	config.LoadConfig(ctx, configFilePath)
+
 	nodeId := getNodeId(appName, nodeIdNum)
 	if nodeId == "" {
 		log.Error("invalid node Id created, exiting now")
