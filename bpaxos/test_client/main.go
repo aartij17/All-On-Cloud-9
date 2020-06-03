@@ -21,9 +21,6 @@ func (s *Socket) Connect(address string) bool {
 		AllowReconnect: true,
 		MaxReconnect:   3,
 		ReconnectWait:  10,
-		//// TODO: these callbacks can be set in order to allow nats to perform failure handling.
-		//ClosedCB:          nil,
-		//DisconnectedErrCB: nil,
 	}
 
 	s.conn, err = natsOptions.Connect()

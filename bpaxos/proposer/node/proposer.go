@@ -67,7 +67,6 @@ func (proposer *Proposer) processMessageFromLeader(data common.MessageEvent, nc 
 	proposer.VoteCount = 0
 	proposer.Message = data
 	vertexId := data.VertexId
-	// TODO: hardcoded the ip address for now, change that later
 	consensusMessage := common.ConsensusMessage{VertexId: vertexId, ProposerId: proposer.ProposerId, Release: 0}
 	sentMessage, err := json.Marshal(&consensusMessage)
 	if err != nil {

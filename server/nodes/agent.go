@@ -73,8 +73,6 @@ func (server *Server) initiateLocalGlobalConsensus(ctx context.Context, fromNode
 	//	}).Error("request received on a non-primary agent, no action taken")
 	//	return
 	//}
-	// TODO: [Aarti]: Check if the message is valid -- check the signature
-	// TODO: THIS WILL BLOCK! Initiate local consensus - Make sure that true is published to LocalConsensusCompleteChannel
 	// [Aarti]: This needs to be a go routine since we want to ensure that we appropriately wait for the
 	// local consensus to finish
 	//if commonMessage.Clock.Clock%config.GetAppNodeCnt(server.AppName) == server.ServerNumId {
@@ -90,9 +88,8 @@ func (server *Server) initiateLocalGlobalConsensus(ctx context.Context, fromNode
 			server.pbftSLNode.MessageIn <- *commonMessage.Txn
 		}
 	} else if commonMessage.Txn.TxnType == common.LOCAL_TXN {
-		// TODO: [DEMO]: if we are gonna demo orderer + bpaxos, comment the next 2 lines of code
-		go server.startLocalConsensus(commonMessage) //WHY?
-		<-server.LocalConsensusComplete              //WHY?
+		go server.startLocalConsensus(commonMessage)
+		<-server.LocalConsensusComplete
 		common.UpdateGlobalClock(commonMessage.Txn.Clock.Clock, false)
 		server.InitiateAddBlock(ctx, commonMessage.Txn)
 		return

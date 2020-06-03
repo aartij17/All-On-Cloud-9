@@ -89,9 +89,7 @@ func InitBlockchain(nodeId string) *Vertex {
 		IsGenesis:     true,
 		Transaction:   nil,
 		InitiatorNode: "",
-		// TODO: [Aarti]: Do we even need this?!
 		Clock: &common.LamportClock{
-			// TODO: [Aarti] Confirm if this is right
 			PID:   fmt.Sprintf("%s-%s", nodeId, id.String()),
 			Clock: common.GlobalClock,
 		},
