@@ -102,7 +102,7 @@ func (state *pbftState) handleMessage(
 		state.viewNumber = _message.Timestamp
 		state.candidateNumber = state.viewNumber + 1
 	case VIEW_CHANGE:
-		//if isSuggestedLeader(_message.Timestamp) { TODO
+		//if isSuggestedLeader(_message.Timestamp) {
 		//	state.viewChangeCounter++
 		//	//println("inside VIEW_CHANGE", getId(), state.viewChangeCounter, 2*state.failureTolerance+1)
 		//	if state.viewChangeCounter == 2*state.failureTolerance+1 {
@@ -128,7 +128,6 @@ func (state *pbftState) handleMessage(
 			state.setTimer()
 		}
 	case PRE_PREPARE:
-		// TODO: Check if is from leader
 		state.stopTimer()
 		go broadcast(common.Message{
 			MessageType: PREPARE,

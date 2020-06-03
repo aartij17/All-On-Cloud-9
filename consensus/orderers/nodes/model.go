@@ -6,7 +6,6 @@ type Message struct {
 	MessageType   string          `json:"message_type"`
 	Timestamp     int             `json:"client_timestamp,omitempty"`
 	CommonMessage *common.Message `json:"common_message"`
-	// TODO: [Aarti]: Transaction is not really needed here, maybe remove it?
 	Transaction   *common.Transaction `json:"transaction,omitempty"`
 	Digest        string              `json:"message_digest,omitempty"`
 	Hash          string              `json:"crypto_hash,omitempty"`

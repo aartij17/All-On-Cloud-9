@@ -103,7 +103,6 @@ func (state *pbftState) handleMessage(
 			state.setTimer()
 		}
 	case PRE_PREPARE:
-		// TODO: Check if is from leader
 		state.stopTimer()
 		go broadcast(common.Message{
 			MessageType: PREPARE,
