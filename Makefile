@@ -85,9 +85,14 @@ build:
 
 
 copy-instance:
-	scp -i ~/cloud_test.pem -r $(BIN_OUT)/* ubuntu@${INSTANCE}:/home/ubuntu/cloud/bin
-	scp -i ~/cloud_test.pem -r $(KUBE_OUT)/* ubuntu@${INSTANCE}:/home/ubuntu/cloud/kubernetes
-	scp -i ~/cloud_test.pem -r $(DOCKER_OUT)/* ubuntu@${INSTANCE}:/home/ubuntu/cloud
+	scp -i ~/pem_files/cloud_test.pem -r $(BIN_OUT)/* ubuntu@${INSTANCE}:/home/ubuntu/cloud/bin
+	scp -i ~/pem_files/cloud_test.pem -r $(KUBE_OUT)/* ubuntu@${INSTANCE}:/home/ubuntu/cloud/kubernetes
+	scp -i ~/pem_files/cloud_test.pem -r $(DOCKER_OUT)/* ubuntu@${INSTANCE}:/home/ubuntu/cloud
+
+copy-local:
+	cp -r $(BIN_OUT)/* /home/ubuntu/cloud/bin
+	cp -r $(KUBE_OUT)/* /home/ubuntu/cloud/kubernetes
+	cp -r $(DOCKER_OUT)/* /home/ubuntu/cloud
 
 prepare-service-files:
 	mkdir -p $(SERVICE_OUT)
@@ -111,3 +116,5 @@ prepare-docker-files:
 local: clean build
 
 deploy: clean build prepare-kubernetes-files prepare-docker-files copy-instance
+
+deploy-local: clean build prepare-kubernetes-files prepare-docker-files copy-local
