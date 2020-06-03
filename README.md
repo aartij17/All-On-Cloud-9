@@ -3,10 +3,6 @@ The project will assume presence of 4 applications -
 2. Supplier
 3. Bulk Buyer
 4. Carrier
-
-Here, each application may have its own internal transactions. For example: The Manufacturer might perform some
-production activities which involve multiple activities from these domains - finance, marketing, purchasing, assembly,
-testing, packaging etc.
 ---------------------------------------------------------------------------------------------------------------------
 BLOCKCHAIN LEDGER
 ---------------------------------------------------------------------------------------------------------------------
