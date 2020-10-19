@@ -1,4 +1,4 @@
-![Caper logo](https://github.com/AartiJivrajani/All-On-Cloud-9/blob/master/images/logo.png?raw=true)
+![Caper logo](https://github.com/AartiJivrajani/All-On-Cloud-9/blob/master/images/logo.png?raw=true)  
 Supply chain management using Cross Application Permissioned Blockchain. The project is an attempt to implement [this work](https://dl.acm.org/doi/pdf/10.14778/3342263.3342275).
 
 # Consideration
