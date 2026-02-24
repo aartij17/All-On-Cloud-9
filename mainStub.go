@@ -59,7 +59,8 @@ func (s *Socket) Publish(subject string, request []byte) {
 }
 
 func main() {
-	ctx, _ := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	config.LoadConfig(ctx, "config/config.json")
 

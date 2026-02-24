@@ -16,7 +16,8 @@ func TestTHLocal(t *testing.T) {
 	timeout := time.After(3 * TIMEOUT * time.Second)
 	done := make(chan bool)
 
-	ctx, _ := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	config.LoadConfig(ctx, "../config/config.json")
 
 	for i := 0; i < 3; i++ {
@@ -52,7 +53,8 @@ func TestTHGlobalSingleNodeApp(t *testing.T) {
 	timeout := time.After(3 * TIMEOUT * time.Second)
 	done := make(chan bool)
 
-	ctx, _ := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	config.LoadConfig(ctx, "../config/config.json")
 
 	for i := 0; i < 3; i++ {
@@ -92,7 +94,8 @@ func TestTHGlobalOneMultipleNodeApp(t *testing.T) {
 	//timeout := time.After(500 * time.Second)
 	done := make(chan bool)
 
-	ctx, _ := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	config.LoadConfig(ctx, "../config/config.json")
 
 	const AppCount = 3
@@ -153,7 +156,8 @@ func TestTHGlobalAndLocalOneMultipleNodeApp(t *testing.T) {
 	//timeout := time.After(500 * time.Second)
 	done := make(chan bool)
 
-	ctx, _ := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	config.LoadConfig(ctx, "../config/config.json")
 
 	const AppCount = 3
@@ -242,7 +246,8 @@ func TestTHGlobalMultipleNodeApp(t *testing.T) {
 	//timeout := time.After(500 * time.Second)
 	done := make(chan bool)
 
-	ctx, _ := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	config.LoadConfig(ctx, "../config/config.json")
 
 	const AppCount = 3
