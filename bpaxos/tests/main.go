@@ -26,7 +26,8 @@ func main() {
 
 	flag.Parse()
 
-	ctx, _ := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	natsOptions := nats.Options{
 		Servers:        []string{"nats://0.0.0.0:4222"},
 		AllowReconnect: true,

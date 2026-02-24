@@ -60,9 +60,9 @@ func NewLeader(index int) Leader {
 }
 
 func (leader *Leader) handleReceiveCommand(message []byte) common.MessageEvent {
-	v := common.Vertex{leader.Index, id_count}
+	v := common.Vertex{Index: leader.Index, Id: id_count}
 	id_count += 1
-	newMessageEvent := common.MessageEvent{&v, message, []*common.Vertex{}}
+	newMessageEvent := common.MessageEvent{VertexId: &v, Message: message, Deps: []*common.Vertex{}}
 
 	return newMessageEvent
 }

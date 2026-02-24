@@ -50,8 +50,8 @@ func Timeout(consensusNode *ConsensusServiceNode) {
 
 func (consensusServiceNode *ConsensusServiceNode) HandleReceive(message *common.MessageEvent) common.MessageEvent {
 	if consensusServiceNode.ReachConsensus() {
-		v_stub := common.Vertex{0, 0}
-		message_stub := common.MessageEvent{&v_stub, []byte("Hello"), []*common.Vertex{&v_stub}}
+		v_stub := common.Vertex{Index: 0, Id: 0}
+		message_stub := common.MessageEvent{VertexId: &v_stub, Message: []byte("Hello"), Deps: []*common.Vertex{&v_stub}}
 		return message_stub
 	} else {
 		return common.MessageEvent{}
